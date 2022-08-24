@@ -31,25 +31,12 @@ filteredMat <- largeMat[genesSubset$genes, ]
 
 filteredMat <- filteredMat[which(rowMeans(!is.na(filteredMat)) > 0.5), ]
 
-typeCols <- list(Type = c("T" = "purple", "N" = "orange"))
+colorsTbl = read.csv("./data/colors.csv")
 
-
-colors <- c(
-  "royalblue4",
-  "maroon",
-  "goldenrod1",
-  "aquamarine",
-  "pink3",
-  "coral4",
-  "slategray3",
-  "mediumpurple",
-  "seagreen",
-  "lightgoldenrod2",
-  "orangered3"
-)
+colors = colorsTbl$color
 
 colorList <- list(
-  Type = setNames(c("purple", "orange"), nm = c("T", "N")),
+  Type = setNames(colors[12:13], nm = c("T", "N")),
   Cohort = setNames(colors, nm = cohorts)
 )
 
