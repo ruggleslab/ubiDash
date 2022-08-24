@@ -5,7 +5,12 @@ library(tidyverse)
 library(RColorBrewer)
 library(plotly)
 
-# DE_protien is spelled wrong
+# TODO ----
+# add cohort select to oncoplot
+# fix download button on heatmap
+# add download data button ton oncoplot
+# Fix issue when no cohorts are selected
+
 
 # heatmap variables ----
 
@@ -265,7 +270,10 @@ shinyServer(function(input, output) {
       paste("data-", Sys.Date(), ".csv", sep = "")
     },
     content = function(file) {
-      inputGenesMat <- getGenesMat(getCohortPatients(labels, isolate(input$cohortSelect)), getInputGenes())
+      cohortSubsetLabels <- getCohortPatients(labels, isolate(input$cohortSelect))
+      inputGenes <- getInputGenes(input$inputGenesCSV,isolate(input$inputGenesTXT))
+      inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
+      
       if (length(inputGenesMat) == 0) {
         inputGenesMat <- filteredMat
       }

@@ -4,7 +4,6 @@ library(plotly)
 library(readxl)
 library(bslib)
 
-# make nav 90% purple
 # make plot square
 
 filepath = "./data/DE_protien.xlsx"
@@ -16,7 +15,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
   includeCSS("./www/style.css"),
   
   # oncoplot tab ----
-  tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "flatly"),
+    tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "flatly"),
            sidebarLayout(
              sidebarPanel(
                textInput("inputOncoGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
