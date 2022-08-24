@@ -1,0 +1,15 @@
+.navbar.navbar-default.navbar-static-topav{
+  background-color: #6A2798!important;
+  color:white!important;
+}
+.navbar.navbar-default{
+  background-color: #6A2798!important;
+  
+}
+.navbar-nav a.nav-link, span.navbar-brand{
+  color:white!important;
+  
+}
+#generateBTN, #generateVolcano{
+  margin-bottom: 15px!important;
+}
