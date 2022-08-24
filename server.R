@@ -110,6 +110,7 @@ shinyServer(function(input, output) {
     }
     
     smallFM = filter(maf, Hugo_Symbol %in% inputGenes)
+    
     uniqueGenes = unique(smallFM$Hugo_Symbol)
     
     mutationsTbl = matrix(ncol = length(unique(smallFM$Tumor_Sample_Barcode)), nrow = length(uniqueGenes))
@@ -188,6 +189,23 @@ shinyServer(function(input, output) {
     )
   })
   
+  output$downloadOncoMutations <- downloadHandler(
+    filename = function() {
+      paste("data-", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(mtbl(), file)
+    }
+  )
+  output$downloadOncoCohorts <- downloadHandler(
+    filename = function() {
+      paste("data-", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(ctbl(), file)
+    }
+  )
+  
 
   # heatmap tab ----
 
@@ -215,6 +233,14 @@ shinyServer(function(input, output) {
       
       
       cohortSubsetLabels <- getCohortPatients(labels, isolate(input$cohortSelect))
+     
+      if(nrow(cohortSubsetLabels) == 0){
+        output$rowscut <- renderText({
+          paste("Error: Please select at least one cohort")
+        })
+        return()
+      }
+      
       inputGenes <- getInputGenes(input$inputGenesCSV,isolate(input$inputGenesTXT))
       inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
 
@@ -290,11 +316,6 @@ shinyServer(function(input, output) {
   #     ggsave(file, plot = plotInput(), device = device)
   #   }
   # )
-
-  
-  
-  
-  
   
   # volcano plot tab ----
   output$distPlot <- renderPlotly({
