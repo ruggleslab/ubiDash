@@ -57,7 +57,7 @@ colorList <- list(
 
 # volcano plot variables ----
 
-filepath <- "./data/DE_protien.xlsx"
+filepath <- "./data/DE_protein.xlsx"
 genes <- read_excel(path = "./data/AllCRLs.v4.xlsx", sheet = 1)
 unique_genes <- unique(genes$hgnc_symbol)
 

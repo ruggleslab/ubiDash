@@ -6,7 +6,7 @@ library(bslib)
 
 # make plot square
 
-filepath = "./data/DE_protien.xlsx"
+filepath = "./data/DE_protein.xlsx"
 cohorts = c("BRCA","CCRCC","COAD","GBM","HCC","HNSCC","LSCC","LUAD","OV","PDA","UCEC")
 cohortSheets <- excel_sheets(path = filepath);
 
