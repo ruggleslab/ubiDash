@@ -369,7 +369,7 @@ shinyServer(function(input, output) {
   # correlation tab ----
   output$pt_pn = renderPlotly({
     p = suppressWarnings(
-      ggplot(plot_tab, aes(x = pr_normal.cor, y = pr_tumor.cor)) + 
+      ggplot(plot_tab, aes(y = pr_normal.cor, x = pr_tumor.cor)) + 
         geom_point(aes(text = text)) +
         lines
     )
@@ -377,22 +377,22 @@ shinyServer(function(input, output) {
   })
   output$pt_rt = renderPlotly({
     p = suppressWarnings(
-      ggplot(plot_tab, aes(x = rn_tumor.cor, y = pr_tumor.cor)) + 
+      ggplot(plot_tab, aes(y = rn_tumor.cor, x = pr_tumor.cor)) + 
         geom_point(aes(text = text)) +
         lines
     )
     ggplotly(p, tooltip = "text")
     
   })
-  output$pn_rt = renderPlotly({
-    p = suppressWarnings(
-      ggplot(plot_tab, aes(x = rn_tumor.cor, y = pr_normal.cor)) + 
-        geom_point(aes(text = text)) +
-        lines
-    )
-    ggplotly(p, tooltip = "text")
-    
-  })
+  # output$pn_rt = renderPlotly({
+  #   p = suppressWarnings(
+  #     ggplot(plot_tab, aes(x = rn_tumor.cor, y = pr_normal.cor)) + 
+  #       geom_point(aes(text = text)) +
+  #       lines
+  #   )
+  #   ggplotly(p, tooltip = "text")
+  #   
+  # })
   output$downloadCorrelationData <- downloadHandler(
     filename = function() {
       paste("data-", Sys.Date(), ".csv", sep = "")

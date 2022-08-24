@@ -111,10 +111,10 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                    ),
                    tabPanel("Tumor Proteome - Tumor Transcriptome",
                      shinycssloaders::withSpinner(plotlyOutput("pt_rt"), color = "#6A2798")
-                   ),
-                   tabPanel("Normal Proteome - Tumor Transcriptome",
-                     shinycssloaders::withSpinner(plotlyOutput("pn_rt"), color = "#6A2798")
                    )
+                   # ,tabPanel("Normal Proteome - Tumor Transcriptome",
+                   #   shinycssloaders::withSpinner(plotlyOutput("pn_rt"), color = "#6A2798")
+                   # )
                    )
                 )
             )
