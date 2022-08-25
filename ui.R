@@ -8,7 +8,7 @@ library(bslib)
 
 filepath = "./data/DE_protein.xlsx"
 cohorts = c("BRCA","CCRCC","COAD","GBM","HCC","HNSCC","LSCC","LUAD","OV","PDA","UCEC")
-cohortSheets <- excel_sheets(path = filepath);
+cohortSheets <- excel_sheets(path = filepath)
 
 
 shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"),
