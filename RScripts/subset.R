@@ -1,9 +1,9 @@
-library(tidyverse);
+library(tidyverse)
 library(reshape2)
 library(dplyr)
 library(readxl)
 
-filepath = "./data/DE_protien.xlsx";
+filepath = "./data/DE_protien.xlsx"
 sheets = excel_sheets(path = filepath)
 
 
@@ -25,8 +25,8 @@ for(i in sheets){
     PValueTable =as.data.frame(cbind(cohortSheet$gene, cohortSheet$sca.adj.pval))
     colnames(PValueTable) = c("gene", i)
   }else{
-    logFCTable =full_join(logFCTable, as.data.frame(tempfc), by = "gene");
-    PValueTable =full_join(PValueTable, as.data.frame(tempp), by = "gene");
+    logFCTable =full_join(logFCTable, as.data.frame(tempfc), by = "gene")
+    PValueTable =full_join(PValueTable, as.data.frame(tempp), by = "gene")
   }
   logFCTable[[i]] = as.numeric(logFCTable[[i]])
 }
