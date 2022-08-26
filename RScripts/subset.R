@@ -3,7 +3,7 @@ library(reshape2)
 library(dplyr)
 library(readxl)
 
-filepath = "./data/DE_protien.xlsx"
+filepath = "./data/DE_protein.xlsx"
 sheets = excel_sheets(path = filepath)
 
 
@@ -34,7 +34,7 @@ for(i in sheets){
 
 genes <- read_excel(path="./data/AllCRLs.v4.xlsx", sheet = 1)
 
-source("./RScripts/table.R")
+# source("./RScripts/table.R")
 
 
 tempfc = as.data.frame(logFCTable)
