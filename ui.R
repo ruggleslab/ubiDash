@@ -15,6 +15,10 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
   includeCSS("./www/style.css"),
   
   # oncoplot tab ----
+    tabPanel("Home", theme = bs_theme(version = 5, bootswatch = "flatly"),
+             img(src='assets/OverviewSchematic.png', align = "right"),
+             
+             ),
     tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "flatly"),
            sidebarLayout(
              sidebarPanel(
