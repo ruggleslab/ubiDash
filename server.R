@@ -96,7 +96,7 @@ shinyServer(function(input, output) {
       inputGenes = unlist(strsplit(inputGenes, " "))
     }
     
-    smallFM = filter(maf, Hugo_Symbol %in% inputGenes)
+    smallFM = filter(maf, Hugo_Symbol %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
     
     uniqueGenes = unique(smallFM$Hugo_Symbol)
     
@@ -139,21 +139,29 @@ shinyServer(function(input, output) {
   output$mutationOncoplot = renderPlot({
     input$generateOnco
     
-    
     mutation_colors = get_mutation_colors(mutationsreactive())
     mutation_alter_fun = get_mutation_alter_fun(mutation_colors)
-    
-    oncoPrint(
-      mtbl(), alter_fun = mutation_alter_fun, col = mutation_colors, 
-      row_names_side = "left", 
-      pct_side = "right",
-      
-      row_order = renderedGenes(),
-      
-      remove_empty_columns = TRUE,
-      
-      heatmap_legend_param = list(title = "Alterations")
-      
+    tryCatch(
+      {
+        output$oncoError = renderText("")
+        
+        oncoPrint(
+        mtbl(), alter_fun = mutation_alter_fun, col = mutation_colors, 
+        row_names_side = "left", 
+        pct_side = "right",
+        
+        row_order = renderedGenes(),
+        
+        remove_empty_columns = TRUE,
+        
+        heatmap_legend_param = list(title = "Alterations")
+        
+      )
+        },
+      error = function(e){
+        output$oncoError = renderText("No Data")
+        return()
+      }
     )
   })
   output$cohortOncoplot = renderPlot({
@@ -162,6 +170,7 @@ shinyServer(function(input, output) {
     cohort_colors = get_cohort_colors()
     cohort_alter_fun = get_cohort_alter_fun(cohort_colors)
     
+    tryCatch({
     oncoPrint(
       ctbl(), alter_fun = cohort_alter_fun, col = cohort_colors, 
       row_names_side = "left", 
@@ -173,6 +182,11 @@ shinyServer(function(input, output) {
       
       heatmap_legend_param = list(title = "Cohorts")
       
+    )},
+    error = function(e){
+      print(e)
+      return()
+    }
     )
   })
   

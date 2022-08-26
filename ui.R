@@ -19,9 +19,13 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
            sidebarLayout(
              sidebarPanel(
                textInput("inputOncoGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
-               sliderInput("maxOncoGenes", "Number of Genes to Render:",
+               sliderInput("maxOncoGenes", "Max Number of Genes to Display:",
                            min = 1, max = 50,
-                           value = 20),
+                           value = 10),
+               h3("Cohorts"),
+               checkboxGroupInput("oncoCohortSelect", "Select Cohorts:",
+                                  cohorts, selected = cohorts),
+               
                actionButton("generateOnco", "Generate Plot"),
                
                p("Download this data"),
@@ -29,6 +33,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                downloadButton(outputId = "downloadOncoCohorts", label = "Download Cohort Data"),               
              ),
              mainPanel(
+               textOutput("oncoError"),
                shinycssloaders::withSpinner(plotOutput("cohortOncoplot"), color = "#6A2798"),
                shinycssloaders::withSpinner(plotOutput("mutationOncoplot"), color = "#6A2798")
              )
