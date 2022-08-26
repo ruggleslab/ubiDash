@@ -33,10 +33,10 @@ filteredMat <- filteredMat[which(rowMeans(!is.na(filteredMat)) > 0.5), ]
 
 colorsTbl = read.csv("./data/colors.csv")
 
-colors = colorsTbl$color
+colors = colorsTbl$color[1:11]
 
 colorList <- list(
-  Type = setNames(colors[12:13], nm = c("T", "N")),
+  Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
   Cohort = setNames(colors, nm = cohorts)
 )
 

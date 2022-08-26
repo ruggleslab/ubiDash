@@ -26,7 +26,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                
                p("Download this data"),
                downloadButton(outputId = "downloadOncoMutations", label = "Download Mutations Data"),               
-               downloadButton(outputId = "downloadOncoCohrts", label = "Download Cohort Data"),               
+               downloadButton(outputId = "downloadOncoCohorts", label = "Download Cohort Data"),               
              ),
              mainPanel(
                shinycssloaders::withSpinner(plotOutput("cohortOncoplot"), color = "#6A2798"),
