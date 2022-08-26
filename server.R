@@ -320,7 +320,8 @@ shinyServer(function(input, output) {
     labeledPoints <- filter(data, gene %in% unique_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff))
 
     p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = CRL)) +
-      ylab("-Log10(P-val)") +
+      ylab("-Log10(adjusted p-val)") +
+      xlab("Log2(Tumor/Normal)") +
       labs(title = isolate(input$cohort)) +
       geom_point(shape = 16, alpha = .5, mapping = aes(text = paste(
         "Gene: ", gene, "\n",

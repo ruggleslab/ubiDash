@@ -82,8 +82,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
         selectInput("cohort", "Cohort", cohortSheets),
         
         
-          selectInput("PValCutoff", "P Value Cutoff:", c(0.001, 0.01, 0.05)),
-           sliderInput("logFCCutoff", "LogFC Cutoff:",
+          selectInput("PValCutoff", "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
+           sliderInput("logFCCutoff", "Log2(Tumor/Normal) Cutoff:",
                     min = .25, max = 2,
               value = 1, step = 0.05),
         
