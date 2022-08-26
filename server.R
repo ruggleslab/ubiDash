@@ -53,6 +53,7 @@ source('./RScripts/OncoplotColors.R')
 
 load("./data/sample_info.Rdata")
 load("./data/maf.Rdata")
+nPatients = length(unique(maf$Tumor_Sample_Barcode))
 
 CRLS = genes
 crl_genes = unique(CRLS$hgnc_symbol)
@@ -83,6 +84,7 @@ shinyServer(function(input, output) {
   mtbl = reactiveVal(NULL)
   renderedGenes = reactiveVal(NULL)
   mutationsreactive = reactiveVal(NULL)
+  anno = reactiveVal(NULL)
   
   observe({
     input$generateOnco
@@ -129,11 +131,28 @@ shinyServer(function(input, output) {
     cohortsTbl = filter(cohortsTbl, rownames(cohortsTbl) %in% topGenes)
     mutationsTbl = filter(mutationsTbl, rownames(mutationsTbl) %in% topGenes)
     
+    pcts = matrix(ncol = 2, nrow = nrow(cohortsTbl))
+    rownames(pcts) = rownames(cohortsTbl)
+    pcts[,1] = rowSums(cohortsTbl != "")
+    pcts[,2] = round((pcts[,1] / 1069) * 100, digits = 1)
+    
+    if(nrow(pcts) > 1)
+      pcts = pcts[order(pcts[,2],decreasing=TRUE),]
+    
+    pcts[,2] = paste0(pcts[,2], "%")
+    mutationsTbl = mutationsTbl[order(pcts[,2],decreasing=TRUE),]
+    anno(pcts[,2])
+    
+    mutationsTbl = mutationsTbl[rownames(pcts),]
+    cohortsTbl = cohortsTbl[rownames(pcts),]
+    
     mutations = levels(smallFM$Variant_Classification)
     mutationsreactive(mutations)
     ctbl(cohortsTbl)
     mtbl(mutationsTbl)
     renderedGenes(topGenes)
+    
+    
     
   })
   output$mutationOncoplot = renderPlot({
@@ -148,14 +167,15 @@ shinyServer(function(input, output) {
         oncoPrint(
         mtbl(), alter_fun = mutation_alter_fun, col = mutation_colors, 
         row_names_side = "left", 
-        pct_side = "right",
+        show_pct = FALSE,
         
         row_order = renderedGenes(),
         
         remove_empty_columns = TRUE,
         
-        heatmap_legend_param = list(title = "Alterations")
-        
+        heatmap_legend_param = list(title = "Alterations"),
+
+        right_annotation = rowAnnotation(pct = anno_text(anno()))
       )
         },
       error = function(e){
@@ -174,17 +194,19 @@ shinyServer(function(input, output) {
     oncoPrint(
       ctbl(), alter_fun = cohort_alter_fun, col = cohort_colors, 
       row_names_side = "left", 
-      pct_side = "right",
+      show_pct = FALSE,
       
       row_order = renderedGenes(),
       
       remove_empty_columns = TRUE,
       
-      heatmap_legend_param = list(title = "Cohorts")
+      heatmap_legend_param = list(title = "Cohorts"),
+      
+      right_annotation = rowAnnotation(pct = anno_text(anno()))
+      
       
     )},
     error = function(e){
-      print(e)
       return()
     }
     )
