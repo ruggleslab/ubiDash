@@ -45,7 +45,7 @@ colorList <- list(
 # volcano plot variables ----
 
 filepath <- "./data/DE_protein.xlsx"
-genes <- read_excel(path = "./data/AllCRLs.v4.xlsx", sheet = 1)
+genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
 unique_genes <- unique(genes$hgnc_symbol)
 
 # oncoplot variables ----
@@ -54,7 +54,7 @@ source('./RScripts/OncoplotColors.R')
 load("./data/sample_info.Rdata")
 load("./data/maf.Rdata")
 
-CRLS = read_excel('./data/AllCRLs.v4.xlsx')
+CRLS = genes
 crl_genes = unique(CRLS$hgnc_symbol)
 
 # correlation variables ----

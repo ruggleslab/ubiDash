@@ -1,4 +1,3 @@
-source('./RScripts/table.R')
 source('./RScripts/subset.R')
 
 load("./data/20220214_ANA044_Proteome_Pancan_mat.combo_observed_norm.Rdata")
@@ -39,5 +38,5 @@ defaultHeatmap = Heatmap(filteredMat, name = "Log2(Relative Abundance)",
 
 defaultHeatmap = draw(defaultHeatmap, heatmap_legend_side="bottom", annotation_legend_side="right")
 
-save(defaultHeatmap, file = "defaultHeatmap.RData")
+save(defaultHeatmap, file = "./data/defaultHeatmap.RData")
 

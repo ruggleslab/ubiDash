@@ -32,10 +32,7 @@ for(i in sheets){
 }
 
 
-genes <- read_excel(path="./data/AllCRLs.v4.xlsx", sheet = 1)
-
-# source("./RScripts/table.R")
-
+genes <- read_excel(path="./data/AllCRLs.v5.xlsx", sheet = 1)
 
 tempfc = as.data.frame(logFCTable)
 tempp = as.data.frame(PValueTable)
@@ -73,6 +70,6 @@ genesSubset = inner_join(tempfc, tempp, by = "genes")
 
 
 save(genesSubset, file =  "./data/genesSubset.RData")
-rm(tempfc, tempp, cohortSheet, genes, logFCTable, PValueTable, genesSubset)
+rm(tempfc, tempp, cohortSheet, genes, logFCTable, PValueTable)
 
 
