@@ -1,6 +1,10 @@
-data/
+# Hidden files
 .Rhistory
 .Rproj.user
-ubiDash.Rproj
 .RData
+*.DS_Store
+
+# Big folders
+ubiDash.Rproj
+data/
 www/assets/
