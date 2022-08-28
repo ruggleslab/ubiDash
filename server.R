@@ -60,12 +60,7 @@ crl_genes = unique(CRLS$hgnc_symbol)
 
 # correlation variables ----
 plot_tab = read.csv("./data/plotTab.csv")
-
-text = paste("<b>",plot_tab$gene_pairs, "</b> \n",
-             "pr_normal.cor: ", plot_tab$pr_normal.cor, "\n",
-             "pr_tumor.cor: ", plot_tab$pr_tumor.cor, "\n",
-             "rn_tumor.cor: ", plot_tab$rn_tumor.cor, "\n")
-
+source("./RScripts/GenerateCorrPlot.R")
 lines = list(geom_hline(yintercept=.5, color = "red") ,
              geom_hline(yintercept=-.5,  color = "red") ,
              geom_vline(xintercept=-.5,color = "red") ,
@@ -78,6 +73,7 @@ lines = list(geom_hline(yintercept=.5, color = "red") ,
 # server ----
 
 shinyServer(function(input, output) {
+  
   
   # oncoplot tab ----
   ctbl = reactiveVal(NULL)
@@ -392,19 +388,13 @@ shinyServer(function(input, output) {
   )
   # correlation tab ----
   output$pt_pn = renderPlotly({
-    p = suppressWarnings(
-      ggplot(plot_tab, aes(y = pr_normal.cor, x = pr_tumor.cor)) + 
-        geom_point(aes(text = text)) +
-        lines
-    )
+    input$generateCorrelation
+    p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "pr_normal.cor")
     ggplotly(p, tooltip = "text")
   })
   output$pt_rt = renderPlotly({
-    p = suppressWarnings(
-      ggplot(plot_tab, aes(y = rn_tumor.cor, x = pr_tumor.cor)) + 
-        geom_point(aes(text = text)) +
-        lines
-    )
+    input$generateCorrelation
+    p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "rn_tumor.cor")
     ggplotly(p, tooltip = "text")
     
   })

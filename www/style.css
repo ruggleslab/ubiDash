@@ -13,3 +13,27 @@
 #generateBTN, #generateVolcano{
   margin-bottom: 15px!important;
 }
+
+.home-img{
+  width:100%;
+}
+.title-page{
+  margin:0px 12%;
+}
+.title-page p{
+  text-align: justify;
+  font-size: 1.3rem;
+}
+.title-page h1{
+      width: 75%;
+    margin: 0 auto;
+    text-align: center;
+}
+@media (max-width: 600px) {
+  .title-page{
+    margin:0px 3%;
+  }
+  .title-page h1{
+    width: 100%;s
+  }        
+}

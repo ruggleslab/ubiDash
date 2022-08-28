@@ -9,16 +9,22 @@ library(bslib)
 filepath = "./data/DE_protein.xlsx"
 cohorts = c("BRCA","CCRCC","COAD","GBM","HCC","HNSCC","LSCC","LUAD","OV","PDA","UCEC")
 cohortSheets <- excel_sheets(path = filepath)
-
+abstract =  paste(read.delim("./www/assets/abstract.txt"))
 
 shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"),
   includeCSS("./www/style.css"),
-  
-  # oncoplot tab ----
+  # home page tab
     tabPanel("Home", theme = bs_theme(version = 5, bootswatch = "flatly"),
-             img(src='assets/OverviewSchematic.png', align = "right"),
+             tags$div(
+             h1("Integrated multi-omic analysis of Cullin-RING E3 ligases in cancer"),
+              p(abstract),
+            img(src='assets/OverviewSchematic.png', align = "right")%>% 
+              tagAppendAttributes(class = 'home-img')
+             )  %>%  
+              tagAppendAttributes(class = 'title-page')
              
              ),
+  # oncoplot tab ----
     tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "flatly"),
            sidebarLayout(
              sidebarPanel(
@@ -110,6 +116,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
   tabPanel("Correlations", theme = bs_theme(version = 5, bootswatch = "pulse"),
              sidebarLayout(
                sidebarPanel(
+                 sliderInput("CorrelationCutoff", "Correlation Cutoff:",
+                             min = .5, max = 1,
+                             value = .5, step = 0.05),
+                 actionButton("generateCorrelation", "Generate Plot"),
+                 
                  p("Download this data"),
                  downloadButton(outputId = "downloadCorrelationData", label = "Download")
                ),
