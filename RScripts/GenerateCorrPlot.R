@@ -1,4 +1,4 @@
-generateCorrPlot = function(threshold, plot_tab,yaxis, inputGenes, warning){
+generateCorrPlot = function(threshold, plot_tab, xaxis, yaxis, inputGenes, warning){
   
   warning("")
   
@@ -6,7 +6,8 @@ generateCorrPlot = function(threshold, plot_tab,yaxis, inputGenes, warning){
   inputGenes = gsub("  ", " ", inputGenes)
   inputGenes = unlist(strsplit(inputGenes, " "))
   
-  plot_tab = filter(plot_tab, abs(pr_normal.cor) > threshold & abs(pr_tumor.cor) > threshold & abs(rn_tumor.cor) > threshold)
+  plot_tab = filter(plot_tab, abs(plot_tab[,xaxis]) > threshold 
+                    & abs(plot_tab[,yaxis]) > threshold)
  
   if(length(inputGenes) > 0){
     plot_tab = filter(plot_tab,row %in% inputGenes)
@@ -16,13 +17,11 @@ generateCorrPlot = function(threshold, plot_tab,yaxis, inputGenes, warning){
   }
   
    text = paste("<b>",plot_tab$gene_pairs, "</b> \n",
-               "pr_normal.cor: ", plot_tab$pr_normal.cor, "\n",
-               "pr_normal.p: ", plot_tab$pr_normal.p, "\n",
-               "pr_tumor.cor: ", plot_tab$pr_tumor.cor, "\n",
-               "pr_tumor.p: ", plot_tab$pr_tumor.p, "\n",
-               "rn_tumor.cor: ", plot_tab$rn_tumor.cor, "\n",
-               "rn_tumor.p: ", plot_tab$rn_tumor.p, "\n")
-  
+               "pr_normal.cor: ", round(plot_tab$pr_normal.cor,2), "\n",
+               "pr_tumor.cor: ", round(plot_tab$pr_tumor.cor,2), "\n",
+               "rn_tumor.cor: ", round(plot_tab$rn_tumor.cor,2), "\n",
+               "rn_normal.cor: ", round(plot_tab$rn_normal.cor,2), "\n")
+
   lines = list(geom_hline(yintercept=threshold, color = "red") ,
                geom_hline(yintercept=-threshold,  color = "red") ,
                geom_vline(xintercept=-threshold,color = "red") ,
@@ -31,8 +30,9 @@ generateCorrPlot = function(threshold, plot_tab,yaxis, inputGenes, warning){
                geom_vline(xintercept=-0, size = 1, color = "black"))
   
   return(suppressWarnings(
-    ggplot(plot_tab, aes(y = plot_tab[,yaxis], x = pr_tumor.cor)) + 
+    ggplot(plot_tab, aes(y = plot_tab[,yaxis], x = plot_tab[,xaxis])) + 
       ylab(yaxis) +
+      xlab(xaxis) +
       geom_point(aes(text = text)) +
       lines
   ))

@@ -59,7 +59,7 @@ CRLS = genes
 crl_genes = unique(CRLS$hgnc_symbol)
 
 # correlation variables ----
-plot_tab = read.csv("./data/plotTabv2.csv")
+plot_tab = read.csv("./data/plotTabv4.csv")
 source("./RScripts/GenerateCorrPlot.R")
 lines = list(geom_hline(yintercept=.5, color = "red") ,
              geom_hline(yintercept=-.5,  color = "red") ,
@@ -391,13 +391,13 @@ shinyServer(function(input, output) {
   warning = reactiveVal("")
   
   output$pt_pn = renderPlotly({
+    input$generateCorrelation
     output$corrErr1 <- renderText({
       warning()
     })
-    input$generateCorrelation
     tryCatch(
     {
-      p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "pr_normal.cor", 
+      p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "pr_tumor.cor", "pr_normal.cor", 
                            isolate(input$inputCorrGenesTXT), warning)
       ggplotly(p, tooltip = "text")
     },
@@ -411,12 +411,13 @@ shinyServer(function(input, output) {
     
   })
   output$pt_rt = renderPlotly({
+    input$generateCorrelation
     output$corrErr2 <- renderText({
       warning()
     })
     tryCatch(
       {
-        p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "rn_tumor.cor", 
+        p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "pr_tumor.cor","rn_tumor.cor", 
                              isolate(input$inputCorrGenesTXT), warning)
         ggplotly(p, tooltip = "text")
       },
@@ -428,15 +429,26 @@ shinyServer(function(input, output) {
       })
     
   })
-  # output$pn_rt = renderPlotly({
-  #   p = suppressWarnings(
-  #     ggplot(plot_tab, aes(x = rn_tumor.cor, y = pr_normal.cor)) + 
-  #       geom_point(aes(text = text)) +
-  #       lines
-  #   )
-  #   ggplotly(p, tooltip = "text")
-  #   
-  # })
+  output$rt_rn = renderPlotly({
+    input$generateCorrelation
+    output$corrErr2 <- renderText({
+      warning()
+    })
+    tryCatch(
+      {
+        p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "rn_tumor.cor", "rn_normal.cor", 
+                             isolate(input$inputCorrGenesTXT), warning)
+        ggplotly(p, tooltip = "text")
+      },
+      error = function(e) {
+        output$corrErr3 <- renderText({
+          "Error: No data available for input genes"
+        })
+        return()
+      })
+    
+  })
+
   output$downloadCorrelationData <- downloadHandler(
     filename = function() {
       paste("data-", Sys.Date(), ".csv", sep = "")

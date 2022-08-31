@@ -139,10 +139,13 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                    textOutput("corrErr2") %>% 
                      tagAppendAttributes(class = 'error'),
                      shinycssloaders::withSpinner(plotlyOutput("pt_rt"), color = "#6A2798")
+                   ),
+                   tabPanel("Tumor Transcriptome - Normal Transcriptome",
+                   textOutput("corrErr3") %>% 
+                     tagAppendAttributes(class = 'error'),
+                     shinycssloaders::withSpinner(plotlyOutput("rt_rn"), color = "#6A2798")
                    )
-                   # ,tabPanel("Normal Proteome - Tumor Transcriptome",
-                   #   shinycssloaders::withSpinner(plotlyOutput("pn_rt"), color = "#6A2798")
-                   # )
+                  
                    )
                 )
             )
