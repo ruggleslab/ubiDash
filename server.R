@@ -53,6 +53,7 @@ source('./RScripts/OncoplotColors.R')
 
 load("./data/sample_info.Rdata")
 load("./data/maf.Rdata")
+load("./data/defaultOncoplot.RData")
 nPatients = length(unique(maf$Tumor_Sample_Barcode))
 
 CRLS = genes
@@ -81,81 +82,93 @@ shinyServer(function(input, output) {
   renderedGenes = reactiveVal(NULL)
   mutationsreactive = reactiveVal(NULL)
   anno = reactiveVal(NULL)
+  modifiedOncoInput = reactiveVal(FALSE)
   
   observe({
     input$generateOnco
     
-    inputGenes = isolate(input$inputOncoGenesTXT)
-    if(inputGenes == ""){
-      inputGenes = crl_genes
-    } else {
-      inputGenes = gsub(",", " ", inputGenes)
-      inputGenes = gsub("  ", " ", inputGenes)
-      inputGenes = unlist(strsplit(inputGenes, " "))
-    }
+    modifiedOncoInput(!(isolate(input$inputOncoGenesTXT) == "" & 
+                          isolate(input$maxOncoGenes) == 10 & 
+                          length(isolate(input$oncoCohortSelect)) == 11))
     
-    smallFM = filter(maf, Hugo_Symbol %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
+    if(modifiedOncoInput()){
     
-    uniqueGenes = unique(smallFM$Hugo_Symbol)
-    
-    mutationsTbl = matrix(ncol = length(unique(smallFM$Tumor_Sample_Barcode)), nrow = length(uniqueGenes))
-    rownames(mutationsTbl) = uniqueGenes
-    colnames(mutationsTbl) = unique(smallFM$Tumor_Sample_Barcode)
-    cohortsTbl = mutationsTbl
-    
-    for(i in seq_along(rownames(smallFM))){
-      id = smallFM[i,Tumor_Sample_Barcode]
-      mutationsTbl[smallFM[i,Hugo_Symbol],id] = levels(smallFM$Variant_Classification)[smallFM[i,Variant_Classification]]
-      cohortsTbl[smallFM[i,Hugo_Symbol],id] = smallFM[i,cohort_code]
+      inputGenes = isolate(input$inputOncoGenesTXT)
+      if(inputGenes == ""){
+        inputGenes = crl_genes
+      } else {
+        inputGenes = gsub(",", " ", inputGenes)
+        inputGenes = gsub("  ", " ", inputGenes)
+        inputGenes = unlist(strsplit(inputGenes, " "))
+      }
+      
+      
+      smallFM = filter(maf, Hugo_Symbol %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
+      
+      uniqueGenes = unique(smallFM$Hugo_Symbol)
+      
+      mutationsTbl = matrix(ncol = length(unique(smallFM$Tumor_Sample_Barcode)), nrow = length(uniqueGenes))
+      rownames(mutationsTbl) = uniqueGenes
+      colnames(mutationsTbl) = unique(smallFM$Tumor_Sample_Barcode)
+      cohortsTbl = mutationsTbl
+      
+      for(i in seq_along(rownames(smallFM))){
+        id = smallFM[i,Tumor_Sample_Barcode]
+        mutationsTbl[smallFM[i,Hugo_Symbol],id] = levels(smallFM$Variant_Classification)[smallFM[i,Variant_Classification]]
+        cohortsTbl[smallFM[i,Hugo_Symbol],id] = smallFM[i,cohort_code]
+        
+      }
+      
+      mutationsTbl[is.na(mutationsTbl)] <- ""
+      cohortsTbl[is.na(cohortsTbl)] <- ""
+      
+      cohortsTbl = as.data.frame(cohortsTbl)
+      mutationsTbl = as.data.frame(mutationsTbl)
+      
+      sortedTbl = as.data.frame(cohortsTbl) %>% arrange(rowSums(cohortsTbl == ""))
+      topGenes = NULL
+      if(nrow(sortedTbl) > isolate(input$maxOncoGenes)){
+        topGenes = rownames(sortedTbl[1:isolate(input$maxOncoGenes),])
+      }else {
+        topGenes = rownames(sortedTbl)
+      }
+  
+      cohortsTbl = filter(cohortsTbl, rownames(cohortsTbl) %in% topGenes)
+      mutationsTbl = filter(mutationsTbl, rownames(mutationsTbl) %in% topGenes)
+      
+      pcts = matrix(ncol = 2, nrow = nrow(cohortsTbl))
+      rownames(pcts) = rownames(cohortsTbl)
+      pcts[,1] = rowSums(cohortsTbl != "")
+      pcts[,2] = round((pcts[,1] / 1069) * 100, digits = 1)
+      
+      if(nrow(pcts) > 1)
+        pcts = pcts[order(pcts[,2],decreasing=TRUE),]
+      
+      pcts[,2] = paste0(pcts[,2], "%")
+      mutationsTbl = mutationsTbl[order(pcts[,2],decreasing=TRUE),]
+      anno(pcts[,2])
+      
+      mutationsTbl = mutationsTbl[rownames(pcts),]
+      cohortsTbl = cohortsTbl[rownames(pcts),]
+      
+      mutations = levels(smallFM$Variant_Classification)
+      mutationsreactive(mutations)
+      ctbl(cohortsTbl)
+      mtbl(mutationsTbl)
+      renderedGenes(topGenes)
       
     }
-    
-    mutationsTbl[is.na(mutationsTbl)] <- ""
-    cohortsTbl[is.na(cohortsTbl)] <- ""
-    
-    cohortsTbl = as.data.frame(cohortsTbl)
-    mutationsTbl = as.data.frame(mutationsTbl)
-    
-    sortedTbl = as.data.frame(cohortsTbl) %>% arrange(rowSums(cohortsTbl == ""))
-    topGenes = NULL
-    if(nrow(sortedTbl) > isolate(input$maxOncoGenes)){
-      topGenes = rownames(sortedTbl[1:isolate(input$maxOncoGenes),])
-    }else {
-      topGenes = rownames(sortedTbl)
-    }
-
-    cohortsTbl = filter(cohortsTbl, rownames(cohortsTbl) %in% topGenes)
-    mutationsTbl = filter(mutationsTbl, rownames(mutationsTbl) %in% topGenes)
-    
-    pcts = matrix(ncol = 2, nrow = nrow(cohortsTbl))
-    rownames(pcts) = rownames(cohortsTbl)
-    pcts[,1] = rowSums(cohortsTbl != "")
-    pcts[,2] = round((pcts[,1] / 1069) * 100, digits = 1)
-    
-    if(nrow(pcts) > 1)
-      pcts = pcts[order(pcts[,2],decreasing=TRUE),]
-    
-    pcts[,2] = paste0(pcts[,2], "%")
-    mutationsTbl = mutationsTbl[order(pcts[,2],decreasing=TRUE),]
-    anno(pcts[,2])
-    
-    mutationsTbl = mutationsTbl[rownames(pcts),]
-    cohortsTbl = cohortsTbl[rownames(pcts),]
-    
-    mutations = levels(smallFM$Variant_Classification)
-    mutationsreactive(mutations)
-    ctbl(cohortsTbl)
-    mtbl(mutationsTbl)
-    renderedGenes(topGenes)
-    
-    
     
   })
   output$mutationOncoplot = renderPlot({
     input$generateOnco
     
+    if(!modifiedOncoInput()) return(mutationsOnco)
+  
     mutation_colors = get_mutation_colors(mutationsreactive())
     mutation_alter_fun = get_mutation_alter_fun(mutation_colors)
+    
+    
     tryCatch(
       {
         output$oncoError = renderText("")
@@ -171,7 +184,7 @@ shinyServer(function(input, output) {
         
         heatmap_legend_param = list(title = "Alterations"),
 
-        right_annotation = rowAnnotation(pct = anno_text(anno()))
+        right_annotation = rowAnnotation(pct = anno_text(anno()), barplot = anno_oncoprint_barplot())
       )
         },
       error = function(e){
@@ -182,6 +195,8 @@ shinyServer(function(input, output) {
   })
   output$cohortOncoplot = renderPlot({
     input$generateOnco
+    
+    if(!modifiedOncoInput()) return(cohortsOnco)
     
     cohort_colors = get_cohort_colors()
     cohort_alter_fun = get_cohort_alter_fun(cohort_colors)
@@ -198,7 +213,7 @@ shinyServer(function(input, output) {
       
       heatmap_legend_param = list(title = "Cohorts"),
       
-      right_annotation = rowAnnotation(pct = anno_text(anno()))
+      right_annotation = rowAnnotation(pct = anno_text(anno()), barplot = anno_oncoprint_barplot())
       
       
     )},

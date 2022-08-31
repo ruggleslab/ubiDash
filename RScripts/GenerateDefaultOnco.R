@@ -72,10 +72,10 @@ mutationsOnco = oncoPrint(
   
   heatmap_legend_param = list(title = "Alterations"),
   
-  right_annotation = rowAnnotation(pct = anno_text(pcts[,2]))
+  right_annotation = rowAnnotation(pct = anno_text(pcts[,2]), barplot = anno_oncoprint_barplot())
 )
 cohortsOnco = oncoPrint(
-  mutationsTbl, alter_fun = mutation_alter_fun, col = mutation_colors, 
+  cohortsTbl, alter_fun = cohort_alter_fun, col = cohort_colors, 
   row_names_side = "left", 
   show_pct = FALSE,
   
@@ -85,7 +85,7 @@ cohortsOnco = oncoPrint(
   
   heatmap_legend_param = list(title = "Alterations"),
   
-  right_annotation = rowAnnotation(pct = anno_text(pcts[,2]))
+  right_annotation = rowAnnotation(pct = anno_text(pcts[,2]), barplot = anno_oncoprint_barplot())
 )
 
-save(cohortsOnco, mutationsOnco, file = "./data/defaultOncoplot.RData")
+save(cohortsOnco, mutationsOnco, file = "./data/defaultOncoplot.RData") 
