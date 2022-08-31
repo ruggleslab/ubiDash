@@ -14,6 +14,10 @@
   margin-bottom: 15px!important;
 }
 
+.error{
+  color:red!important;
+}
+
 .home-img{
   width:100%;
 }

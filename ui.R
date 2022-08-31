@@ -43,7 +43,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                downloadButton(outputId = "downloadOncoCohorts", label = "Download Cohort Data"),               
              ),
              mainPanel(
-               textOutput("oncoError"),
+               textOutput("oncoError")%>% 
+                 tagAppendAttributes(class = 'error'),
                shinycssloaders::withSpinner(plotOutput("cohortOncoplot"), color = "#6A2798"),
                shinycssloaders::withSpinner(plotOutput("mutationOncoplot"), color = "#6A2798")
              )
@@ -82,7 +83,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
         # Show a plot of the generated distribution
         mainPanel(
           textOutput("rowscut"),
-          textOutput("err"),
+          textOutput("err")%>% 
+            tagAppendAttributes(class = 'error'),
           shinycssloaders::withSpinner(plotOutput("heatmap"), color = "#6A2798"),
             )
         
@@ -116,6 +118,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
   tabPanel("Correlations", theme = bs_theme(version = 5, bootswatch = "pulse"),
              sidebarLayout(
                sidebarPanel(
+                 textInput("inputCorrGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
+                 
                  sliderInput("CorrelationCutoff", "Correlation Cutoff:",
                              min = .5, max = 1,
                              value = .5, step = 0.05),
@@ -127,9 +131,13 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                mainPanel(
                  tabsetPanel(
                    tabPanel("Tumor Proteome - Normal Proteome",
+                   textOutput("corrErr1") %>% 
+                     tagAppendAttributes(class = 'error'),
                      shinycssloaders::withSpinner(plotlyOutput("pt_pn"), color = "#6A2798")
                    ),
                    tabPanel("Tumor Proteome - Tumor Transcriptome",
+                   textOutput("corrErr2") %>% 
+                     tagAppendAttributes(class = 'error'),
                      shinycssloaders::withSpinner(plotlyOutput("pt_rt"), color = "#6A2798")
                    )
                    # ,tabPanel("Normal Proteome - Tumor Transcriptome",

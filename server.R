@@ -59,7 +59,7 @@ CRLS = genes
 crl_genes = unique(CRLS$hgnc_symbol)
 
 # correlation variables ----
-plot_tab = read.csv("./data/plotTab.csv")
+plot_tab = read.csv("./data/plotTabv2.csv")
 source("./RScripts/GenerateCorrPlot.R")
 lines = list(geom_hline(yintercept=.5, color = "red") ,
              geom_hline(yintercept=-.5,  color = "red") ,
@@ -387,15 +387,45 @@ shinyServer(function(input, output) {
     }
   )
   # correlation tab ----
+  
+  warning = reactiveVal("")
+  
   output$pt_pn = renderPlotly({
+    output$corrErr1 <- renderText({
+      warning()
+    })
     input$generateCorrelation
-    p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "pr_normal.cor")
-    ggplotly(p, tooltip = "text")
+    tryCatch(
+    {
+      p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "pr_normal.cor", 
+                           isolate(input$inputCorrGenesTXT), warning)
+      ggplotly(p, tooltip = "text")
+    },
+      error = function(e) {
+        print(e)
+        output$corrErr1 <- renderText({
+          "Error: No data available for input genes"
+      })
+        return()
+    })
+    
   })
   output$pt_rt = renderPlotly({
-    input$generateCorrelation
-    p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "rn_tumor.cor")
-    ggplotly(p, tooltip = "text")
+    output$corrErr2 <- renderText({
+      warning()
+    })
+    tryCatch(
+      {
+        p = generateCorrPlot(isolate(input$CorrelationCutoff), plot_tab, "rn_tumor.cor", 
+                             isolate(input$inputCorrGenesTXT), warning)
+        ggplotly(p, tooltip = "text")
+      },
+      error = function(e) {
+        output$corrErr2 <- renderText({
+          "Error: No data available for input genes"
+        })
+        return()
+      })
     
   })
   # output$pn_rt = renderPlotly({
