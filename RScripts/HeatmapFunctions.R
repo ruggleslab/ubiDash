@@ -8,9 +8,7 @@ getInputGenes <- function(CSV, TXT) {
   if (!is.null(inFile)) {
     return(unlist(read.csv(file = inFile$datapath, header = FALSE)))
   }
-  TXT <- gsub(",", " ", TXT)
-  TXT <- gsub("  ", " ", TXT)
-  return(unlist(strsplit(TXT, " ")))
+  return(splitInputGenes(TXT))
 }
 
 drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster){

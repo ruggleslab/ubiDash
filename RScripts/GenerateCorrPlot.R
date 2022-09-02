@@ -2,15 +2,13 @@ generateCorrPlot = function(threshold, plot_tab, xaxis, yaxis, inputGenes, warni
   
   warning("")
   
-  inputGenes = gsub(",", " ", inputGenes)
-  inputGenes = gsub("  ", " ", inputGenes)
-  inputGenes = unlist(strsplit(inputGenes, " "))
+  inputGenes = splitInputGenes(inputGenes)
   
   plot_tab = filter(plot_tab, abs(plot_tab[,xaxis]) > threshold 
                     & abs(plot_tab[,yaxis]) > threshold)
  
   if(length(inputGenes) > 0){
-    plot_tab = filter(plot_tab,row %in% inputGenes)
+    plot_tab = filter(plot_tab,toupper(row) %in% inputGenes)
     if(length(unique(plot_tab$row)) != length(inputGenes)){
       warning("Data unavailable for some genes")
     }

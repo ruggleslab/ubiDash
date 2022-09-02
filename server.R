@@ -11,6 +11,7 @@ library(plotly)
 # add download data button ton oncoplot
 # Fix issue when no cohorts are selected
 
+source("./RScripts/SplitInputGenes.R")
 
 # heatmap variables ----
 
@@ -97,13 +98,11 @@ shinyServer(function(input, output) {
       if(inputGenes == ""){
         inputGenes = crl_genes
       } else {
-        inputGenes = gsub(",", " ", inputGenes)
-        inputGenes = gsub("  ", " ", inputGenes)
-        inputGenes = unlist(strsplit(inputGenes, " "))
+        inputGenes = splitInputGenes(isolate(input$inputOncoGenesTXT))
       }
       
       
-      smallFM = filter(maf, Hugo_Symbol %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
+      smallFM = filter(maf, toupper(Hugo_Symbol) %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
       
       uniqueGenes = unique(smallFM$Hugo_Symbol)
       
@@ -289,7 +288,7 @@ shinyServer(function(input, output) {
         plotHeight(nrow(inputGenesMat) * 12 + 200)
       }
 
-      cutout <- inputGenes[!(inputGenes %in% rownames(inputGenesMat))]
+      cutout <- inputGenes[!(inputGenes %in% toupper(rownames(inputGenesMat)))]
       if (length(cutout) > 0) {
         output$rowscut <- renderText({
           paste("No Data:", paste(cutout, collapse = ", "))
@@ -360,10 +359,7 @@ shinyServer(function(input, output) {
     inputGenes=  c("")
     
     if(isolate(input$volcanoinputGenes) != ""){
-      inputGenes = isolate(input$volcanoinputGenes)
-      inputGenes = gsub(",", " ", inputGenes)
-      inputGenes = gsub("  ", " ", inputGenes)
-      inputGenes = unlist(strsplit(inputGenes, " "))
+     inputGenes = splitInputGenes(isolate(input$volcanoinputGenes))
     }
     
     logFCCutoff <- isolate(input$logFCCutoff)
@@ -372,7 +368,7 @@ shinyServer(function(input, output) {
     data <- read_excel(path = filepath, sheet = isolate(input$cohort))
     data$POI <- "Other"
     data$POI[data$gene %in% unique_genes] = "CRL"
-    data$POI[data$gene %in% inputGenes] = "Potential Substrate"
+    data$POI[toupper(data$gene) %in% inputGenes] = "Potential Substrate"
     data$log.scal.pval <- -log10(data$sca.adj.pval)
 
     labeledPoints <- filter(data, gene %in% unique_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff))
