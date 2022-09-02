@@ -13,7 +13,7 @@ abstract =  paste(read.delim("./www/assets/abstract.txt"))
 
 shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"),
   includeCSS("./www/style.css"),
-  # home page tab
+  # home page tab ----
     tabPanel("Home", theme = bs_theme(version = 5, bootswatch = "flatly"),
              tags$div(
              h1("Integrated multi-omic analysis of Cullin-RING E3 ligases in cancer"),
@@ -97,6 +97,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
       sidebarPanel(
         
         selectInput("cohort", "Cohort", cohortSheets),
+       
+         textInput("volcanoinputGenes", "Input genes of interest (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
         
         
           selectInput("PValCutoff", "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),

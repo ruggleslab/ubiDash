@@ -357,27 +357,38 @@ shinyServer(function(input, output) {
 
     input$generateVolcano
 
+    inputGenes=  c("")
+    
+    if(isolate(input$volcanoinputGenes) != ""){
+      inputGenes = isolate(input$volcanoinputGenes)
+      inputGenes = gsub(",", " ", inputGenes)
+      inputGenes = gsub("  ", " ", inputGenes)
+      inputGenes = unlist(strsplit(inputGenes, " "))
+    }
+    
     logFCCutoff <- isolate(input$logFCCutoff)
     PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
 
     data <- read_excel(path = filepath, sheet = isolate(input$cohort))
-    data$CRL <- data$gene %in% unique_genes
+    data$POI <- "Other"
+    data$POI[data$gene %in% unique_genes] = "CRL"
+    data$POI[data$gene %in% inputGenes] = "Potential Substrate"
     data$log.scal.pval <- -log10(data$sca.adj.pval)
 
     labeledPoints <- filter(data, gene %in% unique_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff))
 
-    p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = CRL)) +
+    p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = POI)) +
       ylab("-Log10(adjusted p-val)") +
       xlab("Log2(Tumor/Normal)") +
       labs(title = isolate(input$cohort)) +
       geom_point(shape = 16, alpha = .5, mapping = aes(text = paste(
         "Gene: ", gene, "\n",
-        "CRL: ", CRL, "\n",
+        "POI: ", POI, "\n",
         "LogFC: ", logFC, "\n",
         "P Value: ", log.scal.pval, "\n",
         sep = ""
       ))) +
-      scale_color_manual(breaks = c(TRUE, FALSE), values = c("#FF0000", "#888888"), labels = c("CRL", "Non-CRL")) +
+      scale_color_manual(breaks = c("CRL", "Potential Substrate", "Other"), values = c("#FF0000","#0000FF","#888888")) +
       geom_vline(xintercept = logFCCutoff, linetype = "solid", color = "red") +
       geom_vline(xintercept = -logFCCutoff, linetype = "solid", color = "red") +
       geom_hline(yintercept = PValCutoff, linetype = "solid", color = "red")
