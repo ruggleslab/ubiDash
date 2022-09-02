@@ -453,7 +453,7 @@ shinyServer(function(input, output) {
   })
   output$rt_rn = renderPlotly({
     input$generateCorrelation
-    output$corrErr2 <- renderText({
+    output$corrErr3 <- renderText({
       warning()
     })
     tryCatch(
