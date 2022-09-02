@@ -371,7 +371,7 @@ shinyServer(function(input, output) {
     data$POI[toupper(data$gene) %in% inputGenes] = "Potential Substrate"
     data$log.scal.pval <- -log10(data$sca.adj.pval)
 
-    labeledPoints <- filter(data, gene %in% unique_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff))
+    labeledPoints <- filter(data, (gene %in% unique_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% inputGenes)
 
     p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = POI)) +
       ylab("-Log10(adjusted p-val)") +
