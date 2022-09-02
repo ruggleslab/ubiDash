@@ -17,7 +17,7 @@ source("./RScripts/SplitInputGenes.R")
 
 source('./RScripts/HeatmapFunctions.R')
 
-load("./data/genesSubset.Rdata")
+load("./data/genesSubset.RData")
 load("./data/20220214_ANA044_Proteome_Pancan_mat.combo_observed_norm.Rdata")
 load("./data/sample_info.Rdata")
 load("./data/defaultHeatmap.RData")
@@ -53,7 +53,7 @@ unique_genes <- unique(genes$hgnc_symbol)
 source('./RScripts/OncoplotColors.R')
 
 load("./data/sample_info.Rdata")
-load("./data/maf.Rdata")
+load("./data/maf.RData")
 load("./data/defaultOncoplot.RData")
 nPatients = length(unique(maf$Tumor_Sample_Barcode))
 
