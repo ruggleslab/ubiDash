@@ -6,7 +6,7 @@ getCohortPatients <- function(labels, cohortSelect) {
 getInputGenes <- function(CSV, TXT) {
   inFile <- CSV
   if (!is.null(inFile)) {
-    return(unlist(read.csv(file = inFile$datapath, header = FALSE)))
+    return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = "\t")))
   }
   return(splitInputGenes(TXT))
 }

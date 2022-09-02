@@ -89,18 +89,18 @@ shinyServer(function(input, output) {
     input$generateOnco
     
     modifiedOncoInput(!(isolate(input$inputOncoGenesTXT) == "" & 
+                          is.null(isolate(input$inputOncoGenesCSV)) &
                           isolate(input$maxOncoGenes) == 10 & 
                           length(isolate(input$oncoCohortSelect)) == 11))
     
     if(modifiedOncoInput()){
     
-      inputGenes = isolate(input$inputOncoGenesTXT)
-      if(inputGenes == ""){
+      # inputGenes = isolate(input$inputOncoGenesTXT)
+      inputGenes <- getInputGenes(input$inputOncoGenesCSV,isolate(input$inputOncoGenesTXT))
+
+      if(length(inputGenes) == 0){
         inputGenes = crl_genes
-      } else {
-        inputGenes = splitInputGenes(isolate(input$inputOncoGenesTXT))
       }
-      
       
       smallFM = filter(maf, toupper(Hugo_Symbol) %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
       
@@ -330,7 +330,7 @@ shinyServer(function(input, output) {
     },
     content = function(file) {
       cohortSubsetLabels <- getCohortPatients(labels, isolate(input$cohortSelect))
-      inputGenes <- getInputGenes(input$inputGenesCSV,isolate(input$inputGenesTXT))
+      inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT))
       inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
       
       if (length(inputGenesMat) == 0) {
@@ -355,11 +355,11 @@ shinyServer(function(input, output) {
     # allow user to save plots
 
     input$generateVolcano
-
-    inputGenes=  c("")
     
-    if(isolate(input$volcanoinputGenes) != ""){
-     inputGenes = splitInputGenes(isolate(input$volcanoinputGenes))
+    inputGenes <- getInputGenes(input$volcanoinputGenesCSV,isolate(input$volcanoinputGenes))
+    
+    if(length(inputGenes) == 0){
+      inputGenes = c("")
     }
     
     logFCCutoff <- isolate(input$logFCCutoff)
