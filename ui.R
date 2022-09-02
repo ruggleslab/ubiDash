@@ -30,8 +30,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
              sidebarPanel(
                textInput("inputOncoGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
                p("OR"),
-               fileInput("inputOncoGenesCSV", "Upload CSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
-               
+               fileInput("inputOncoGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+                selectInput("oncoDelims", "Delimiter", c("tab", "comma")),               
                sliderInput("maxOncoGenes", "Max Number of Genes to Display:",
                            min = 1, max = 50,
                            value = 10),
@@ -64,7 +64,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
           # make sure these do not interfere
           textInput("inputGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
           p("OR"),
-          fileInput("inputGenesCSV", "Upload CSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+          fileInput("inputGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+          selectInput("heatmapDelims", "Delimiter", c("tab", "comma")),               
           
           h3("Cohorts"),
           
@@ -85,7 +86,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
 
         # Show a plot of the generated distribution
         mainPanel(
-          textOutput("rowscut"),
+          textOutput("rowscut")%>% 
+            tagAppendAttributes(class = 'error'),
           textOutput("err")%>% 
             tagAppendAttributes(class = 'error'),
           shinycssloaders::withSpinner(plotOutput("heatmap"), color = "#6A2798"),
@@ -103,7 +105,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
        
          textInput("volcanoinputGenes", "Input genes of interest (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
         p("OR"),
-        fileInput("volcanoinputGenesCSV", "Upload CSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+        fileInput("volcanoinputGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+        selectInput("volcanoDelims", "Delimiter", c("tab", "comma")),               
         
         
           selectInput("PValCutoff", "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),

@@ -96,7 +96,7 @@ shinyServer(function(input, output) {
     if(modifiedOncoInput()){
     
       # inputGenes = isolate(input$inputOncoGenesTXT)
-      inputGenes <- getInputGenes(input$inputOncoGenesCSV,isolate(input$inputOncoGenesTXT))
+      inputGenes <- getInputGenes(isolate(input$inputOncoGenesCSV),isolate(input$inputOncoGenesTXT), delim = isolate(input$oncoDelims))
 
       if(length(inputGenes) == 0){
         inputGenes = crl_genes
@@ -274,7 +274,7 @@ shinyServer(function(input, output) {
         return()
       }
       
-      inputGenes <- getInputGenes(input$inputGenesCSV,isolate(input$inputGenesTXT))
+      inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT), delim = isolate(input$heatmapDelims))
       inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
 
       if (is.null(inputGenesMat)) {
@@ -289,9 +289,13 @@ shinyServer(function(input, output) {
       }
 
       cutout <- inputGenes[!(inputGenes %in% toupper(rownames(inputGenesMat)))]
-      if (length(cutout) > 0) {
+      if (length(cutout) > 0 & (is.null(isolate(input$inputGenesCSV)) | length(inputGenesMat) > 0)) {
         output$rowscut <- renderText({
           paste("No Data:", paste(cutout, collapse = ", "))
+        })
+      } else if (length(cutout) > 0) {
+        output$rowscut <- renderText({
+          paste("No Data:", paste(cutout, collapse = ", "), ". Make sure delimiter is correct.")
         })
       } else {
         output$rowscut <- renderText({
@@ -330,7 +334,7 @@ shinyServer(function(input, output) {
     },
     content = function(file) {
       cohortSubsetLabels <- getCohortPatients(labels, isolate(input$cohortSelect))
-      inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT))
+      inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT), delim = isolate(input$volcanoDelims))
       inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
       
       if (length(inputGenesMat) == 0) {
@@ -356,7 +360,7 @@ shinyServer(function(input, output) {
 
     input$generateVolcano
     
-    inputGenes <- getInputGenes(input$volcanoinputGenesCSV,isolate(input$volcanoinputGenes))
+    inputGenes <- getInputGenes(isolate(input$volcanoinputGenesCSV),isolate(input$volcanoinputGenes), delim = isolate(input$volcanoDelims))
     
     if(length(inputGenes) == 0){
       inputGenes = c("")

@@ -3,10 +3,14 @@ getCohortPatients <- function(labels, cohortSelect) {
   return(patients)
 }
 
-getInputGenes <- function(CSV, TXT) {
+getInputGenes <- function(CSV, TXT, delim = "tab") {
+  delims = c(
+    tab = "\t",
+    comma = ","
+  )
   inFile <- CSV
   if (!is.null(inFile)) {
-    return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = "\t")))
+    return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = delims[delim])))
   }
   return(splitInputGenes(TXT))
 }
