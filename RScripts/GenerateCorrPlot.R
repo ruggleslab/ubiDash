@@ -31,7 +31,7 @@ generateCorrPlot = function(threshold, plot_tab, xaxis, yaxis, inputGenes, warni
     ggplot(plot_tab, aes(y = plot_tab[,yaxis], x = plot_tab[,xaxis])) + 
       ylab(yaxis) +
       xlab(xaxis) +
-      geom_point(aes(text = text)) +
+      geom_point(aes(text = text), alpha = 0.35) +
       lines
   ))
 }
