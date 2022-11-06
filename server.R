@@ -5,37 +5,36 @@ library(tidyverse)
 library(RColorBrewer)
 library(plotly)
 
-# TODO ----
-# add cohort select to oncoplot
-# fix download button on heatmap
-# add download data button ton oncoplot
-# Fix issue when no cohorts are selected
-
 source("./RScripts/SplitInputGenes.R")
 
 # heatmap variables ----
 
 source('./RScripts/HeatmapFunctions.R')
 
+# genes subset
 load("./data/genesSubset.RData")
+# mat (matrix with correlations)
 load("./data/20220214_ANA044_Proteome_Pancan_mat.combo_observed_norm.RData")
+# samples
 load("./data/sample_info.RData")
+# default heatmap
 load("./data/defaultHeatmap.RData")
 
-
+# cohort and sample type of all normal and tumor samples
 labels <- subset(samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
+# get list of cohorts
 cohorts <- unique(labels$cohort_code)
 
+# cast matrix with correlations to datafram
 mat <- as.data.frame(mat)
 largeMat <- mat[, rownames(labels)]
 filteredMat <- largeMat[genesSubset$genes, ]
 
+# remove rows with over 50% NA
 filteredMat <- filteredMat[which(rowMeans(!is.na(filteredMat)) > 0.5), ]
 
 colorsTbl = read.csv("./data/colors.csv")
-
 colors = colorsTbl$color[1:11]
-
 colorList <- list(
   Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
   Cohort = setNames(colors, nm = cohorts)
@@ -52,9 +51,12 @@ unique_genes <- unique(genes$hgnc_symbol)
 # oncoplot variables ----
 source('./RScripts/OncoplotColors.R')
 
-load("./data/sample_info.RData")
+# load("./data/sample_info.RData")
+# maf
 load("./data/maf.RData")
+# cohortsOnco
 load("./data/defaultOncoplot.RData")
+# total patients
 nPatients = length(unique(maf$Tumor_Sample_Barcode))
 
 CRLS = genes
@@ -75,9 +77,10 @@ lines = list(geom_hline(yintercept=.5, color = "red") ,
 # server ----
 
 shinyServer(function(input, output) {
-  
+
   
   # oncoplot tab ----
+  # reactive vals are able to be shared across both oncoplots
   ctbl = reactiveVal(NULL)
   mtbl = reactiveVal(NULL)
   renderedGenes = reactiveVal(NULL)
@@ -88,6 +91,7 @@ shinyServer(function(input, output) {
   observe({
     input$generateOnco
     
+    # see if the settings are at their defaults
     modifiedOncoInput(!(isolate(input$inputOncoGenesTXT) == "" & 
                           is.null(isolate(input$inputOncoGenesCSV)) &
                           isolate(input$maxOncoGenes) == 10 & 
@@ -102,6 +106,7 @@ shinyServer(function(input, output) {
         inputGenes = crl_genes
       }
       
+      # maf with only most frequently mutated genes
       smallFM = filter(maf, toupper(Hugo_Symbol) %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
       
       uniqueGenes = unique(smallFM$Hugo_Symbol)
@@ -113,17 +118,20 @@ shinyServer(function(input, output) {
       
       for(i in seq_along(rownames(smallFM))){
         id = smallFM[i,Tumor_Sample_Barcode]
+        # create tables to be plotted
         mutationsTbl[smallFM[i,Hugo_Symbol],id] = levels(smallFM$Variant_Classification)[smallFM[i,Variant_Classification]]
         cohortsTbl[smallFM[i,Hugo_Symbol],id] = smallFM[i,cohort_code]
         
       }
       
+      # set NA values to empty string
       mutationsTbl[is.na(mutationsTbl)] <- ""
       cohortsTbl[is.na(cohortsTbl)] <- ""
       
       cohortsTbl = as.data.frame(cohortsTbl)
       mutationsTbl = as.data.frame(mutationsTbl)
       
+      # sort both tables the same way
       sortedTbl = as.data.frame(cohortsTbl) %>% arrange(rowSums(cohortsTbl == ""))
       topGenes = NULL
       if(nrow(sortedTbl) > isolate(input$maxOncoGenes)){
@@ -135,6 +143,7 @@ shinyServer(function(input, output) {
       cohortsTbl = filter(cohortsTbl, rownames(cohortsTbl) %in% topGenes)
       mutationsTbl = filter(mutationsTbl, rownames(mutationsTbl) %in% topGenes)
       
+      # get percents
       pcts = matrix(ncol = 2, nrow = nrow(cohortsTbl))
       rownames(pcts) = rownames(cohortsTbl)
       pcts[,1] = rowSums(cohortsTbl != "")
@@ -159,6 +168,7 @@ shinyServer(function(input, output) {
     }
     
   })
+  # mutations oncoplot
   output$mutationOncoplot = renderPlot({
     input$generateOnco
     
@@ -192,6 +202,7 @@ shinyServer(function(input, output) {
       }
     )
   })
+  # cohorts oncoplot
   output$cohortOncoplot = renderPlot({
     input$generateOnco
     
@@ -244,8 +255,10 @@ shinyServer(function(input, output) {
 
   # add download heatmap button
   
+  # default plot height maybe automate this 
   plotHeight <- reactiveVal(956)
-  
+
+  # matrix with only genes to plot
   getGenesMat <- function(inputGenes,cohortSubsetLabels) {
     if (length(inputGenes) == 0 &
         length(isolate(isolate(input$cohortSelect))) == length(cohorts)) {
@@ -257,14 +270,15 @@ shinyServer(function(input, output) {
     }
     return(largeMat[inputGenes, rownames(cohortSubsetLabels)])
   }
-
+  
+  
   output$heatmap <- renderPlot(
     {
       
       # Button will trigger rerender
       input$generateHeatmap
       
-      
+      # get cohorts selected by user
       cohortSubsetLabels <- getCohortPatients(labels, isolate(input$cohortSelect))
      
       if(nrow(cohortSubsetLabels) == 0){
@@ -305,7 +319,12 @@ shinyServer(function(input, output) {
 
       ha <- HeatmapAnnotation(Type = cohortSubsetLabels$sample_type, Cohort = cohortSubsetLabels$cohort_code, col = colorList)
       hm <- NULL
-      colsplit = getCohortPatients(labels,isolate(input$cohortSelect))$sample_type
+      
+      colsplit = NULL
+      if(isolate(input$separateNandT)){
+        colsplit = getCohortPatients(labels,isolate(input$cohortSelect))$sample_type
+      }
+      
 
       inputGenesMat <- as.matrix(inputGenesMat)
       
@@ -365,16 +384,18 @@ shinyServer(function(input, output) {
     if(length(inputGenes) == 0){
       inputGenes = c("")
     }
-    
+    # cutoffs
     logFCCutoff <- isolate(input$logFCCutoff)
     PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
 
+    # prepare dataframe
     data <- read_excel(path = filepath, sheet = isolate(input$cohort))
     data$POI <- "Other"
     data$POI[data$gene %in% unique_genes] = "CRL"
     data$POI[toupper(data$gene) %in% inputGenes] = "Potential Substrate"
     data$log.scal.pval <- -log10(data$sca.adj.pval)
 
+    # get significant genes
     labeledPoints <- filter(data, (gene %in% unique_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% inputGenes)
 
     p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = POI)) +
@@ -416,6 +437,7 @@ shinyServer(function(input, output) {
   
   warning = reactiveVal("")
   
+  # proteome tumor - proteome normal
   output$pt_pn = renderPlotly({
     input$generateCorrelation
     output$corrErr1 <- renderText({
@@ -436,6 +458,7 @@ shinyServer(function(input, output) {
     })
     
   })
+  # proteome tunor - transcriptome tunor
   output$pt_rt = renderPlotly({
     input$generateCorrelation
     output$corrErr2 <- renderText({
@@ -455,6 +478,8 @@ shinyServer(function(input, output) {
       })
     
   })
+  
+  # transcriptome tumor - transcriptome normal
   output$rt_rn = renderPlotly({
     input$generateCorrelation
     output$corrErr3 <- renderText({

@@ -28,10 +28,14 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
     tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "flatly"),
            sidebarLayout(
              sidebarPanel(
+               
+               # gene inputs
                textInput("inputOncoGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
                p("OR"),
                fileInput("inputOncoGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
                 selectInput("oncoDelims", "Delimiter", c("tab", "comma")),               
+               
+               # options
                sliderInput("maxOncoGenes", "Max Number of Genes to Display:",
                            min = 1, max = 50,
                            value = 10),
@@ -41,6 +45,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                
                actionButton("generateOnco", "Generate Plot"),
                
+               # download options
                p("Download this data"),
                downloadButton(outputId = "downloadOncoMutations", label = "Download Mutations Data"),               
                downloadButton(outputId = "downloadOncoCohorts", label = "Download Cohort Data"),               
@@ -48,6 +53,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
              mainPanel(
                textOutput("oncoError")%>% 
                  tagAppendAttributes(class = 'error'),
+               # loading icons
                shinycssloaders::withSpinner(plotOutput("cohortOncoplot"), color = "#6A2798"),
                shinycssloaders::withSpinner(plotOutput("mutationOncoplot"), color = "#6A2798")
              )
@@ -65,13 +71,19 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
           textInput("inputGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
           p("OR"),
           fileInput("inputGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+          actionButton("resetHeatmapGenesCSV","clear"),
           selectInput("heatmapDelims", "Delimiter", c("tab", "comma")),               
           
           h3("Cohorts"),
           
+          # cohort seleciton checkboxes
           checkboxGroupInput("cohortSelect", "Select Cohorts:",
                              cohorts, selected = cohorts),
           checkboxInput("cluster", "Cluster columns",
+                             value = TRUE),
+          
+          # toggle clustering and separation by tumor and normal
+          checkboxInput("separateNandT", "Separate normal and tumor",
                              value = TRUE),
           actionButton("generateHeatmap", "Generate Heatmap"),
           
@@ -103,16 +115,16 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
         
         selectInput("cohort", "Cohort", cohortSheets),
        
-         textInput("volcanoinputGenes", "Input genes of interest (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
+        # input options
+        textInput("volcanoinputGenes", "Input genes of interest (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
         p("OR"),
         fileInput("volcanoinputGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
         selectInput("volcanoDelims", "Delimiter", c("tab", "comma")),               
         
-        
-          selectInput("PValCutoff", "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
-           sliderInput("logFCCutoff", "Log2(Tumor/Normal) Cutoff:",
-                    min = .25, max = 2,
-              value = 1, step = 0.05),
+        # cutoff options
+        selectInput("PValCutoff", "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
+        sliderInput("logFCCutoff", "Log2(Tumor/Normal) Cutoff:",
+              min = .25, max = 2, value = 1, step = 0.05),
         
         actionButton("generateVolcano", "Generate Plot"),
         
@@ -128,6 +140,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
   tabPanel("Correlations", theme = bs_theme(version = 5, bootswatch = "pulse"),
              sidebarLayout(
                sidebarPanel(
+                 
+                 # gene input options
                  textInput("inputCorrGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
                  
                  sliderInput("CorrelationCutoff", "Correlation Cutoff:",
@@ -137,9 +151,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                  
                  p("Download this data"),
                  downloadButton(outputId = "downloadCorrelationData", label = "Download")
-               ),
+              
+                  ),
                mainPanel(
                  tabsetPanel(
+                   # three tabs to compare proteome and genome of normal and tumor
                    tabPanel("Tumor Proteome - Normal Proteome",
                    textOutput("corrErr1") %>% 
                      tagAppendAttributes(class = 'error'),
