@@ -142,6 +142,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                sidebarPanel(
                  
                  # gene input options
+                 p("Filter (by all protiens correlated with a CRL)"),
                  textInput("inputCorrGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
                  
                  sliderInput("CorrelationCutoff", "Correlation Cutoff:",
