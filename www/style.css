@@ -10,8 +10,20 @@
   color:white!important;
   
 }
+
+.navbar:after{
+  background-image: url(./assets/NYUlogo.png);
+  background-size: 100px 50px;
+  width: 100px;
+  height: 50px;
+  content: "";
+  position: absolute;
+  right: 10px;
+}
+
 #generateBTN, #generateVolcano{
   margin-bottom: 15px!important;
+  height:30px;
 }
 
 .error{
@@ -33,11 +45,14 @@
     margin: 0 auto;
     text-align: center;
 }
-@media (max-width: 600px) {
+@media (max-width: 680px) {
   .title-page{
     margin:0px 3%;
   }
   .title-page h1{
     width: 100%;s
-  }        
+  }
+  .navbar:after{
+    content:none;
+  }
 }
