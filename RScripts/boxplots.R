@@ -1,6 +1,6 @@
-# title: "Extracting GMCL1 table from CCLE protein data for Yuki"
+# title: "Extracting Proteins of Interest (POIs) table from CCLE data"
 # author: "Tania Gonzalez"
-# date: "20220809"
+# date: "20221113"
 
 # LOADING PACKAGES----
 packagelist = c("readxl", "tidyverse", "glue", "stringr", "reshape2")
