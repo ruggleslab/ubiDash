@@ -5,78 +5,64 @@
 # LOADING PACKAGES----
 packagelist = c("readxl", "tidyverse", "glue", "stringr", "reshape2")
 
-lapply(packagelist, function(xxx) suppressMessages(require(xxx, character.only = TRUE,quietly=TRUE,warn.conflicts = FALSE)))
+lapply(packagelist, function(x) {
+  suppressMessages(require(x, character.only = T,
+                           quietly=T, 
+                           warn.conflicts = F))
+}
+)
+
 
 # PARAMETERS SETUP----
 date <- format(Sys.Date(), "%Y%m%d") # setting today's date in specific format: YYYYMMDD
-# analysis.id <- "EXP096"
+analysis.id <- "EXP096"
+
+out.path <- paste0("./", analysis.id, "/output")
+data.path <- "../../datasets/ccle"
 
 # DATA LOAD----
-out.path <- paste0("./", analysis.id, "/output")
-data.path <- "../datasets/depmap/ccle/"
+ccle_rna <- readRDS(glue("{data.path}/ccle_rna_expression.rds"))
+ccle_protein <- readRDS(glue("{data.path}/ccle_tmt_protein_expression.rds"))
 
-file.name <- "CCLE_rna_expression.csv"
-ccle_protein <- read.csv(file = glue("{data.path}{file.name}"), row.names = 1, check.names = F)
-
-pr_names <- str_split(colnames(ccle_protein), pattern = " ")
-names <- c()
-for (i in seq_along(pr_names)) {
-  pr <- unlist(pr_names[i])
-  tmp <- pr[1]
-  names <- c(names,tmp)
-}
-colnames(ccle_protein) <- names
-# saveRDS(ccle_protein, file = glue("{data.path}CCLE_expression.rds")) # Only do once
+ccle_samples_info <- read.csv(file = glue("{data.path}/ccle_sample_info.csv"))
 
 
-file.name <- "sample_info.csv"
-samples_info <- read.csv(file = glue("{data.path}{file.name}"))
-x <- c("DepMap_ID", "CCLE_Name", "sample_collection_site", "primary_or_metastasis", "primary_disease", "Subtype")
-samples_info_sub <- samples_info[, x]
-
-
-file.name <- "Achilles_metadata.csv"
-metadata <- read.csv(file = glue("{data.path}{file.name}"))
-x <- c("DepMap_ID", "culture_medium")
-metadata_sub <- metadata[, x]
-
-
-# POIs info
+# Boxplot for RNA values
+# labeling instructions
 p <- c("GMCL1", "USP28", "TP53BP1", "APC","RB1", "TP53", "MYC", "CCND1")
-gmcl1 <- ccle_protein[, p, drop = F]
-gmcl1$DepMap_ID <- rownames(gmcl1)
+POIs <- ccle_rna[, p, drop = F]
+POIs$DepMap_ID <- rownames(POIs)
 
-gmcl1 <- left_join(gmcl1, samples_info_sub, by = "DepMap_ID")
-gmcl1 <- left_join(gmcl1, metadata_sub, by = "DepMap_ID")
+lab <- data.frame(genes = colnames(POIs[1:8]),
+                  driver = c(rep("Unknown", 3), # "GMCL1"   "USP28"   "TP53BP1"
+                             rep("Tumor Suppressor", 3), # "APC"     "RB1"  "TP53" 
+                             rep("Oncogene", 2))) # "MYC"     "CCND1"  
 
-gmcl1$median_expression <- matrixStats::rowMedians(as.matrix(ccle_protein), na.rm = F)
-
-write_csv(gmcl1, file = glue("{out.path}/ccle_gmcl1_protein.csv"))
-
-# Boxplot visualization
-driver <- data.frame(genes = colnames(gmcl1[1:8]),
-                     driver = c(rep("Unknown", 3), 
-                                rep("Tumor Suppressor", 3),
-                                rep("Oncogene", 2))) 
-  
-input <- reshape2::melt(gmcl1[1:9]) %>% 
-  mutate(driver = rep("Unknown", nrow(input)))
+# constructing input table for ggplot in the long format
+input <- reshape2::melt(POIs, id.vars="DepMap_ID") %>% 
+  mutate(driver = rep("Unknown", nrow(.))) 
 
 input$driver <- ifelse(input$variable %in% c("MYC","CCND1"),
-                       "Oncogene", input$driver)
+                       "Oncogene", input$driver) 
 
 input$driver <- ifelse(input$variable %in% c("APC","RB1","TP53"),
                        "Tumor Suppressor", input$driver)
 
-ggplot(input, aes(x=variable, y= value, fill = driver)) + 
-  geom_violin(show.legend = T) +
-  geom_jitter(size = 0.1, show.legend = F) +
+# constructing boxplot viz
+ggplot(input, aes(x = variable, y = value, fill = driver)) + 
+  
+  geom_violin(show.legend = T) + # use geom_boxplot for boxplots format
+  geom_jitter(size = 0.1, show.legend = F) + # resizing individual dots
   theme_minimal() +
-  scale_fill_brewer(palette = "Set1") +
+  scale_fill_brewer(palette = "Set1") + # setting colors
+  
+  # re-naming x and y axis
   labs(x = NULL, y = "mRNA expression, log2(TPM +1)", 
-       title = "CCLE cell lines, n = 1406")
+       title = paste("CCLE cell lines, n =", nrow(POIs))
+  )
 
-ggsave(filename = glue("{out.path}/EXP096_ccle_gmcl1_mRNA.png"))
-   
+# saving file
+ggsave(filename = glue("{out.path}/ccle_mRNA_violin_plot.png"))
+
 
 # END OF CODE #
