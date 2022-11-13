@@ -3,6 +3,7 @@
 .Rproj.user
 .RData
 *.DS_Store
+*Icon?
 
 # Big folders
 ubiDash.Rproj
