@@ -12,7 +12,7 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
 2.  Create a branch on your local machine and switch into this branch. (Refs: [1](https://www.git-tower.com/learn/git/commands/git-checkout), [2](https://www.nobledesktop.com/learn/git/git-branches))
 
-    -   To create and switch to new brnack use `$ git checkout -b [name_of_your_new_branch]` or
+    -   To create and switch to new branch use `$ git checkout -b [name_of_your_new_branch]` or
     -   just create a branch by `$ git branch [name_of_your_new_branch]`
     -   To set remote branch tracking on new branch `$ git checkout -b <new-branch> --track <remote-branch>`
     -   To list all existing branches use `$ git branch -a`, `$ git branch` for local and `$ git branch -r` for remote repos.
