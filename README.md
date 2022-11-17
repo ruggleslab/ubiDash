@@ -38,7 +38,7 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
     -   Now, can merge another branch into current branch by `$ git merge my-branch-name`
 
-        -   **NOTE:** When you merge, there may be a conflict. Refer to [**Handling Merge Conflicts**](https://www.nobledesktop.com/learn/git/merge-conflicts)to learn what to do.
+        -   **NOTE:** When you merge, there may be a conflict. Refer to [**Handling Merge Conflicts**](https://www.nobledesktop.com/learn/git/merge-conflicts) to learn what to do.
 
 5.  Deleting existing branches you no longer need
 
