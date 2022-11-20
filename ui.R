@@ -176,6 +176,13 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                    )
                 )
             )
+        ),
+  tabPanel("Violin Plot", theme = bs_theme(version = 5, bootswatch = "pulse"),
+           
+                p("Violin Plot"),
+                shinycssloaders::withSpinner(plotlyOutput("violin"), color = "#6A2798")
+           
         )
+  
     )
 )
