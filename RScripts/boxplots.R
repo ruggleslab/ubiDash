@@ -18,7 +18,7 @@ date <- format(Sys.Date(), "%Y%m%d") # setting today's date in specific format: 
 analysis.id <- "EXP096"
 
 out.path <- paste0("./", analysis.id, "/output")
-data.path <- "../../datasets/ccle"
+data.path <- "./data"
 
 # DATA LOAD----
 ccle_rna <- readRDS(glue("{data.path}/ccle_rna_expression.rds"))
@@ -49,7 +49,7 @@ input$driver <- ifelse(input$variable %in% c("APC","RB1","TP53"),
                        "Tumor Suppressor", input$driver)
 
 # constructing boxplot viz
-ggplot(input, aes(x = variable, y = value, fill = driver)) + 
+p = ggplot(input, aes(x = variable, y = value, fill = driver)) + 
   
   geom_violin(show.legend = T) + # use geom_boxplot for boxplots format
   geom_jitter(size = 0.1, show.legend = F) + # resizing individual dots
@@ -60,6 +60,8 @@ ggplot(input, aes(x = variable, y = value, fill = driver)) +
   labs(x = NULL, y = "mRNA expression, log2(TPM +1)", 
        title = paste("CCLE cell lines, n =", nrow(POIs))
   )
+
+ggplotly(p)
 
 # saving file
 ggsave(filename = glue("{out.path}/ccle_mRNA_violin_plot.png"))
