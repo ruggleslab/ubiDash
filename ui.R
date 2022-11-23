@@ -142,7 +142,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                sidebarPanel(
                  
                  # gene input options
-                 p("Filter (by all protiens correlated with a CRL)"),
+                 p("The underlying data for this tab is a pre-filtered table 
+                   only containing genes correlated to CRLs with cor > | 0.5 |. 
+                   So, input text should specify a CRL of interest to produce a 
+                   scatterplot of all other proteins correlated to the specified 
+                   CRL."),
                  textInput("inputCorrGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
                  
                  sliderInput("CorrelationCutoff", "Correlation Cutoff:",
@@ -177,6 +181,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                 )
             )
         ),
+  # violin plot tap
+  # need to let users input genes of interest
   tabPanel("Violin Plot", theme = bs_theme(version = 5, bootswatch = "pulse"),
            
                 p("Violin Plot"),
