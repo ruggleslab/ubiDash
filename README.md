@@ -39,6 +39,7 @@ Before starting your work, make sure to setup the remote repo appropriately. The
     -   Now, can merge another branch into current branch by `$ git merge my-branch-name`
 
         -   **NOTE:** When you merge, there may be a conflict. Refer to [**Handling Merge Conflicts**](https://www.nobledesktop.com/learn/git/merge-conflicts) to learn what to do.
+        -   You can also look into this [link](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-comparing-branches-in-pull-requests) to learn how to compare between branches and branch versions.
 
 5.  Deleting existing branches you no longer need
 
