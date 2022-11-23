@@ -24,6 +24,26 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
     -   `$ git commit -m "add descriptive message here"` to commit all changes
 
+        -   To associate commits to specific issues opened on GitHub, use any key word from the list below, along with the issue number (e.g., `git commit -m "this commit resolves issue #1"`) (more info [here](https://docs.devart.com/studio-for-sql-server/source-controlling-databases/associating-commits-with-github-issues.html)):
+
+            -   Close
+
+            -   Closes
+
+            -   Closed
+
+            -   Fix
+
+            -   Fixes
+
+            -   Fixed
+
+            -   Resolve
+
+            -   Resolves
+
+            -   Resolved
+
     -   `$ git push origin [name_of_your_new_branch]` to push all committed changes to the remote branch
 
     -   You can see all the branches created by using: `$ git branch -a`
