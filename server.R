@@ -6,7 +6,7 @@ library(RColorBrewer)
 library(plotly)
 
 source("./RScripts/SplitInputGenes.R")
-# test comment
+
 # heatmap variables ----
 
 source('./RScripts/HeatmapFunctions.R')
