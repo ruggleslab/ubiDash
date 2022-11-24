@@ -1,7 +1,7 @@
 source('./RScripts/subset.R')
 
-load("./data/20220214_ANA044_Proteome_Pancan_mat.combo_observed_norm.Rdata")
-load("./data/sample_info.Rdata")
+mat <- readRDS("./data/cptac_tmt_protein_expression.rds")
+samples <- readRDS("./data/cptac_sample_info.rds")
 labels = subset(samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
 
 mat = as.data.frame(mat)
