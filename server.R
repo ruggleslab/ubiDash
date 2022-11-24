@@ -14,30 +14,38 @@ lapply(packagelist, function(x) {
 }
 )
 
+load("./data/defaults.RData")
+# loading default objects below:
+# genesSubset
+# defaultHeatmap
+# cohortsOnco
+# mutationsOnco
+
 source("./RScripts/SplitInputGenes.R")
 
 # heatmap variables ----
 
 source('./RScripts/HeatmapFunctions.R')
 
-# genes subset
-load("./data/genesSubset.RData")
-# mat (matrix with correlations)
-load("./data/20220214_ANA044_Proteome_Pancan_mat.combo_observed_norm.RData")
-# samples
-load("./data/sample_info.RData")
-# default heatmap
-load("./data/defaultHeatmap.RData")
+# ccle dataset
+ccle_rna <- readRDS(glue("./data/ccle_tpm_rna_expression.rds"))
+ccle_protein <- readRDS("./data/ccle_tmt_protein_expression.rds")
+ccle_samples <- readRDS("./data/ccle_sample_info.rds")
+
+# cptac dataset
+cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
+cptac_protein <- readRDS("./data/cptac_tmt_protein_expression.rds")
+cptac_samples <- readRDS("./data/cptac_sample_info.rds")
+
 
 # cohort and sample type of all normal and tumor samples
-labels <- subset(samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
+labels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
 # get list of cohorts
 cohorts <- unique(labels$cohort_code)
 
-# cast matrix with correlations to datafram
-mat <- as.data.frame(mat)
-largeMat <- mat[, rownames(labels)]
-filteredMat <- largeMat[genesSubset$genes, ]
+
+cptac_protein <- cptac_protein[, rownames(labels)]
+filteredMat <- cptac_protein[genesSubset$genes, ]
 
 # remove rows with over 50% NA
 filteredMat <- filteredMat[which(rowMeans(!is.na(filteredMat)) > 0.5), ]
@@ -60,11 +68,9 @@ unique_genes <- unique(genes$hgnc_symbol)
 # oncoplot variables ----
 source('./RScripts/OncoplotColors.R')
 
-# load("./data/sample_info.RData")
-# maf
-load("./data/maf.RData")
 # cohortsOnco
-load("./data/defaultOncoplot.RData")
+maf <- readRDS("./data/oncoplot_maf.rds")
+
 # total patients
 nPatients = length(unique(maf$Tumor_Sample_Barcode))
 
@@ -72,7 +78,7 @@ CRLS = genes
 crl_genes = unique(CRLS$hgnc_symbol)
 
 # correlation variables ----
-plot_tab = read.csv("./data/plotTabv4.csv")
+plot_tab <- readRDS("./data/cptac_multi_omic_correlations.rds")
 source("./RScripts/GenerateCorrPlot.R")
 lines = list(geom_hline(yintercept=.5, color = "red") ,
              geom_hline(yintercept=-.5,  color = "red") ,
@@ -84,18 +90,6 @@ lines = list(geom_hline(yintercept=.5, color = "red") ,
 
 
 # boxplot variables ----
-  date <- format(Sys.Date(), "%Y%m%d") # setting today's date in specific format: YYYYMMDD
-  analysis.id <- "EXP096"
-  
-  out.path <- paste0("./", analysis.id, "/output")
-  data.path <- "./data"
-  
-  # DATA LOAD
-  ccle_rna <- readRDS(glue("{data.path}/ccle_rna_expression.rds"))
-  ccle_protein <- readRDS(glue("{data.path}/ccle_tmt_protein_expression.rds"))
-  
-  ccle_samples_info <- read.csv(file = glue("{data.path}/ccle_sample_info.csv"))
-  
   
   # Boxplot for RNA values
   # labeling instructions
@@ -313,7 +307,7 @@ shinyServer(function(input, output) {
     if (length(inputGenes) == 0) {
       return(filteredMat[, rownames(cohortSubsetLabels)])
     }
-    return(largeMat[inputGenes, rownames(cohortSubsetLabels)])
+    return(cptac_protein[inputGenes, rownames(cohortSubsetLabels)])
   }
   
   
