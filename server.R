@@ -34,7 +34,7 @@ ccle_samples <- readRDS("./data/ccle_sample_info.rds")
 
 # cptac dataset
 cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
-cptac_protein <- readRDS("./data/cptac_tmt_protein_expression.rds")
+cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
 cptac_samples <- readRDS("./data/cptac_sample_info.rds")
 
 
