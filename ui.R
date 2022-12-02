@@ -3,6 +3,7 @@ library(shinycssloaders)
 library(plotly)
 library(readxl)
 library(bslib)
+library(DT)
 
 # make plot square
 
@@ -188,7 +189,31 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                 p("Violin Plot"),
                 shinycssloaders::withSpinner(plotlyOutput("violin"), color = "#6A2798")
            
-        )
+        ),
+  tabPanel("Protein specific correlations",
+           sidebarLayout(
+             sidebarPanel(
+               textInput("inputProtsSpecCorr", "Input gene", value = "", width = NULL, placeholder = NULL),
+               #selectizeInput(inputId = "inputProtsSpecCorr", 
+               #               choices = NULL, 
+               #              label = "Choose a protein",options = list(`live-search` = TRUE),  multiple = F),
+               
+               radioButtons(inputId = "inputTissueTypeSpecCorr", label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Normal"),
+               
+               sliderInput(inputId = "inputRSpecCorr",
+                           label = "Set correlation coefficient cut-off",
+                           value = 0.5, min = -1, max = 1, step = 0.05),
+               
+               actionButton("generateSpecCorr", label = "Start Analysis")
+             ),
+             mainPanel(
+               fluidRow(column(width = 4, 
+                               withSpinner(dataTableOutput(outputId = "outputTabSpecCorr"),color = "#6A2798")),
+                        column(width = 8, 
+                               withSpinner(plotOutput(outputId = "outputPlotSpecCorr"),color = "#6A2798")))
+             )
+           )
+  )
   
     )
 )
