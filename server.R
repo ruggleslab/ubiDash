@@ -562,4 +562,34 @@ shinyServer(function(input, output) {
     )
   ggplotly(violin)
   })
+  
+  #protein specific correlation
+  source(file = "./RScripts/corrAnalysis.R")
+  
+  #updateSelectizeInput(session, 'inputProtsSpecCorr', choices = proteinsToChoose, server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
+  
+  doInputProtSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputProtsSpecCorr})
+  doInputTissueTypeSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputTissueTypeSpecCorr})
+  doInputRSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputRSpecCorr})
+  
+  resSpecCorr <- eventReactive(input$generateSpecCorr,{multiCorr(geneName = doInputProtSpecCorr(),
+                                                                 cutOff = doInputRSpecCorr(),
+                                                                 tissueType = doInputTissueTypeSpecCorr(),
+                                                                 cptac_protein = cptac_protein,
+                                                                 cptac_samples = cptac_samples
+                                                                 )
+  })
+  
+  output$outputTabSpecCorr <- DT::renderDataTable(server = FALSE,{resSpecCorr()$result},rownames = F,extensions = 'Buttons', options = list(
+    dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
+    buttons = list(
+      
+      list(extend = "excel", text = "Download results", filename = paste0(input$proteinsToChoose, "_correlations"),
+           exportOptions = list(
+             modifier = list(page = "all")
+           )))))
+  
+  output$outputPlotSpecCorr <- renderPlot({resSpecCorr()$corrPlot})
+  
+  
 })
