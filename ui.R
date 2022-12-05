@@ -193,11 +193,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
   tabPanel("Protein specific correlations",
            sidebarLayout(
              sidebarPanel(
-               textInput("inputProtsSpecCorr", "Input gene", value = "", width = NULL, placeholder = NULL),
-               #selectizeInput(inputId = "inputProtsSpecCorr", 
-               #               choices = NULL, 
-               #              label = "Choose a protein",options = list(`live-search` = TRUE),  multiple = F),
-               
+               #textInput("inputProtsSpecCorr2", "Input gene", value = "", width = NULL, placeholder = NULL),
+               selectizeInput(inputId = "inputProtsSpecCorr",
+                             choices = NULL,#as.list(rownames(cptac_protein)),
+                            label = "Choose a protein",options = list(`live-search` = TRUE),  multiple = F),
+
                radioButtons(inputId = "inputTissueTypeSpecCorr", label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Normal"),
                
                sliderInput(inputId = "inputRSpecCorr",

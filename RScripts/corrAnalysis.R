@@ -35,7 +35,7 @@ multiCorr <- function(geneName, tissueType, cutOff,cptac_protein, cptac_samples)
   rawForAn <- cptac_protein[,colnames(cptac_protein) %in% colnames(selectedGene)]
   rawForAn <- as.data.frame(na.omit(rawForAn)) 
   selectedGene <- as.numeric(selectedGene)
-  
+  #correlation analysis
   corResult <- apply(rawForAn, 1, function(x) cor.test(x, selectedGene, method = "spearman", exact = F)[c(4,3)])
   
   #store the results as a dataframe and convert the list to a dataframe

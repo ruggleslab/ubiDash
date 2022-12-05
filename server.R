@@ -115,7 +115,7 @@ lines = list(geom_hline(yintercept=.5, color = "red") ,
 
   # server ----
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
 
   
   # oncoplot tab ----
@@ -566,7 +566,7 @@ shinyServer(function(input, output) {
   #protein specific correlation
   source(file = "./RScripts/corrAnalysis.R")
   
-  #updateSelectizeInput(session, 'inputProtsSpecCorr', choices = proteinsToChoose, server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
+  updateSelectizeInput(session, 'inputProtsSpecCorr', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
   
   doInputProtSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputProtsSpecCorr})
   doInputTissueTypeSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputTissueTypeSpecCorr})
