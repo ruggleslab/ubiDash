@@ -583,12 +583,7 @@ shinyServer(function(input, output, session) {
   output$outputTabSpecCorr <- DT::renderDataTable(server = FALSE,{resSpecCorr()$result},rownames = F,extensions = 'Buttons', options = list(
     dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
     buttons = list(
-      
-<<<<<<< HEAD
       list(extend = "excel", text = "Download results", filename = paste0(input$inputProtsSpecCorr, "_correlations"),
-=======
-      list(extend = "excel", text = "Download results", filename = paste0(input$proteinsToChoose, "_correlations"),
->>>>>>> 7941ab390f16522606026ab8fc4d564a3c2bfe78
            exportOptions = list(
              modifier = list(page = "all")
            )))))
