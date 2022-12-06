@@ -584,7 +584,7 @@ shinyServer(function(input, output, session) {
     dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
     buttons = list(
       
-      list(extend = "excel", text = "Download results", filename = paste0(input$proteinsToChoose, "_correlations"),
+      list(extend = "excel", text = "Download results", filename = paste0(input$inputProtsSpecCorr, "_correlations"),
            exportOptions = list(
              modifier = list(page = "all")
            )))))
