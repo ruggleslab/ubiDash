@@ -1,6 +1,6 @@
 # geneName <- "TNNC1"
 # tissueType <- "Tumor"
-# cutOff <- -0.01
+# cutOff <- c(-0.05,0.05)
 # 
 # cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
 # cptac_samples <- readRDS("./data/cptac_sample_info.rds")
@@ -46,20 +46,8 @@ multiCorr <- function(geneName, tissueType, cutOff,cptac_protein, cptac_samples)
   result[, 2] = round(x = sapply(corResult, "[[", 1), digits = 2)
   result[, 3] = format(x = sapply(corResult, "[[", 2), digits = 3, scientific = T)
   
-  #order the results based on R and remove the values below cutoff
-  if ((cutOff < 0) == TRUE) {
-    result <- result[result$`Spearman's Rho` < 0,]
-    result <- subset(result, result$`Spearman's Rho` <= cutOff)
-    result <- result[order(result$`Spearman's Rho` ,decreasing = F),]
-    #result$`Spearman's Rho` <- abs(result$`Spearman's Rho`)
-    
-  } else {
-    result <- subset(result, result$`Spearman's Rho` >= cutOff)
-    result <- result[order(result$`Spearman's Rho` ,decreasing = T),]
-  }
-  
-  library(ggplot2)
-  library(ggrepel)
+  result <- result[result$`Spearman's Rho` >= min(cutOff) & result$`Spearman's Rho` <=max(cutOff),]
+  result <- result[order(result$`Spearman's Rho` ,decreasing = T),]
   
   plotTab <- result
   plotTab$From <- geneName
@@ -67,7 +55,7 @@ multiCorr <- function(geneName, tissueType, cutOff,cptac_protein, cptac_samples)
   colnames(plotTab) <-c("From", "Genes", "R_value", "P_value")
   plotTab$R_value <- as.numeric(plotTab$R_value)
   plotTab$P_value <- as.numeric(plotTab$P_value)  
-    
+  
   corrPlot <- ggplot(data=plotTab, aes(x=R_value, y=-log10(P_value), label = Genes)) +
     geom_point() + 
     theme_minimal() +

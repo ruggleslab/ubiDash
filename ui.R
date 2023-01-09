@@ -202,7 +202,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                
                sliderInput(inputId = "inputRSpecCorr",
                            label = "Set correlation coefficient cut-off",
-                           value = 0.5, min = -1, max = 1, step = 0.05),
+                           value = c(0.5,1), min = -1, max = 1, step = 0.05),
                
                actionButton("generateSpecCorr", label = "Start Analysis")
              ),
