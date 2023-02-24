@@ -1,4 +1,4 @@
-load("./data/maf.Rdata")
+maf <- readRDS("./data/cptac_mutations.rds")
 
 genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
 crl_genes = unique(genes$hgnc_symbol)
