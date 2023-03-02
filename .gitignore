@@ -6,7 +6,7 @@
 refs/Icon?
 */Icon
 # Use the command below to find all instances of "Icon?" files and delete them.
-# find . -name "Icon?" -print0 | xargs -0 rm -rf
+# find -name "Icon?" -print0 | xargs -0 rm -rf
 
 # Big folders
 ubiDash.Rproj
