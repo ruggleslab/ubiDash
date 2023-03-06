@@ -1,27 +1,161 @@
-# geneName <- "TNNC1"
+# library(corrplot)
+# geneNamesRNA <- rownames(cptac_rna)[1:13]
+# geneNamesProtein <- rownames(cptac_protein)[1:13]
+# cohort <- c("BRCA","COAD", "CCRCC")
 # tissueType <- "Tumor"
 # cutOff <- c(-0.05,0.05)
 # 
 # cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
+# cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
+# cptac_rna <- NULL
 # cptac_samples <- readRDS("./data/cptac_sample_info.rds")
+# 
+# geneNameA <- "A1BG"
+# geneNameB <- "A2M"
+# 
+# asd <- singleCorr(geneNameA = "A1BG",geneNameB = "A2M",tissueType = "Tumor",cohort = c("BRCA","COAD", "CCRCC"),
+#                   cptac_protein = NULL,
+#                   cptac_rna = cptac_rna,
+#                   cptac_samples = cptac_samples)
+# asd$singCorrTab
+
+singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, cptac_rna, cptac_samples){
+  
+  if (!is.null(cptac_protein) & !is.null(cptac_rna)) {
+    #cohort filter
+    cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
+    
+    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
+    
+    if (tissueType == "Tumor") {
+      usedTissue <- tumNames
+      
+    }else if (tissueType == "Normal") {
+      usedTissue <- normNames
+    }
+    cptac_samples_filt <- cptac_samples_filt[rownames(cptac_samples_filt) %in% usedTissue,]
+    
+    #Filter for genes
+    selectedGeneA <- cptac_protein[rownames(cptac_protein) == geneNameA,colnames(cptac_protein) %in% usedTissue]
+    selectedGeneB <- cptac_rna[rownames(cptac_rna) == geneNameB,colnames(cptac_rna) %in% usedTissue]
+    #remove NAs
+    selectedGeneA <- selectedGeneA[,!is.na(selectedGeneA)]
+    selectedGeneB <- selectedGeneB[,!is.na(selectedGeneB)]
+    #keep common samples
+    selectedGeneA <- selectedGeneA[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
+    selectedGeneB <- selectedGeneB[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
+    
+  } else if (!is.null(cptac_protein) | !is.null(cptac_rna)) {#for RNA or Protein separately
+    varToAssign <- list(cptac_protein,cptac_rna)
+    inPut <- as.data.frame(varToAssign[which(c(!is.null(cptac_protein),!is.null(cptac_rna)))])
+    rm(varToAssign)
+    
+    colnames(inPut) <- gsub(pattern = ".?^X",replacement = "",x = colnames(inPut))
+    colnames(inPut) <- gsub(pattern = "\\.", replacement = "-",x = colnames(inPut))
+    #cohort filter
+    cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
+    
+    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], colnames(inPut)))
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], colnames(inPut)))
+    
+   
+    if (tissueType == "Tumor") {
+      usedTissue <- tumNames
+      
+    }else if (tissueType == "Normal") {
+      usedTissue <- normNames
+    }
+    
+    cptac_samples_filt <- cptac_samples_filt[rownames(cptac_samples_filt) %in% usedTissue,]
+    
+    #Filter for genes
+    selectedGeneA <- inPut[rownames(inPut) == geneNameA,colnames(inPut) %in% usedTissue]
+    selectedGeneB <- inPut[rownames(inPut) == geneNameB,colnames(inPut) %in% usedTissue]
+    #remove NAs
+    selectedGeneA <- selectedGeneA[,!is.na(selectedGeneA)]
+    selectedGeneB <- selectedGeneB[,!is.na(selectedGeneB)]
+    #keep common samples
+    selectedGeneA <- selectedGeneA[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
+    selectedGeneB <- selectedGeneB[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
+    
+  }
+  
+  selectedGeneA <- as.data.frame(t(selectedGeneA))
+  selectedGeneB <- as.data.frame(t(selectedGeneB))
+  
+  selectedGeneA$Cohort <- cptac_samples_filt[rownames(cptac_samples_filt) %in% rownames(selectedGeneA),1]
+  selectedGeneB$Cohort <- cptac_samples_filt[rownames(cptac_samples_filt) %in% rownames(selectedGeneB),1]
+  colnames(selectedGeneA) <- c("ExpValueA", "Cohort")
+  colnames(selectedGeneB) <- c("ExpValueB", "Cohort")
+  
+  corrSum <- cor.test(x = as.numeric(selectedGeneA$ExpValueA),y = as.numeric(selectedGeneB$ExpValueB), method = "spearman")
+  
+  #visualization
+  if (is.null(cptac_rna)) {
+    dat <- data.frame("geneAExp" = as.numeric(selectedGeneA$ExpValueA), "geneBExp" = as.numeric(selectedGeneB$ExpValueB))#Protein
+  } else if (is.null(cptac_protein)) {
+    dat <- data.frame("geneAExp" = log2(as.numeric(selectedGeneA$ExpValueA)), "geneBExp" = log2(as.numeric(selectedGeneB$ExpValueB)))#RNA
+  } else if (!is.null(cptac_protein) & !is.null(cptac_rna)) {
+    dat <- data.frame("geneAExp" = as.numeric(selectedGeneA$ExpValueA), "geneBExp" = log2(as.numeric(selectedGeneB$ExpValueB)))#Both
+  } 
+  
+  if (identical(rownames(selectedGeneA), rownames(selectedGeneB))) {
+    dat$Cohort <- selectedGeneA$Cohort
+  }
+   
+  
+  
+  singCorrTab <- data.frame("N" = nrow(dat),
+                            "Spearman's Rho" = round(x = corrSum$estimate,digits = 2),
+                            "pValue" = format(x = corrSum$p.value,digits = 2, scientific = TRUE), row.names = NULL)
+  
+  # pValue <- format(x = corrSum$p.value,digits = 2, scientific = TRUE)
+  # rho <- round(x = corrSum$estimate,digits = 2)
+  # singCorrTab <- t(data.frame("Cohorts" = names(table(dat$Cohort)),
+  #                              "N" = as.numeric(unlist(table(dat$Cohort)))))
+  #  
+  # xmax <- max(dat$geneAExp)
+  # ymax <- max(dat$geneBExp)
+  
+  library(ggplot2)
+  scatPlot <- ggplot(dat, aes(x = geneAExp, y = geneBExp, color = Cohort)) +
+    geom_point(size = 4) +
+    geom_smooth(method = "lm", size = 2) +
+    #geom_smooth(aes(x = geneAExp, y = geneBExp,color = NULL),method = "lm", size = 2) +
+    xlab(paste0("Log2 expression of \n", geneNameA)) + 
+    ylab(paste0("Log2 expression of \n", geneNameB)) + 
+    #annotate("text",x = xmax, y = ymax, label = paste0( "p = ",pValue, "\n", "R = ",rho), size = 8, parse = TRUE)+
+    theme(legend.position = "right", 
+          panel.background = element_rect(fill = NA, colour = "grey50"),  
+          panel.grid = element_blank(),
+          axis.text.x = element_text(size = 26, colour = "black"),
+          axis.text.y = element_text(size = 26, colour = "black"),
+          axis.title.y = element_text(size = 26, face = "bold",  vjust = 2),
+          axis.title.x = element_text(size = 26, face = "bold",  vjust = 2))
+  scatPlot
+  
+  res <- list(singCorrPlot = scatPlot, singCorrTab = singCorrTab)
+  return(res)
+  
+}
 
 
-multiCorr <- function(geneName, tissueType, cutOff,cptac_protein, cptac_samples){
-  #opening clinical table
-  # load(file = "data/cptac_sample_info.RData")
-  # cptac_samples <- samples
-  # rm(samples) 
+multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac_rna, cptac_samples){
+  varToAssign <- list(cptac_protein,cptac_rna)
+  inPut <- as.data.frame(varToAssign[which(c(!is.null(cptac_protein),!is.null(cptac_rna)))])
+  rm(varToAssign)
   
-  #opening expression table
-  #load(file = "data/cptac_tmt_protein_expression.RData")
-  #cptac_protein <- mat
-  #rm(mat)
+  colnames(inPut) <- gsub(pattern = ".?^X",replacement = "",x = colnames(inPut))
+  colnames(inPut) <- gsub(pattern = "\\.", replacement = "-",x = colnames(inPut))
   
-  tumNames <- as.character(intersect(cptac_samples[cptac_samples$sample_type == "T",5], colnames(cptac_protein)))
-  normNames <- as.character(intersect(cptac_samples[cptac_samples$sample_type == "N" | cptac_samples$sample_type == "G" ,5], colnames(cptac_protein)))
-  #cptac_samples$sample_type %in% c(“N”, “G”)
+  #cohort filter
+  cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
   
-  #screening for selected tissue in clinical table
+  tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], colnames(inPut)))
+  normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], colnames(inPut)))
+  
+  
   if (tissueType == "Tumor") {
     usedTissue <- tumNames
     
@@ -30,9 +164,9 @@ multiCorr <- function(geneName, tissueType, cutOff,cptac_protein, cptac_samples)
   }
   
   #make the selected gene to a numeric vector and perform correlation test
-  selectedGene <- cptac_protein[rownames(cptac_protein) == geneName,colnames(cptac_protein) %in% usedTissue]
+  selectedGene <- inPut[rownames(inPut) == geneName,colnames(inPut) %in% usedTissue]
   selectedGene <- selectedGene[,!is.na(selectedGene)]
-  rawForAn <- cptac_protein[,colnames(cptac_protein) %in% colnames(selectedGene)]
+  rawForAn <- inPut[,colnames(inPut) %in% colnames(selectedGene)]
   rawForAn <- as.data.frame(na.omit(rawForAn)) 
   selectedGene <- as.numeric(selectedGene)
   #correlation analysis
@@ -56,6 +190,8 @@ multiCorr <- function(geneName, tissueType, cutOff,cptac_protein, cptac_samples)
   plotTab$R_value <- as.numeric(plotTab$R_value)
   plotTab$P_value <- as.numeric(plotTab$P_value)  
   
+  library(ggrepel)
+  library(ggplot2)
   corrPlot <- ggplot(data=plotTab, aes(x=R_value, y=-log10(P_value), label = Genes)) +
     geom_point() + 
     theme_minimal() +
@@ -74,7 +210,77 @@ multiCorr <- function(geneName, tissueType, cutOff,cptac_protein, cptac_samples)
     guides(col=guide_legend(nrow=2,byrow=TRUE))
   
  
-  #corrPlot
+  corrPlot
   res <- list(result = result, corrPlot = corrPlot)
   return(res)
+}
+
+
+panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_protein, cptac_rna, cptac_samples){
+
+  if (!is.null(cptac_protein) & !is.null(cptac_rna)) {
+    #cohort filter
+    cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
+    
+    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
+
+    if (tissueType == "Tumor") {
+      usedTissue <- tumNames
+
+    }else if (tissueType == "Normal") {
+      usedTissue <- normNames
+    }
+    
+    #Filter for genes
+    selectedGenesProt <- cptac_protein[rownames(cptac_protein) %in% geneNamesProtein,colnames(cptac_protein) %in% usedTissue]
+    selectedGenesRna <- cptac_rna[rownames(cptac_rna) %in% geneNamesRNA,colnames(cptac_rna) %in% usedTissue]
+    
+    #keep common samples and genes
+    selectedGenesProt <- selectedGenesProt[intersect(rownames(selectedGenesProt), rownames(selectedGenesRna)),intersect(colnames(selectedGenesProt), colnames(selectedGenesRna))]
+    selectedGenesRna <- selectedGenesRna[intersect(rownames(selectedGenesProt), rownames(selectedGenesRna)),intersect(colnames(selectedGenesProt), colnames(selectedGenesRna))]
+    library(corrplot)
+    cor.mat <- cor(t(selectedGenesProt), t(selectedGenesRna), use = "pairwise.complete.obs", method = "spearman")
+    p.mat <- cor.mtest(mat = cor.mat, method = "spearman")
+    
+    corrPlot <- corrplot(cor.mat, p.mat = p.mat[[1]], sig.level = 0.01, tl.col = "black")
+    #title(ylab = substitute(paste(bold("RNA"))), main = "Protein",cex.lab = 2, cex.main = 2)
+  
+    
+  } else if (!is.null(cptac_protein) | !is.null(cptac_rna)) {#for RNA or Protein separately
+    varToAssign <- list(cptac_protein,cptac_rna)
+    inPut <- as.data.frame(varToAssign[which(c(!is.null(cptac_protein),!is.null(cptac_rna)))])
+    rm(varToAssign)
+    geneName <- c(geneNamesProtein, geneNamesRNA)
+    
+    colnames(inPut) <- gsub(pattern = ".?^X",replacement = "",x = colnames(inPut))
+    colnames(inPut) <- gsub(pattern = "\\.", replacement = "-",x = colnames(inPut))
+
+    #cohort filter
+    cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
+    
+    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], colnames(inPut)))
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], colnames(inPut)))
+    
+    if (tissueType == "Tumor") {
+      usedTissue <- tumNames
+      
+    }else if (tissueType == "Normal") {
+      usedTissue <- normNames
+    }
+
+    selectedGenes <- inPut[rownames(inPut) %in% geneName,colnames(inPut) %in% usedTissue]
+    
+    cor.mat <- cor(t(selectedGenes), use = "pairwise.complete.obs", method = "spearman")
+    p.mat <- cor.mtest(mat = cor.mat, method = "spearman")
+    
+    corrPlot <- corrplot(cor.mat, p.mat = p.mat[[1]], sig.level = 0.01, tl.col = "black",type="lower",diag = FALSE)
+    
+    
+
+  }
+  
+  res <- list(corrPlot = corrPlot)
+  return(res)
+
 }

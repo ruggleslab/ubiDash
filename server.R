@@ -39,7 +39,7 @@ cptac_samples <- readRDS("./data/cptac_sample_info.rds")
 
 
 # cohort and sample type of all normal and tumor samples
-labels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
+labels <- subset(cptac_samples, sample_type %in% c("T", "N","G"), select = c("sample_type", "cohort_code"))
 # get list of cohorts
 cohorts <- unique(labels$cohort_code)
 
@@ -127,19 +127,31 @@ shinyServer(function(input, output, session) {
   anno = reactiveVal(NULL)
   modifiedOncoInput = reactiveVal(FALSE)
   
+  
+  
+  
   observe({
     input$generateOnco
     
+    updateSelectizeInput(session, 'inputOncoGenesTXT', 
+                         choices = as.list(rownames(cptac_protein)), 
+                         server = TRUE,  
+                         options = list(placeholder = 'Input text (separate genes with comma)'))
+    
     # see if the settings are at their defaults
-    modifiedOncoInput(!(isolate(input$inputOncoGenesTXT) == "" & 
-                          is.null(isolate(input$inputOncoGenesCSV)) &
+    # modifiedOncoInput(!(isolate(input$inputOncoGenesTXT) == "" & 
+    #                       is.null(isolate(input$inputOncoGenesCSV)) &
+    #                       isolate(input$maxOncoGenes) == 10 & 
+    #                       length(isolate(input$oncoCohortSelect)) == 11))
+    modifiedOncoInput(!(is.null(isolate(input$inputOncoGenesCSV)) &
                           isolate(input$maxOncoGenes) == 10 & 
                           length(isolate(input$oncoCohortSelect)) == 11))
     
     if(modifiedOncoInput()){
     
       # inputGenes = isolate(input$inputOncoGenesTXT)
-      inputGenes <- getInputGenes(isolate(input$inputOncoGenesCSV),isolate(input$inputOncoGenesTXT), delim = isolate(input$oncoDelims))
+      #inputGenes <- getInputGenes(isolate(input$inputOncoGenesCSV),isolate(input$inputOncoGenesTXT), delim = isolate(input$oncoDelims))
+      inputGenes <- getInputGenes(isolate(input$inputOncoGenesCSV),isolate(session,input$inputOncoGenesTXT), delim = isolate(input$oncoDelims))
 
       if(length(inputGenes) == 0){
         inputGenes = crl_genes
@@ -566,29 +578,135 @@ shinyServer(function(input, output, session) {
   #protein specific correlation
   source(file = "./RScripts/corrAnalysis.R")
   
-  updateSelectizeInput(session, 'inputProtsSpecCorr', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
+  #Gene vs Gene correlation RNA
+  updateSelectizeInput(session, 'inputGvgCorrRnaNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
+  updateSelectizeInput(session, 'inputGvgCorrRnaNameB', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "A2M", options = list(placeholder = 'Type gene name'))
   
-  doInputProtSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputProtsSpecCorr})
-  doInputTissueTypeSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputTissueTypeSpecCorr})
-  doInputRSpecCorr <- eventReactive(input$generateSpecCorr,{input$inputRSpecCorr})
+  resGvgCorrRna <- eventReactive(input$generateGvgCorrRna,{singleCorr(geneNameA = input$inputGvgCorrRnaNameA,
+                                                                      geneNameB = input$inputGvgCorrRnaNameB,
+                                                                      cohort = input$inputGvgCorrRnaCohort,
+                                                                      tissueType = input$inputGvgCorrRnaStype, 
+                                                                      cptac_protein = NULL,
+                                                                      cptac_rna = cptac_rna,
+                                                                      cptac_samples = cptac_samples)})
   
-  resSpecCorr <- eventReactive(input$generateSpecCorr,{multiCorr(geneName = doInputProtSpecCorr(),
-                                                                 cutOff = doInputRSpecCorr(),
-                                                                 tissueType = doInputTissueTypeSpecCorr(),
+  output$outputPlotGvgCorrRna <- renderPlot({resGvgCorrRna()$singCorrPlot})
+  output$outputTabGvgCorrRna <- renderTable({resGvgCorrRna()$singCorrTab})#,rownames = T, colnames = F)
+  
+  #Protein vs Protein correlation RNA
+  updateSelectizeInput(session, 'inputGvgCorrProteinNameA', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
+  updateSelectizeInput(session, 'inputGvgCorrProteinNameB', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "A2M", options = list(placeholder = 'Type gene name'))
+  
+  resGvgCorrProtein <- eventReactive(input$generateGvgCorrProtein,{singleCorr(geneNameA = input$inputGvgCorrProteinNameA,
+                                                                      geneNameB = input$inputGvgCorrProteinNameB,
+                                                                      cohort = input$inputGvgCorrProteinCohort,
+                                                                      tissueType = input$inputGvgCorrProteinStype, 
+                                                                      cptac_protein = cptac_protein,
+                                                                      cptac_rna = NULL, 
+                                                                      cptac_samples = cptac_samples)})
+  
+  output$outputPlotGvgCorrProtein <- renderPlot({resGvgCorrProtein()$singCorrPlot})
+  output$outputTabGvgCorrProtein <- renderTable({resGvgCorrProtein()$singCorrTab})#,rownames = T, colnames = F)
+  
+  #Protein vs Gene correlation
+  updateSelectizeInput(session, 'inputGvgCorrBothNameA', choices = as.list(intersect(rownames(cptac_protein),rownames(cptac_rna))), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type Protein name'))
+  updateSelectizeInput(session, 'inputGvgCorrBothNameB', choices = as.list(intersect(rownames(cptac_protein),rownames(cptac_rna))), server = TRUE, selected = "A2M", options = list(placeholder = 'Type gene name'))
+  
+  resGvgCorrBoth <- eventReactive(input$generateGvgCorrBoth,{singleCorr(geneNameA = input$inputGvgCorrBothNameA,
+                                                                        geneNameB = input$inputGvgCorrBothNameB,
+                                                                        cohort = input$inputGvgCorrBothCohort,
+                                                                        tissueType = input$inputGvgCorrBothStype, 
+                                                                        cptac_protein = cptac_protein,
+                                                                        cptac_rna = cptac_rna,
+                                                                        cptac_samples = cptac_samples)})
+  
+  output$outputPlotGvgCorrBoth <- renderPlot({resGvgCorrBoth()$singCorrPlot})
+  output$outputTabGvgCorrBoth <- renderTable({resGvgCorrBoth()$singCorrTab})#,rownames = T, colnames = F)
+  
+  #Gene vs All correlation for proteins
+  updateSelectizeInput(session, 'inputGvACorrProteinGeneName', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
+  resGvACorrProtein <- eventReactive(input$generateGvACorrProtein,{multiCorr(geneName = input$inputGvACorrProteinGeneName,
+                                                                 cutOff =  input$inputGvACorrProteinR, 
+                                                                 cohort = input$inputGvACorrProteinCohort,
+                                                                 tissueType =input$inputGvACorrProteinType,
                                                                  cptac_protein = cptac_protein,
+                                                                 cptac_rna = NULL,
                                                                  cptac_samples = cptac_samples
                                                                  )
   })
   
-  output$outputTabSpecCorr <- DT::renderDataTable(server = FALSE,{resSpecCorr()$result},rownames = F,extensions = 'Buttons', options = list(
+  output$outputTabGvACorrProtein <- DT::renderDataTable(server = FALSE,{resGvACorrProtein()$result},rownames = F,extensions = 'Buttons', options = list(
     dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
     buttons = list(
-      list(extend = "excel", text = "Download results", filename = paste0(input$inputProtsSpecCorr, "_correlations"),
+      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrRnaGeneName, "_ProteinCorrelations"),
            exportOptions = list(
              modifier = list(page = "all")
            )))))
   
-  output$outputPlotSpecCorr <- renderPlot({resSpecCorr()$corrPlot})
+  output$outputPlotGvACorrProtein <- renderPlot({resGvACorrProtein()$corrPlot})
+  
+  #Gene vs All correlation for RNA
+  updateSelectizeInput(session, 'inputGvACorrRnaGeneName', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
+  resGvACorrRna <- eventReactive(input$generateGvACorrRna,{multiCorr(geneName = input$inputGvACorrRnaGeneName,
+                                                                       cutOff =  input$inputGvACorrRnaR,
+                                                                       tissueType =input$inputGvACorrRnaType, 
+                                                                       cohort = input$inputGvACorrRnaCohort,
+                                                                       cptac_protein = NULL,
+                                                                       cptac_rna = cptac_rna,
+                                                                       cptac_samples = cptac_samples
+  )
+  })
+  
+  output$outputTabGvACorrRna <- DT::renderDataTable(server = FALSE,{resGvACorrRna()$result},rownames = F,extensions = 'Buttons', options = list(
+    dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
+    buttons = list(
+      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrRnaGeneName, "_RNAcorrelations"),
+           exportOptions = list(
+             modifier = list(page = "all")
+           )))))
+  
+  output$outputPlotGvACorrRna <- renderPlot({resGvACorrRna()$corrPlot})
+  
+  #Gene panel correlation for RNA
+  updateSelectizeInput(session, 'inputGvpCorrRnaGeneName', choices = as.list(rownames(cptac_rna)), server = TRUE,  options = list(placeholder = 'Type gene name'))
+  
+  resGvpCorrRna <- eventReactive(input$generateGvpCorrRna,{panelCorr(geneNamesRNA = input$inputGvpCorrRnaGeneName,
+                                                                      geneNamesProtein = NULL, 
+                                                                      tissueType = input$inputGvpCorrRnaStype, 
+                                                                      cohort = input$inputGvpCorrRnaCohort, 
+                                                                      cptac_protein = NULL, 
+                                                                      cptac_rna = cptac_rna, 
+                                                                      cptac_samples = cptac_samples)})
+  
+  output$outputPlotGvpCorrRna <- renderPlot({resGvpCorrRna()$corrPlot})
+  
+  #Gene panel correlation for Protein
+  updateSelectizeInput(session, 'inputGvpCorrProteinGeneName', choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = 'Type gene name'))
+  
+  resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein,{panelCorr(geneNamesProtein = input$inputGvpCorrProteinGeneName,
+                                                                     geneNamesRNA = NULL, 
+                                                                     tissueType = input$inputGvpCorrProteinStype, 
+                                                                     cohort = input$inputGvpCorrProteinCohort, 
+                                                                     cptac_protein = cptac_protein, 
+                                                                     cptac_rna = NULL, 
+                                                                     cptac_samples = cptac_samples)})
+  
+  output$outputPlotGvpCorrProtein <- renderPlot({resGvpCorrProtein()$corrPlot})
+  
+  #Gene panel correlation for Protein/RNA
+  updateSelectizeInput(session, 'inputGvpCorrBothGeneNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, options = list(placeholder = 'Type gene name'))
+  updateSelectizeInput(session, 'inputGvpCorrBothGeneNameB', choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = 'Type protein name'))
+  
+  resGvpCorrBoth <- eventReactive(input$generateGvpCorrBoth,{panelCorr(geneNamesRNA = input$inputGvpCorrBothGeneNameA,
+                                                                     geneNamesProtein = input$inputGvpCorrBothGeneNameB, 
+                                                                     tissueType = input$inputGvpCorrBothStype, 
+                                                                     cohort = input$inputGvpCorrBothCohort, 
+                                                                     cptac_protein = cptac_protein, 
+                                                                     cptac_rna = cptac_rna, 
+                                                                     cptac_samples = cptac_samples)})
+  
+  output$outputPlotGvpCorrBoth <- renderPlot({resGvpCorrBoth()$corrPlot})
+  
   
   
 })
