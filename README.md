@@ -68,3 +68,5 @@ Before starting your work, make sure to setup the remote repo appropriately. The
     -   To delete a local branch use `$ git branch -d my-branch-name` or `$ git branch -D my-branch-name`
 
         -   **NOTE:** The -d option only deletes the branch if it has already been merged. The -D option is a shortcut for \--delete \--force, which deletes the branch irrespective of its merged status.
+
+**Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.
