@@ -12,7 +12,7 @@ getInputGenes <- function(CSV, TXT, delim = "tab") {
   if (!is.null(inFile)) {
     return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = delims[delim])))
   }
-  return(splitInputGenes(TXT))
+  return(TXT)
 }
 
 drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster){

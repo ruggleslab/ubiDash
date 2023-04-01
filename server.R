@@ -39,13 +39,14 @@ cptac_samples <- readRDS("./data/cptac_sample_info.rds")
 
 
 # cohort and sample type of all normal and tumor samples
-labels <- subset(cptac_samples, sample_type %in% c("T", "N","G"), select = c("sample_type", "cohort_code"))
+# labels <- subset(cptac_samples, sample_type %in% c("T", "N","G"), select = c("sample_type", "cohort_code"))
+tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
 # get list of cohorts
-cohorts <- unique(labels$cohort_code)
+cohorts <- unique(tnlabels$cohort_code)
 
 
-cptac_protein <- cptac_protein[, rownames(labels)]
-filteredMat <- cptac_protein[genesSubset$genes, ]
+# cptac_protein <- cptac_protein[, ]
+filteredMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
 
 # remove rows with over 50% NA
 filteredMat <- filteredMat[which(rowMeans(!is.na(filteredMat)) > 0.5), ]
@@ -128,30 +129,26 @@ shinyServer(function(input, output, session) {
   modifiedOncoInput = reactiveVal(FALSE)
   
   
-  
+  updateSelectizeInput(session, 'inputOncoGenesTXT', 
+                       choices = as.list(rownames(cptac_protein)), 
+                       server = TRUE)
   
   observe({
     input$generateOnco
-    
-    updateSelectizeInput(session, 'inputOncoGenesTXT', 
-                         choices = as.list(rownames(cptac_protein)), 
-                         server = TRUE,  
-                         options = list(placeholder = 'Input text (separate genes with comma)'))
-    
+  
     # see if the settings are at their defaults
-    # modifiedOncoInput(!(isolate(input$inputOncoGenesTXT) == "" & 
-    #                       is.null(isolate(input$inputOncoGenesCSV)) &
-    #                       isolate(input$maxOncoGenes) == 10 & 
-    #                       length(isolate(input$oncoCohortSelect)) == 11))
-    modifiedOncoInput(!(is.null(isolate(input$inputOncoGenesCSV)) &
-                          isolate(input$maxOncoGenes) == 10 & 
-                          length(isolate(input$oncoCohortSelect)) == 11))
+    modifiedOncoInput(!(
+                      is.null(isolate(input$inputOncoGenesTXT)) &
+                      is.null(isolate(input$inputOncoGenesCSV)) &
+                      isolate(input$maxOncoGenes) == 10 &
+                      length(isolate(input$oncoCohortSelect)) == 11
+                      ))
     
     if(modifiedOncoInput()){
     
       # inputGenes = isolate(input$inputOncoGenesTXT)
       #inputGenes <- getInputGenes(isolate(input$inputOncoGenesCSV),isolate(input$inputOncoGenesTXT), delim = isolate(input$oncoDelims))
-      inputGenes <- getInputGenes(isolate(input$inputOncoGenesCSV),isolate(session,input$inputOncoGenesTXT), delim = isolate(input$oncoDelims))
+      inputGenes <- getInputGenes(isolate(input$inputOncoGenesCSV),isolate(input$inputOncoGenesTXT), delim = isolate(input$oncoDelims))
 
       if(length(inputGenes) == 0){
         inputGenes = crl_genes
@@ -303,6 +300,10 @@ shinyServer(function(input, output, session) {
   
 
   # heatmap tab ----
+  
+  updateSelectizeInput(session, 'inputGenesTXT', 
+                       choices = as.list(rownames(cptac_protein)), 
+                       server = TRUE)
 
   # add download heatmap button
   
@@ -313,12 +314,16 @@ shinyServer(function(input, output, session) {
   getGenesMat <- function(inputGenes,cohortSubsetLabels) {
     if (length(inputGenes) == 0 &
         length(isolate(isolate(input$cohortSelect))) == length(cohorts)) {
+      print("1")
       return(NULL)
     }
     
     if (length(inputGenes) == 0) {
+      print(cohortSubsetLabels)
+      print("2")
       return(filteredMat[, rownames(cohortSubsetLabels)])
     }
+      print("3")
     return(cptac_protein[inputGenes, rownames(cohortSubsetLabels)])
   }
   
@@ -330,7 +335,7 @@ shinyServer(function(input, output, session) {
       input$generateHeatmap
       
       # get cohorts selected by user
-      cohortSubsetLabels <- getCohortPatients(labels, isolate(input$cohortSelect))
+      cohortSubsetLabels <- getCohortPatients(tnlabels, isolate(input$cohortSelect))
      
       if(nrow(cohortSubsetLabels) == 0){
         output$rowscut <- renderText({
@@ -341,6 +346,7 @@ shinyServer(function(input, output, session) {
       
       inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT), delim = isolate(input$heatmapDelims))
       inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
+      # print(inputGenesMat)
 
       if (is.null(inputGenesMat)) {
 
@@ -373,7 +379,7 @@ shinyServer(function(input, output, session) {
       
       colsplit = NULL
       if(isolate(input$separateNandT)){
-        colsplit = getCohortPatients(labels,isolate(input$cohortSelect))$sample_type
+        colsplit = getCohortPatients(tnlabels,isolate(input$cohortSelect))$sample_type
       }
       
 
@@ -403,7 +409,7 @@ shinyServer(function(input, output, session) {
       paste("data-", Sys.Date(), ".csv", sep = "")
     },
     content = function(file) {
-      cohortSubsetLabels <- getCohortPatients(labels, isolate(input$cohortSelect))
+      cohortSubsetLabels <- getCohortPatients(tnlabels, isolate(input$cohortSelect))
       inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT), delim = isolate(input$volcanoDelims))
       inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
       
@@ -575,7 +581,7 @@ shinyServer(function(input, output, session) {
   ggplotly(violin)
   })
   
-  #protein specific correlation
+  # protein specific correlation ----
   source(file = "./RScripts/corrAnalysis.R")
   
   #Gene vs Gene correlation RNA
