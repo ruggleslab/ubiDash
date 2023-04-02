@@ -124,9 +124,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
         selectInput("cohort", "Cohort", cohortSheets),
        
         # input options
-        textInput("volcanoinputGenes", "Input genes of interest (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
+        selectizeInput(inputId = "inputVolcanoGenesTXT",
+                       choices = NULL,
+                       label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
         p("OR"),
-        fileInput("volcanoinputGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+        fileInput("inputVolcanoGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
         selectInput("volcanoDelims", "Delimiter", c("tab", "comma")),               
         
         # cutoff options

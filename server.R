@@ -314,16 +314,13 @@ shinyServer(function(input, output, session) {
   getGenesMat <- function(inputGenes,cohortSubsetLabels) {
     if (length(inputGenes) == 0 &
         length(isolate(isolate(input$cohortSelect))) == length(cohorts)) {
-      print("1")
       return(NULL)
     }
     
     if (length(inputGenes) == 0) {
       print(cohortSubsetLabels)
-      print("2")
       return(filteredMat[, rownames(cohortSubsetLabels)])
     }
-      print("3")
     return(cptac_protein[inputGenes, rownames(cohortSubsetLabels)])
   }
   
@@ -431,13 +428,16 @@ shinyServer(function(input, output, session) {
   # )
   
   # volcano plot tab ----
+  updateSelectizeInput(session, 'inputVolcanoGenesTXT', 
+                       choices = as.list(rownames(cptac_protein)), 
+                       server = TRUE)
+  
   output$distPlot <- renderPlotly({
     # allow user to save plots
 
     input$generateVolcano
     
-    inputGenes <- getInputGenes(isolate(input$volcanoinputGenesCSV),isolate(input$volcanoinputGenes), delim = isolate(input$volcanoDelims))
-    
+    inputGenes <- getInputGenes(isolate(input$inputVolcanoGenesCSV),isolate(input$inputVolcanoGenesTXT), delim = isolate(input$volcanoDelims))
     if(length(inputGenes) == 0){
       inputGenes = c("")
     }
