@@ -33,7 +33,10 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
              sidebarPanel(
                
                # gene inputs
-               textInput("inputGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
+               
+               selectizeInput(inputId = "inputOncoGenesTXT",
+                              choices = NULL,
+                              label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
                p("OR"),
                fileInput("inputOncoGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
                 selectInput("oncoDelims", "Delimiter", c("tab", "comma")),               
@@ -43,8 +46,9 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                            min = 1, max = 50,
                            value = 10),
                h3("Cohorts"),
-               checkboxGroupInput("oncoCohortSelect", "Select Cohorts:",
-                                  cohorts, selected = cohorts),
+               selectizeInput(inputId = "oncoCohortSelect",
+                              choices = cohorts,selected = cohorts,
+                              label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
                
                actionButton("generateOnco", "Generate Plot"),
                
@@ -71,17 +75,19 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
         sidebarPanel(
           h3("Genes"),
           # make sure these do not interfere
-          textInput("inputGenesTXT", "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
+          selectizeInput(inputId = "inputGenesTXT",
+                         choices = NULL,
+                         label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
           p("OR"),
           fileInput("inputGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
           actionButton("resetHeatmapGenesCSV","clear"),
           selectInput("heatmapDelims", "Delimiter", c("tab", "comma")),               
           
-          h3("Cohorts"),
-          
           # cohort seleciton checkboxes
-          checkboxGroupInput("cohortSelect", "Select Cohorts:",
-                             cohorts, selected = cohorts),
+          h3("Cohorts"),
+          selectizeInput(inputId = "cohortSelect",
+                         choices = cohorts,selected = cohorts,
+                         label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
           checkboxInput("cluster", "Cluster columns",
                              value = TRUE),
           
@@ -119,9 +125,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
         selectInput("cohort", "Cohort", cohortSheets),
        
         # input options
-        textInput("volcanoinputGenes", "Input genes of interest (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
+        selectizeInput(inputId = "inputVolcanoGenesTXT",
+                       choices = NULL,
+                       label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
         p("OR"),
-        fileInput("volcanoinputGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+        fileInput("inputVolcanoGenesCSV", "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
         selectInput("volcanoDelims", "Delimiter", c("tab", "comma")),               
         
         # cutoff options
@@ -184,7 +192,7 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                 )
             )
         ),
-  # violin plot tap
+  # violin plot tap ----
   # need to let users input genes of interest
   tabPanel("Violin Plot", theme = bs_theme(version = 5, bootswatch = "pulse"),
            

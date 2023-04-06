@@ -1,58 +1,76 @@
+/* Set styles for navbar and links */
 .navbar.navbar-default.navbar-static-topav{
   background-color: #6A2798!important;
   color:white!important;
 }
+
 .navbar.navbar-default{
   background-color: #6A2798!important;
-  
-}
-.navbar-nav a.nav-link, span.navbar-brand{
-  color:white!important;
-  
 }
 
-.navbar:after{
-  background-image: url(./assets/NYULangoneLogo_1.png);
-  background-size: 100px 50px;
-  width: 100px;
+.navbar-nav a.nav-link, span.navbar-brand{
+  color:white!important;
+}
+
+.navbar-nav a.nav-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Set background image for navbar */
+.navbar:after {
+  background-image: url(./assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png);
+  background-size: 150px 50px;
+  width: 150px;
   height: 50px;
   content: "";
   position: absolute;
   right: 20px;
 }
 
-#generateBTN, #generateVolcano{
-  margin-bottom: 15px!important;
+/* Set styles for buttons */
+#generateBTN, #generateVolcano {
+  margin-bottom: 15px;
   height:30px;
 }
 
-.error{
-  color:red!important;
+/* Set error message color */
+.error {
+  color:red;
 }
 
-.home-img{
-  width:100%;
+/* Set styles for home image */
+.home-img {
+  width: 100%;
 }
-.title-page{
-  margin:0px 12%;
+
+/* Set styles for title page */
+.title-page {
+  margin: 0px 12%;
 }
-.title-page p{
+
+.title-page p {
   text-align: justify;
   font-size: 1.3rem;
 }
-.title-page h1{
-      width: 75%;
-    margin: 0 auto;
-    text-align: center;
+
+.title-page h1 {
+  width: 75%;
+  margin: 0 auto;
+  text-align: center;
 }
+
+/* Media query for smaller screens */
 @media (max-width: 680px) {
-  .title-page{
-    margin:0px 3%;
+  .title-page {
+    margin: 0px 3%;
   }
-  .title-page h1{
-    width: 100%;s
+  
+  .title-page h1 {
+    width: 100%;
   }
-  .navbar:after{
-    content:none;
+  
+  .navbar:after {
+    content: none;
   }
 }
