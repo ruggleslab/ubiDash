@@ -644,7 +644,7 @@ shinyServer(function(input, output, session) {
   output$outputTabGvACorrProtein <- DT::renderDataTable(server = FALSE,{resGvACorrProtein()$result},rownames = F,extensions = 'Buttons', options = list(
     dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
     buttons = list(
-      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrRnaGeneName, "_ProteinCorrelations"),
+      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrProteinGeneName, "_ProteinCorrelations"),
            exportOptions = list(
              modifier = list(page = "all")
            )))))
