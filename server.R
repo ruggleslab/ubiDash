@@ -5,7 +5,7 @@
 # library(RColorBrewer)
 # library(plotly)
 
-packagelist = c("shiny", "ComplexHeatmap", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly")
+packagelist = c("shiny", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly")
 
 lapply(packagelist, function(x) {
   suppressMessages(require(x, character.only = T,
