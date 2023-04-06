@@ -5,6 +5,7 @@ library(readxl)
 library(bslib)
 library(DT)
 library(corrplot)
+library(openxlsx)
 
 # make plot square
 
@@ -251,7 +252,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                mainPanel(
                  conditionalPanel(condition = "input.GvGpanel == 'mRNA'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvgCorrRna"),color = "#6A2798"),
-                                  tableOutput(outputId = "outputTabGvgCorrRna")
+                                  tableOutput(outputId = "outputTabGvgCorrRna"),
+                                  uiOutput(outputId = "downLoadButtonGvgCorrRna")
                                   ),
                  conditionalPanel(condition = "input.GvGpanel == 'Protein'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvgCorrProtein"),color = "#6A2798"),
@@ -370,13 +372,16 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                ),
                mainPanel(
                  conditionalPanel(condition = "input.GvPpanel == 'mRNA'",
-                                  withSpinner(plotOutput(outputId = "outputPlotGvpCorrRna"),color = "#6A2798")
+                                  withSpinner(plotOutput(outputId = "outputPlotGvpCorrRna"),color = "#6A2798"),
+                                  uiOutput("dataDownLoadGvpCorrRna")
                  ),
                  conditionalPanel(condition = "input.GvPpanel == 'Protein'",
-                                  withSpinner(plotOutput(outputId = "outputPlotGvpCorrProtein"),color = "#6A2798")
+                                  withSpinner(plotOutput(outputId = "outputPlotGvpCorrProtein"),color = "#6A2798"),
+                                  uiOutput("dataDownLoadGvpCorrProtein")
                  ),
                  conditionalPanel(condition = "input.GvPpanel == 'mRNA/Protein'",
-                                  withSpinner(plotOutput(outputId = "outputPlotGvpCorrBoth"),color = "#6A2798")
+                                  withSpinner(plotOutput(outputId = "outputPlotGvpCorrBoth"),color = "#6A2798"),
+                                  uiOutput("dataDownLoadGvpCorrBoth")
                  )
                  
                )

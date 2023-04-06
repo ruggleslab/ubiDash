@@ -591,7 +591,7 @@ shinyServer(function(input, output, session) {
                                                                       cptac_samples = cptac_samples)})
   
   output$outputPlotGvgCorrRna <- renderPlot({resGvgCorrRna()$singCorrPlot})
-  output$outputTabGvgCorrRna <- renderTable({resGvgCorrRna()$singCorrTab})#,rownames = T, colnames = F)
+  output$outputTabGvgCorrRna <- renderTable({resGvgCorrRna()$singCorrTab},rownames = T, colnames = F)
   
   #Protein vs Protein correlation RNA
   updateSelectizeInput(session, 'inputGvgCorrProteinNameA', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
@@ -606,7 +606,7 @@ shinyServer(function(input, output, session) {
                                                                       cptac_samples = cptac_samples)})
   
   output$outputPlotGvgCorrProtein <- renderPlot({resGvgCorrProtein()$singCorrPlot})
-  output$outputTabGvgCorrProtein <- renderTable({resGvgCorrProtein()$singCorrTab})#,rownames = T, colnames = F)
+  output$outputTabGvgCorrProtein <- renderTable({resGvgCorrProtein()$singCorrTab},rownames = T, colnames = F)
   
   #Protein vs Gene correlation
   updateSelectizeInput(session, 'inputGvgCorrBothNameA', choices = as.list(intersect(rownames(cptac_protein),rownames(cptac_rna))), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type Protein name'))
@@ -621,7 +621,7 @@ shinyServer(function(input, output, session) {
                                                                         cptac_samples = cptac_samples)})
   
   output$outputPlotGvgCorrBoth <- renderPlot({resGvgCorrBoth()$singCorrPlot})
-  output$outputTabGvgCorrBoth <- renderTable({resGvgCorrBoth()$singCorrTab})#,rownames = T, colnames = F)
+  output$outputTabGvgCorrBoth <- renderTable({resGvgCorrBoth()$singCorrTab},rownames = T, colnames = F)
   
   #Gene vs All correlation for proteins
   updateSelectizeInput(session, 'inputGvACorrProteinGeneName', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
@@ -680,6 +680,15 @@ shinyServer(function(input, output, session) {
   
   output$outputPlotGvpCorrRna <- renderPlot({resGvpCorrRna()$corrPlot})
   
+  output$dataDownLoadGvpCorrRna <- renderUI({
+    req(input$generateGvpCorrRna)
+    downloadButton("downLoadGvpCorrRna", label = "Download correlation data") })
+  
+  output$downLoadGvpCorrRna <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
+                                                   content = function(file) {
+                                                     write.xlsx(resGvpCorrRna()$corTab, file,row.names = TRUE)})
+  
+  
   #Gene panel correlation for Protein
   updateSelectizeInput(session, 'inputGvpCorrProteinGeneName', choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = 'Type gene name'))
   
@@ -692,6 +701,14 @@ shinyServer(function(input, output, session) {
                                                                      cptac_samples = cptac_samples)})
   
   output$outputPlotGvpCorrProtein <- renderPlot({resGvpCorrProtein()$corrPlot})
+  
+  output$dataDownLoadGvpCorrProtein <- renderUI({
+    req(input$generateGvpCorrProtein)
+    downloadButton("downLoadGvpCorrProtein", label = "Download correlation data") })
+  
+  output$downLoadGvpCorrProtein <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
+                                               content = function(file) {
+                                                 write.xlsx(resGvpCorrProtein()$corTab, file,row.names = TRUE)})
   
   #Gene panel correlation for Protein/RNA
   updateSelectizeInput(session, 'inputGvpCorrBothGeneNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, options = list(placeholder = 'Type gene name'))
@@ -707,6 +724,12 @@ shinyServer(function(input, output, session) {
   
   output$outputPlotGvpCorrBoth <- renderPlot({resGvpCorrBoth()$corrPlot})
   
+  output$dataDownLoadGvpCorrBoth <- renderUI({
+    req(input$generateGvpCorrBoth)
+    downloadButton("downLoadGvpCorrBoth", label = "Download correlation data") })
   
+  output$downLoadGvpCorrBoth <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
+                                               content = function(file) {
+                                                 write.xlsx(resGvpCorrBoth()$corTab, file,row.names = TRUE)})
   
 })

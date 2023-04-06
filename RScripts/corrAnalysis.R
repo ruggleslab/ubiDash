@@ -1,15 +1,18 @@
 # library(corrplot)
-# geneNamesRNA <- rownames(cptac_rna)[1:13]
-# geneNamesProtein <- rownames(cptac_protein)[1:13]
 # cohort <- c("BRCA","COAD", "CCRCC")
 # tissueType <- "Tumor"
 # cutOff <- c(-0.05,0.05)
 # 
 # cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
 # cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
-# cptac_rna <- NULL
+# #cptac_rna <- NULL
 # cptac_samples <- readRDS("./data/cptac_sample_info.rds")
+# #panel
+# geneNamesRNA <- rownames(cptac_rna)[1:13]
+# geneNamesProtein <- rownames(cptac_protein)[1:13]
 # 
+# 
+# #single
 # geneNameA <- "A1BG"
 # geneNameB <- "A2M"
 # 
@@ -106,17 +109,17 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
    
   
   
-  singCorrTab <- data.frame("N" = nrow(dat),
-                            "Spearman's Rho" = round(x = corrSum$estimate,digits = 2),
-                            "pValue" = format(x = corrSum$p.value,digits = 2, scientific = TRUE), row.names = NULL)
-  
-  # pValue <- format(x = corrSum$p.value,digits = 2, scientific = TRUE)
-  # rho <- round(x = corrSum$estimate,digits = 2)
-  # singCorrTab <- t(data.frame("Cohorts" = names(table(dat$Cohort)),
-  #                              "N" = as.numeric(unlist(table(dat$Cohort)))))
-  #  
-  # xmax <- max(dat$geneAExp)
-  # ymax <- max(dat$geneBExp)
+  # singCorrTab <- data.frame("N" = nrow(dat),
+  #                           "Spearman's Rho" = round(x = corrSum$estimate,digits = 2),
+  #                           "pValue" = format(x = corrSum$p.value,digits = 2, scientific = TRUE), row.names = NULL)
+   
+  pValue <- format(x = corrSum$p.value,digits = 2, scientific = TRUE)
+  rho <- round(x = corrSum$estimate,digits = 2)
+  singCorrTab <- t(data.frame("Cohorts" = names(table(dat$Cohort)),
+                               "N" = as.numeric(unlist(table(dat$Cohort)))))
+
+  xmax <- max(dat$geneAExp)
+  ymax <- max(dat$geneBExp)
   
   library(ggplot2)
   scatPlot <- ggplot(dat, aes(x = geneAExp, y = geneBExp, color = Cohort)) +
@@ -125,7 +128,8 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
     #geom_smooth(aes(x = geneAExp, y = geneBExp,color = NULL),method = "lm", size = 2) +
     xlab(paste0("Log2 expression of \n", geneNameA)) + 
     ylab(paste0("Log2 expression of \n", geneNameB)) + 
-    #annotate("text",x = xmax, y = ymax, label = paste0( "p = ",pValue, "\n", "R = ",rho), size = 8, parse = TRUE)+
+    annotate(geom = "text",x = xmax,y = ymax, label = paste0( "p = ",pValue, "\n", "R = ",rho))+
+    #coord_cartesian(clip = "off")+
     theme(legend.position = "right", 
           panel.background = element_rect(fill = NA, colour = "grey50"),  
           panel.grid = element_blank(),
@@ -243,8 +247,42 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     cor.mat <- cor(t(selectedGenesProt), t(selectedGenesRna), use = "pairwise.complete.obs", method = "spearman")
     p.mat <- cor.mtest(mat = cor.mat, method = "spearman")
     
-    corrPlot <- corrplot(cor.mat, p.mat = p.mat[[1]], sig.level = 0.01, tl.col = "black")
+    #corrPlot <- corrplot(cor.mat, p.mat = p.mat[[1]], sig.level = 0.01, tl.col = "black")
     #title(ylab = substitute(paste(bold("RNA"))), main = "Protein",cex.lab = 2, cex.main = 2)
+    flattenCorrMatrix <- function(cormat, pmat) {
+      ut <- upper.tri(cormat)
+      data.frame(
+        row = rownames(cormat)[row(cormat)[ut]],
+        column = rownames(cormat)[col(cormat)[ut]],
+        cor  =(cormat)[ut],
+        p = pmat[ut]
+      )
+    }
+    
+    df <- flattenCorrMatrix(cormat = cor.mat,pmat = p.mat[[1]])
+    df$log_pval <- -log10(df$p)
+    df$log_pval_test <- -log10(df$p + 0.000001)
+    df$qval <- p.adjust(df$p, method = "BH")
+    df$Spearman <- c("Positive", "Negative")[ifelse(df$cor > 0, 1,2)]
+    
+    library(ggpubr)
+    corrPlot <- ggballoonplot(
+      data =df,
+      x = "row", 
+      y = "column",
+      size = "cor",
+      facet.by = NULL,
+      size.range = c(1,10),
+      shape = 21,
+      color = c("black", "transparent")[ifelse(df$qval < 0.01, 1, 2)],
+      color.range = c(0,5),
+      fill = "log_pval",
+      font.label = list(size = 12, color = "black"),
+      rotate.x.text = TRUE) +
+      gradient_fill(c("purple","white","red"))
+      
+    #corrPlot
+    
   
     
   } else if (!is.null(cptac_protein) | !is.null(cptac_rna)) {#for RNA or Protein separately
@@ -274,13 +312,47 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     cor.mat <- cor(t(selectedGenes), use = "pairwise.complete.obs", method = "spearman")
     p.mat <- cor.mtest(mat = cor.mat, method = "spearman")
     
-    corrPlot <- corrplot(cor.mat, p.mat = p.mat[[1]], sig.level = 0.01, tl.col = "black",type="lower",diag = FALSE)
+    #corrPlot <- corrplot(cor.mat, p.mat = p.mat[[1]], sig.level = 0.01, tl.col = "black",type="lower",diag = FALSE)
+    flattenCorrMatrix <- function(cormat, pmat) {
+      ut <- upper.tri(cormat)
+      data.frame(
+        row = rownames(cormat)[row(cormat)[ut]],
+        column = rownames(cormat)[col(cormat)[ut]],
+        cor  =(cormat)[ut],
+        p = pmat[ut]
+      )
+    }
+    df <- flattenCorrMatrix(cormat = cor.mat,pmat = p.mat[[1]])
+    df$log_pval <- -log10(df$p)
+    df$log_pval_test <- -log10(df$p + 0.000001)
+    df$qval <- p.adjust(df$p, method = "BH")
+    df$Spearman <- c("Positive", "Negative")[ifelse(df$cor > 0, 1,2)]
+    
+    library(ggpubr)
+    corrPlot <- ggballoonplot(
+      data =df,
+      x = "row", #pride
+      y = "column", #cptac_n
+      size = "cor",
+      facet.by = NULL,
+      size.range = c(1, 10),
+      shape = 21,
+      color = c("black", "transparent")[ifelse(df$qval < 0.01, 1, 2)],
+      color.range = c(0,5),
+      fill = "log_pval",
+      font.label = list(size = 12, color = "black"),
+      rotate.x.text = TRUE) +
+      #scale_fill_gradient(low = "purple",high = "red") +
+      gradient_fill(c("purple","white","red"))
+    
+    #corrPlot
+    
     
     
 
   }
   
-  res <- list(corrPlot = corrPlot)
+  res <- list(corrPlot = corrPlot, corTab = list(cor = cor.mat, pValue = p.mat$p))
   return(res)
 
 }
