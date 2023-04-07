@@ -13,8 +13,7 @@ lapply(packagelist, function(x) {
   suppressMessages(require(x, character.only = T,
                            quietly=T, 
                            warn.conflicts = F))
-}
-)
+})
 
 load("./data/defaults.RData")
 # loading default objects below:
@@ -73,17 +72,17 @@ source('./tabs/oncoplot.R')
 # correlation variables ----
 source("./tabs/correlations.R")
 # boxplot variables ----
-  source("./tabs/violin.R")
+source("./tabs/violin.R")
 
 
-  # server ----
+# server ----
 
 shinyServer(function(input, output, session) {
-
+  
   
   # oncoplot tab ----
   oncoplotServer("oncoTab")
-
+  
   # heatmap tab ----
   
   heatmapServer("heatmapTab")
@@ -93,7 +92,7 @@ shinyServer(function(input, output, session) {
   
   # correlation tab (----
   correlationsServer("corrTab")
- 
+  
   # boxplot tab ----
   violinServer("violinTab")
   
@@ -120,12 +119,12 @@ shinyServer(function(input, output, session) {
   updateSelectizeInput(session, 'inputGvgCorrProteinNameB', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "A2M", options = list(placeholder = 'Type gene name'))
   
   resGvgCorrProtein <- eventReactive(input$generateGvgCorrProtein,{singleCorr(geneNameA = input$inputGvgCorrProteinNameA,
-                                                                      geneNameB = input$inputGvgCorrProteinNameB,
-                                                                      cohort = input$inputGvgCorrProteinCohort,
-                                                                      tissueType = input$inputGvgCorrProteinStype, 
-                                                                      cptac_protein = cptac_protein,
-                                                                      cptac_rna = NULL, 
-                                                                      cptac_samples = cptac_samples)})
+                                                                              geneNameB = input$inputGvgCorrProteinNameB,
+                                                                              cohort = input$inputGvgCorrProteinCohort,
+                                                                              tissueType = input$inputGvgCorrProteinStype, 
+                                                                              cptac_protein = cptac_protein,
+                                                                              cptac_rna = NULL, 
+                                                                              cptac_samples = cptac_samples)})
   
   output$outputPlotGvgCorrProtein <- renderPlot({resGvgCorrProtein()$singCorrPlot})
   output$outputTabGvgCorrProtein <- renderTable({resGvgCorrProtein()$singCorrTab},rownames = T, colnames = F)
@@ -148,13 +147,13 @@ shinyServer(function(input, output, session) {
   #Gene vs All correlation for proteins
   updateSelectizeInput(session, 'inputGvACorrProteinGeneName', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
   resGvACorrProtein <- eventReactive(input$generateGvACorrProtein,{multiCorr(geneName = input$inputGvACorrProteinGeneName,
-                                                                 cutOff =  input$inputGvACorrProteinR, 
-                                                                 cohort = input$inputGvACorrProteinCohort,
-                                                                 tissueType =input$inputGvACorrProteinType,
-                                                                 cptac_protein = cptac_protein,
-                                                                 cptac_rna = NULL,
-                                                                 cptac_samples = cptac_samples
-                                                                 )
+                                                                             cutOff =  input$inputGvACorrProteinR, 
+                                                                             cohort = input$inputGvACorrProteinCohort,
+                                                                             tissueType =input$inputGvACorrProteinType,
+                                                                             cptac_protein = cptac_protein,
+                                                                             cptac_rna = NULL,
+                                                                             cptac_samples = cptac_samples
+  )
   })
   
   output$outputTabGvACorrProtein <- DT::renderDataTable(server = FALSE,{resGvACorrProtein()$result},rownames = F,extensions = 'Buttons', options = list(
@@ -170,12 +169,12 @@ shinyServer(function(input, output, session) {
   #Gene vs All correlation for RNA
   updateSelectizeInput(session, 'inputGvACorrRnaGeneName', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
   resGvACorrRna <- eventReactive(input$generateGvACorrRna,{multiCorr(geneName = input$inputGvACorrRnaGeneName,
-                                                                       cutOff =  input$inputGvACorrRnaR,
-                                                                       tissueType =input$inputGvACorrRnaType, 
-                                                                       cohort = input$inputGvACorrRnaCohort,
-                                                                       cptac_protein = NULL,
-                                                                       cptac_rna = cptac_rna,
-                                                                       cptac_samples = cptac_samples
+                                                                     cutOff =  input$inputGvACorrRnaR,
+                                                                     tissueType =input$inputGvACorrRnaType, 
+                                                                     cohort = input$inputGvACorrRnaCohort,
+                                                                     cptac_protein = NULL,
+                                                                     cptac_rna = cptac_rna,
+                                                                     cptac_samples = cptac_samples
   )
   })
   
@@ -193,12 +192,12 @@ shinyServer(function(input, output, session) {
   updateSelectizeInput(session, 'inputGvpCorrRnaGeneName', choices = as.list(rownames(cptac_rna)), server = TRUE,  options = list(placeholder = 'Type gene name'))
   
   resGvpCorrRna <- eventReactive(input$generateGvpCorrRna,{panelCorr(geneNamesRNA = input$inputGvpCorrRnaGeneName,
-                                                                      geneNamesProtein = NULL, 
-                                                                      tissueType = input$inputGvpCorrRnaStype, 
-                                                                      cohort = input$inputGvpCorrRnaCohort, 
-                                                                      cptac_protein = NULL, 
-                                                                      cptac_rna = cptac_rna, 
-                                                                      cptac_samples = cptac_samples)})
+                                                                     geneNamesProtein = NULL, 
+                                                                     tissueType = input$inputGvpCorrRnaStype, 
+                                                                     cohort = input$inputGvpCorrRnaCohort, 
+                                                                     cptac_protein = NULL, 
+                                                                     cptac_rna = cptac_rna, 
+                                                                     cptac_samples = cptac_samples)})
   
   output$outputPlotGvpCorrRna <- renderPlot({resGvpCorrRna()$corrPlot})
   
@@ -207,20 +206,20 @@ shinyServer(function(input, output, session) {
     downloadButton("downLoadGvpCorrRna", label = "Download correlation data") })
   
   output$downLoadGvpCorrRna <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
-                                                   content = function(file) {
-                                                     write.xlsx(resGvpCorrRna()$corTab, file,row.names = TRUE)})
+                                               content = function(file) {
+                                                 write.xlsx(resGvpCorrRna()$corTab, file,row.names = TRUE)})
   
   
   #Gene panel correlation for Protein
   updateSelectizeInput(session, 'inputGvpCorrProteinGeneName', choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = 'Type gene name'))
   
   resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein,{panelCorr(geneNamesProtein = input$inputGvpCorrProteinGeneName,
-                                                                     geneNamesRNA = NULL, 
-                                                                     tissueType = input$inputGvpCorrProteinStype, 
-                                                                     cohort = input$inputGvpCorrProteinCohort, 
-                                                                     cptac_protein = cptac_protein, 
-                                                                     cptac_rna = NULL, 
-                                                                     cptac_samples = cptac_samples)})
+                                                                             geneNamesRNA = NULL, 
+                                                                             tissueType = input$inputGvpCorrProteinStype, 
+                                                                             cohort = input$inputGvpCorrProteinCohort, 
+                                                                             cptac_protein = cptac_protein, 
+                                                                             cptac_rna = NULL, 
+                                                                             cptac_samples = cptac_samples)})
   
   output$outputPlotGvpCorrProtein <- renderPlot({resGvpCorrProtein()$corrPlot})
   
@@ -229,20 +228,20 @@ shinyServer(function(input, output, session) {
     downloadButton("downLoadGvpCorrProtein", label = "Download correlation data") })
   
   output$downLoadGvpCorrProtein <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
-                                               content = function(file) {
-                                                 write.xlsx(resGvpCorrProtein()$corTab, file,row.names = TRUE)})
+                                                   content = function(file) {
+                                                     write.xlsx(resGvpCorrProtein()$corTab, file,row.names = TRUE)})
   
   #Gene panel correlation for Protein/RNA
   updateSelectizeInput(session, 'inputGvpCorrBothGeneNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, options = list(placeholder = 'Type gene name'))
   updateSelectizeInput(session, 'inputGvpCorrBothGeneNameB', choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = 'Type protein name'))
   
   resGvpCorrBoth <- eventReactive(input$generateGvpCorrBoth,{panelCorr(geneNamesRNA = input$inputGvpCorrBothGeneNameA,
-                                                                     geneNamesProtein = input$inputGvpCorrBothGeneNameB, 
-                                                                     tissueType = input$inputGvpCorrBothStype, 
-                                                                     cohort = input$inputGvpCorrBothCohort, 
-                                                                     cptac_protein = cptac_protein, 
-                                                                     cptac_rna = cptac_rna, 
-                                                                     cptac_samples = cptac_samples)})
+                                                                       geneNamesProtein = input$inputGvpCorrBothGeneNameB, 
+                                                                       tissueType = input$inputGvpCorrBothStype, 
+                                                                       cohort = input$inputGvpCorrBothCohort, 
+                                                                       cptac_protein = cptac_protein, 
+                                                                       cptac_rna = cptac_rna, 
+                                                                       cptac_samples = cptac_samples)})
   
   output$outputPlotGvpCorrBoth <- renderPlot({resGvpCorrBoth()$corrPlot})
   
@@ -251,7 +250,7 @@ shinyServer(function(input, output, session) {
     downloadButton("downLoadGvpCorrBoth", label = "Download correlation data") })
   
   output$downLoadGvpCorrBoth <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
-                                               content = function(file) {
-                                                 write.xlsx(resGvpCorrBoth()$corTab, file,row.names = TRUE)})
+                                                content = function(file) {
+                                                  write.xlsx(resGvpCorrBoth()$corTab, file,row.names = TRUE)})
   
 })
