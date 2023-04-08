@@ -69,4 +69,18 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
         -   **NOTE:** The -d option only deletes the branch if it has already been merged. The -D option is a shortcut for \--delete \--force, which deletes the branch irrespective of its merged status.
 
+## Accessing the shiny-server from UltraViolet
+
+-   log-in to UltraViolet as you would normally do
+
+-   then log-in to the shiny-server: `ssh KID@ssplcdcdvm04.nyumc.org`
+
+-   Navigate to `/srv/shiny-server/`
+
+-   Clone the repo from GitHub `git clone https://github.com/ruggleslab/ubiDash.git`
+
+    -   Will need login credentials to the ruggleslab github account
+
+    -   [ ] would it be possible to create a ssh key?
+
 **Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.
