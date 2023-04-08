@@ -11,5 +11,5 @@ refs/Icon?
 # Big folders
 ubiDash.Rproj
 data/
-www/assets/
+# www/assets/
 app_cache/
