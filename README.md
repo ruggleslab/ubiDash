@@ -81,6 +81,6 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
     -   Will need login credentials to the ruggleslab github account
 
-    -   [ ] would it be possible to create a ssh key?
+    -   [ ] would it be possible to create a ssh key? see documentation on [how to create ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
 **Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.
