@@ -1,4 +1,4 @@
-maf <- readRDS("./data/cptac_mutations.rds")
+maf <- readRDS("./data/oncoplot_maf.rds")
 
 genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
 crl_genes = unique(genes$hgnc_symbol)
@@ -54,6 +54,7 @@ cohortsTbl = cohortsTbl[rownames(pcts),]
 
 mutations = levels(smallFM$Variant_Classification)
 
+source("./RScripts/OncoplotColors.R")
 
 mutation_colors = get_mutation_colors(mutations)
 mutation_alter_fun = get_mutation_alter_fun(mutation_colors)
@@ -68,7 +69,7 @@ mutationsOnco = oncoPrint(
   
   row_order = topGenes,
   
-  remove_empty_columns = TRUE,
+  # remove_empty_columns = TRUE,
   
   heatmap_legend_param = list(title = "Alterations"),
   
@@ -81,7 +82,7 @@ cohortsOnco = oncoPrint(
   
   row_order = topGenes,
   
-  remove_empty_columns = TRUE,
+  # remove_empty_columns = TRUE,
   
   heatmap_legend_param = list(title = "Alterations"),
   

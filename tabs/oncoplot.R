@@ -17,6 +17,9 @@ oncoplotUI <- function(id, cohorts){
       sliderInput(ns("maxOncoGenes"), "Max Number of Genes to Display:",
                   min = 1, max = 50,
                   value = 10),
+      
+      checkboxInput(ns("showEmptyColumns"), "Show empty columns", value = TRUE),
+      
       h3("Cohorts"),
       selectizeInput(inputId = ns("oncoCohortSelect"),
                      choices = cohorts,selected = cohorts,
@@ -80,7 +83,8 @@ oncoplotServer <- function(id) {
         is.null(isolate(input$inputOncoGenesTXT)) &
           is.null(isolate(input$inputOncoGenesCSV)) &
           isolate(input$maxOncoGenes) == 10 &
-          length(isolate(input$oncoCohortSelect)) == 11
+          length(isolate(input$oncoCohortSelect)) == 11 &
+          (isolate(input$showEmptyColumns)) == TRUE
       ))
       
       if(modifiedOncoInput()){
@@ -146,6 +150,14 @@ oncoplotServer <- function(id) {
         mutationsTbl = mutationsTbl[rownames(pcts),]
         cohortsTbl = cohortsTbl[rownames(pcts),]
         
+        # emptyMat = matrix(nrow = nrow(cohortsTbl),ncol = 20)
+        # emptyMat[is.na(emptyMat)] <- ""
+        # print(ncol(cohortsTbl))
+        # cohortsTbl = cbind(cohortsTbl, emptyMat)
+        # mutationsTbl = cbind(mutationsTbl, emptyMat)
+        # print(ncol(cohortsTbl))
+        
+        
         mutations = levels(smallFM$Variant_Classification)
         mutationsreactive(mutations)
         ctbl(cohortsTbl)
@@ -176,7 +188,7 @@ oncoplotServer <- function(id) {
             
             row_order = renderedGenes(),
             
-            remove_empty_columns = TRUE,
+            remove_empty_columns = !isolate(input$showEmptyColumns),
             
             heatmap_legend_param = list(title = "Alterations"),
             
@@ -185,6 +197,7 @@ oncoplotServer <- function(id) {
         },
         error = function(e){
           output$oncoError = renderText("No Data")
+          print(e);
           return()
         }
       )
@@ -206,8 +219,8 @@ oncoplotServer <- function(id) {
           
           row_order = renderedGenes(),
           
-          remove_empty_columns = TRUE,
-          
+          remove_empty_columns = !isolate(input$showEmptyColumns),
+          # 
           heatmap_legend_param = list(title = "Cohorts"),
           
           right_annotation = rowAnnotation(pct = anno_text(anno()), barplot = anno_oncoprint_barplot())
