@@ -62,11 +62,12 @@ heatmapServer <- function(id) {
     cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
     cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
     cptac_samples <- readRDS("./data/cptac_sample_info.rds")
+    cptac_samples_subtypes <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
     
     
     # cohort and sample type of all normal and tumor samples
     # labels <- subset(cptac_samples, sample_type %in% c("T", "N","G"), select = c("sample_type", "cohort_code"))
-    tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
+    tnlabels <- subset(cptac_samples_subtypes, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code","Cancer_subtype"))
     # get list of cohorts
     cohorts <- unique(tnlabels$cohort_code)
     
@@ -131,7 +132,7 @@ heatmapServer <- function(id) {
         
         if (is.null(inputGenesMat)) {
           
-          if (isolate(input$cluster)) {
+          if (isolate(input$cluster) && isolate(input$separateNandT)) {
             return(defaultHeatmap)
           }
           inputGenesMat <- filteredMat
@@ -141,6 +142,7 @@ heatmapServer <- function(id) {
         }
         
         cutout <- inputGenes[!(inputGenes %in% toupper(rownames(inputGenesMat)))]
+        
         if (length(cutout) > 0 & (is.null(isolate(input$inputGenesCSV)) | length(inputGenesMat) > 0)) {
           output$rowscut <- renderText({
             paste("No Data:", paste(cutout, collapse = ", "))
@@ -155,7 +157,7 @@ heatmapServer <- function(id) {
           })
         }
         
-        ha <- HeatmapAnnotation(Type = cohortSubsetLabels$sample_type, Cohort = cohortSubsetLabels$cohort_code, col = colorList)
+        ha <- HeatmapAnnotation(Type = cohortSubsetLabels$sample_type, Cohort = cohortSubsetLabels$cohort_code, Subtype = cohortSubsetLabels$Cancer_subtype, col = colorList)
         hm <- NULL
         
         colsplit = NULL
