@@ -1,3 +1,7 @@
+---
+---
+---
+
 # ubiDash
 
 Interactive dashboard to query multi-omic datasets from human tissues and/or cell lines, with special focus on E3 ubiquitin ligases of the Cullin RING Ligase (CRL) family.
@@ -81,6 +85,6 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
     -   Will need login credentials to the ruggleslab github account
 
-    -   [ ] would it be possible to create a ssh key?
+    -   [x] would it be possible to create a ssh key? (Yes) see documentation on [how to create ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
 **Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.
