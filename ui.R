@@ -7,11 +7,11 @@ library(DT)
 library(corrplot)
 library(openxlsx)
 
-source('./tabs/oncoplot.R')
-source('./tabs/heatmap.R')
-source('./tabs/volcano.R')
-source('./tabs/correlations.R')
-source('./tabs/violin.R')
+source('./modules/oncoplot.R')
+source('./modules/heatmap.R')
+source('./modules/volcano.R')
+source('./modules/correlations.R')
+source('./modules/violin.R')
 
 
 # make plot square
