@@ -21,7 +21,7 @@ cohorts = c("BRCA","CCRCC","COAD","GBM","HCC","HNSCC","LSCC","LUAD","OV","PDA","
 cohortSheets <- excel_sheets(path = filepath)
 abstract =  paste(read.delim("./www/assets/abstract.txt"))
 
-shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"),
+shinyUI(navbarPage(img(src="assets/ubiDash_logo.png", width="150"), theme = bs_theme(version = 5, bootswatch = "pulse"),
                    includeCSS("./www/style.css"),
                    # home page tab ----
                    tabPanel("Home", theme = bs_theme(version = 5, bootswatch = "flatly"),
