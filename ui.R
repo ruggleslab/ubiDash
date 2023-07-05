@@ -23,7 +23,9 @@ abstract =  paste(read.delim("./www/assets/abstract.txt"))
 
 
 # source: https://stackoverflow.com/questions/38558827/making-an-image-hyperlink-in-r-shiny-header
-shinyUI(navbarPage(img(src="assets/ubiDash_logo.png", width="150"), theme = bs_theme(version = 5, bootswatch = "pulse"),
+shinyUI(
+  
+  navbarPage(img(src="assets/ubiDash_logo.png", width="120"), theme = bs_theme(version = 5, bootswatch = "pulse"),
                    includeCSS("./www/style.css"),
                    # home page tab ----
                    tabPanel("Home", theme = bs_theme(version = 5, bootswatch = "flatly"),
