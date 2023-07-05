@@ -25,7 +25,7 @@ load("./data/defaults.RData")
 source("./RScripts/SplitInputGenes.R")
 
 # heatmap variables ----
-source("./tabs/heatmap.R")
+source("./modules/heatmap.R")
 
 source('./RScripts/HeatmapFunctions.R')
 
@@ -63,16 +63,16 @@ colorList <- list(
 
 
 # volcano plot variables ----
-source("./tabs/volcano.R")
+source("./modules/volcano.R")
 
 # oncoplot variables ----
-source('./tabs/oncoplot.R')
+source('./modules/oncoplot.R')
 
 
 # correlation variables ----
-source("./tabs/correlations.R")
+source("./modules/correlations.R")
 # boxplot variables ----
-source("./tabs/violin.R")
+source("./modules/violin.R")
 
 
 # server ----
