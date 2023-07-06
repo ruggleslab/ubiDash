@@ -12,6 +12,7 @@ source('./modules/heatmap.R')
 source('./modules/volcano.R')
 source('./modules/correlations.R')
 source('./modules/violin.R')
+source('./modules/lollipop.R')
 
 
 # make plot square
@@ -43,6 +44,10 @@ shinyUI(
                               # oncoplot tab ----
                               tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "flatly"),
                                        oncoplotUI("oncoTab", cohorts)
+                              ),
+                              # lollipop tab ----
+                              tabPanel("Lollipop", theme = bs_theme(version = 5, bootswatch = "flatly"),
+                                       lollipopUI("lollipopTab", cohorts)
                               )
                    ),
                    # heatmap tab ----
@@ -53,8 +58,8 @@ shinyUI(
                    # volcano plot tab ----
                    tabPanel("Volcano Plots", theme = bs_theme(version = 5, bootswatch = "pulse"),
                             volcanoUI("volcanoTab", cohortSheets)
-                            
                    ),
+             
                    # correlation tab ----
                    tabPanel("Correlations", theme = bs_theme(version = 5, bootswatch = "pulse"),
                             correlationsUI("corrTab")

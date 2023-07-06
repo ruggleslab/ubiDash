@@ -7,8 +7,8 @@
 
 
 
-packagelist = c("shiny", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly")
-
+packagelist = c("shiny", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools")
+  
 lapply(packagelist, function(x) {
   suppressMessages(require(x, character.only = T,
                            quietly=T, 
@@ -41,7 +41,7 @@ cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
 cptac_samples <- readRDS("./data/cptac_sample_info.rds")
 
 
-# cohort and sample type of all normal and tumor samples
+# cohort  and sample type of all normal and tumor samples
 # labels <- subset(cptac_samples, sample_type %in% c("T", "N","G"), select = c("sample_type", "cohort_code"))
 tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
 # get list of cohorts
@@ -95,6 +95,9 @@ shinyServer(function(input, output, session) {
   
   # boxplot tab ----
   violinServer("violinTab")
+  
+  # lollipop tab
+  lollipopServer("lollipopTab")
   
   # protein specific correlation ----
   source(file = "./RScripts/corrAnalysis.R")
