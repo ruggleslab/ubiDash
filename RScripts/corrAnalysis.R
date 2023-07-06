@@ -1,5 +1,7 @@
 # library(corrplot)
-# cohort <- c("BRCA","COAD", "CCRCC")
+# setwd("E:/ubiDash/")
+# #cohort <- c("GBM","COAD", "CCRCC", "HCC", "HNSCC", "LSCC", "OV", "PDA")
+# cohort <- c("BRCA")
 # tissueType <- "Tumor"
 # cutOff <- c(-0.05,0.05)
 # 
@@ -8,9 +10,10 @@
 # #cptac_rna <- NULL
 # cptac_samples <- readRDS("./data/cptac_sample_info.rds")
 # #panel
-# geneNamesRNA <- rownames(cptac_rna)[1:13]
-# geneNamesProtein <- rownames(cptac_protein)[1:13]
-# 
+# geneNamesRNA <- c("A1BG", "A2M", "A2ML1", "AAAS", "A1CF", "AACS")#rownames(cptac_rna)[1:17]
+# geneNamesProtein <- c("A1BG", "A2M", "A2ML1", "AAAS", "A1CF", "AACS")#rownames(cptac_protein)[1:20]
+# #GvA
+# geneName <- "A1BG"
 # 
 # #single
 # geneNameA <- "A1BG"
@@ -49,6 +52,7 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
     selectedGeneA <- selectedGeneA[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
     selectedGeneB <- selectedGeneB[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
     
+    
   } else if (!is.null(cptac_protein) | !is.null(cptac_rna)) {#for RNA or Protein separately
     varToAssign <- list(cptac_protein,cptac_rna)
     inPut <- as.data.frame(varToAssign[which(c(!is.null(cptac_protein),!is.null(cptac_rna)))])
@@ -82,6 +86,10 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
     selectedGeneA <- selectedGeneA[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
     selectedGeneB <- selectedGeneB[,intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
     
+  }
+  
+  if (length(selectedGeneA) < 10 | length(selectedGeneB) < 10) {
+    stop("One or more genes have missing values, therefore decreasing the number of samples available for analysis. Please, adjust input parameters (e.g., add cohorts and/or additional genes).")
   }
   
   selectedGeneA <- as.data.frame(t(selectedGeneA))
@@ -173,6 +181,10 @@ multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac
   rawForAn <- inPut[,colnames(inPut) %in% colnames(selectedGene)]
   rawForAn <- as.data.frame(na.omit(rawForAn)) 
   selectedGene <- as.numeric(selectedGene)
+  if (length(selectedGene) < 10) {
+    stop("One or more genes have missing values, therefore decreasing the number of samples available for analysis. Please, adjust input parameters (e.g., add cohorts and/or additional genes).")
+  }
+  
   #correlation analysis
   corResult <- apply(rawForAn, 1, function(x) cor.test(x, selectedGene, method = "spearman", exact = F)[c(4,3)])
   
@@ -214,14 +226,15 @@ multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac
     guides(col=guide_legend(nrow=2,byrow=TRUE))
   
  
-  corrPlot
-  res <- list(result = result, corrPlot = corrPlot)
+  #corrPlot
+   
+  res <- list(result = result, corrPlot = corrPlot, usedCohorts = paste0(unique(cptac_samples_filt$cohort_code),collapse = "_"))
   return(res)
 }
 
 
 panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_protein, cptac_rna, cptac_samples){
-
+  
   if (!is.null(cptac_protein) & !is.null(cptac_rna)) {
     #cohort filter
     cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
@@ -236,32 +249,52 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
       usedTissue <- normNames
     }
     
+    if (length(geneNamesRNA) < 5 | length(geneNamesProtein) < 5) {
+      stop("Minimum number of input genes/proteins is five.")
+    }
+    
     #Filter for genes
     selectedGenesProt <- cptac_protein[rownames(cptac_protein) %in% geneNamesProtein,colnames(cptac_protein) %in% usedTissue]
     selectedGenesRna <- cptac_rna[rownames(cptac_rna) %in% geneNamesRNA,colnames(cptac_rna) %in% usedTissue]
     
+    protNAs <- rowSums(is.na(selectedGenesProt))
+    protsToRemove <- ncol(selectedGenesProt) - protNAs
+    protsToRemove <- names(protsToRemove[protsToRemove < 10])
+    selectedGenesProt <- selectedGenesProt[!(rownames(selectedGenesProt) %in% protsToRemove),]
+    
+    
     #keep common samples and genes
     selectedGenesProt <- selectedGenesProt[intersect(rownames(selectedGenesProt), rownames(selectedGenesRna)),intersect(colnames(selectedGenesProt), colnames(selectedGenesRna))]
     selectedGenesRna <- selectedGenesRna[intersect(rownames(selectedGenesProt), rownames(selectedGenesRna)),intersect(colnames(selectedGenesProt), colnames(selectedGenesRna))]
-    library(corrplot)
-    cor.mat <- cor(t(selectedGenesProt), t(selectedGenesRna), use = "pairwise.complete.obs", method = "spearman")
-    p.mat <- cor.mtest(mat = cor.mat, method = "spearman")
     
-    #corrPlot <- corrplot(cor.mat, p.mat = p.mat[[1]], sig.level = 0.01, tl.col = "black")
-    #title(ylab = substitute(paste(bold("RNA"))), main = "Protein",cex.lab = 2, cex.main = 2)
-    flattenCorrMatrix <- function(cormat, pmat) {
-      ut <- upper.tri(cormat)
-      data.frame(
-        row = rownames(cormat)[row(cormat)[ut]],
-        column = rownames(cormat)[col(cormat)[ut]],
-        cor  =(cormat)[ut],
-        p = pmat[ut]
-      )
+    if (ncol(selectedGenesProt) < 10 | ncol(selectedGenesRna) < 10) {
+      stop("One or more genes have missing values, therefore decreasing the number of samples available for analysis. Please, adjust input parameters (e.g., add cohorts and/or additional genes).")
     }
     
+    library(corrplot)
+    cor.mat <- cor(x = t(selectedGenesProt), y = t(selectedGenesRna), use = "pairwise.complete.obs", method = "spearman")
+    p.mat <- cor.mtest(cor.mat, method = "spearman")
+    
+    
+    #asd <- outer(t(na.omit(selectedGenesProt)), t(selectedGenesRna), Vectorize(function(a, b) cor.test(a, b)$p.value))
+    
+    flattenCorrMatrix <- function(cormat, pmat) {
+      ut <- cormat
+      data.frame(
+        row = rownames(cormat)[row(cormat)],
+        column = rownames(cormat)[col(cormat)],
+        cor  =c(cormat),
+        p = c(pmat)
+      )
+    }
+    #testing p values
+    # table(is.na(selectedGenesProt[rownames(selectedGenesProt) == "AARS2",]))
+    # testCorr <- cor.test(as.numeric(selectedGenesProt[rownames(selectedGenesProt) == "AARS2",]),
+    #                      as.numeric(selectedGenesRna[rownames(selectedGenesRna) == "A1BG",]),method = "spearman")
+     
+    
     df <- flattenCorrMatrix(cormat = cor.mat,pmat = p.mat[[1]])
-    df$log_pval <- -log10(df$p)
-    df$log_pval_test <- -log10(df$p + 0.000001)
+    df$log_pval <- -log10(df$p + 0.0000001)
     df$qval <- p.adjust(df$p, method = "BH")
     df$Spearman <- c("Positive", "Negative")[ifelse(df$cor > 0, 1,2)]
     
@@ -270,13 +303,13 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
       data =df,
       x = "row", 
       y = "column",
-      size = "cor",
+      size = "log_pval",
       facet.by = NULL,
       size.range = c(1,10),
       shape = 21,
       color = c("black", "transparent")[ifelse(df$qval < 0.01, 1, 2)],
       color.range = c(0,5),
-      fill = "log_pval",
+      fill = "cor",
       font.label = list(size = 12, color = "black"),
       rotate.x.text = TRUE) +
       gradient_fill(c("purple","white","red"))
@@ -290,6 +323,9 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     inPut <- as.data.frame(varToAssign[which(c(!is.null(cptac_protein),!is.null(cptac_rna)))])
     rm(varToAssign)
     geneName <- c(geneNamesProtein, geneNamesRNA)
+    if (length(geneName) < 5 ) {
+      stop("Minimum number of input genes/proteins is five.")
+    }
     
     colnames(inPut) <- gsub(pattern = ".?^X",replacement = "",x = colnames(inPut))
     colnames(inPut) <- gsub(pattern = "\\.", replacement = "-",x = colnames(inPut))
@@ -308,6 +344,10 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     }
 
     selectedGenes <- inPut[rownames(inPut) %in% geneName,colnames(inPut) %in% usedTissue]
+    if (ncol(selectedGenes) < 10) {
+      stop("One or more genes have missing values, therefore decreasing the number of samples available for analysis. Please, adjust input parameters (e.g., add cohorts and/or additional genes).")
+    }
+    
     
     cor.mat <- cor(t(selectedGenes), use = "pairwise.complete.obs", method = "spearman")
     p.mat <- cor.mtest(mat = cor.mat, method = "spearman")
@@ -323,8 +363,7 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
       )
     }
     df <- flattenCorrMatrix(cormat = cor.mat,pmat = p.mat[[1]])
-    df$log_pval <- -log10(df$p)
-    df$log_pval_test <- -log10(df$p + 0.000001)
+    df$log_pval <- -log10(df$p + 0.0000001)
     df$qval <- p.adjust(df$p, method = "BH")
     df$Spearman <- c("Positive", "Negative")[ifelse(df$cor > 0, 1,2)]
     
@@ -333,13 +372,13 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
       data =df,
       x = "row", #pride
       y = "column", #cptac_n
-      size = "cor",
+      size = "log_pval",
       facet.by = NULL,
       size.range = c(1, 10),
       shape = 21,
       color = c("black", "transparent")[ifelse(df$qval < 0.01, 1, 2)],
       color.range = c(0,5),
-      fill = "log_pval",
+      fill = "cor",
       font.label = list(size = 12, color = "black"),
       rotate.x.text = TRUE) +
       #scale_fill_gradient(low = "purple",high = "red") +
@@ -352,7 +391,12 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
 
   }
   
-  res <- list(corrPlot = corrPlot, corTab = list(cor = cor.mat, pValue = p.mat$p))
+  res <- list(corrPlot = corrPlot, corTab = list(cor = cor.mat, pValue = p.mat$p), usedCohorts = paste0(unique(cptac_samples_filt$cohort_code),collapse = "_"))
   return(res)
 
 }
+# 
+# asd <- panelCorr(geneNamesRNA = c("A1BG", "A2M", "AAAS", "AACS", "AARD"),
+#                  geneNamesProtein = c("A1BG", "A2M", "AAAS", "AACS", "AARD"),
+#                  tissueType = "Tumor", cohort = "COAD", cptac_protein = cptac_protein, cptac_rna = cptac_protein, cptac_samples = cptac_samples)
+# asd$usedCohorts
