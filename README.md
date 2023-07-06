@@ -1,3 +1,7 @@
+---
+---
+---
+
 # ubiDash
 
 Interactive dashboard to query multi-omic datasets from human tissues and/or cell lines, with special focus on E3 ubiquitin ligases of the Cullin RING Ligase (CRL) family.
@@ -68,5 +72,19 @@ Before starting your work, make sure to setup the remote repo appropriately. The
     -   To delete a local branch use `$ git branch -d my-branch-name` or `$ git branch -D my-branch-name`
 
         -   **NOTE:** The -d option only deletes the branch if it has already been merged. The -D option is a shortcut for \--delete \--force, which deletes the branch irrespective of its merged status.
+
+## Accessing the shiny-server from UltraViolet
+
+-   log-in to UltraViolet as you would normally do
+
+-   then log-in to the shiny-server: `ssh KID@ssplcdcdvm04.nyumc.org`
+
+-   Navigate to `/srv/shiny-server/`
+
+-   Clone the repo from GitHub `git clone https://github.com/ruggleslab/ubiDash.git`
+
+    -   Will need login credentials to the ruggleslab github account
+
+    -   [x] would it be possible to create a ssh key? (Yes) see documentation on [how to create ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
 **Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.

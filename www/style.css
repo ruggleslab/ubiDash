@@ -1,21 +1,71 @@
 /* Set styles for navbar and links */
-.navbar.navbar-default.navbar-static-topav{
-  background-color: #6A2798!important;
-  color:white!important;
+.navbar.navbar-default.navbar-static-topav {
+  background-color: #6A2798 !important;
+  color: white !important;
 }
 
-.navbar.navbar-default{
-  background-color: #6A2798!important;
+.navbar.navbar-default {
+  background-color: #6A2798 !important;
 }
 
-.navbar-nav a.nav-link, span.navbar-brand{
-  color:white!important;
+.navbar-nav a.nav-link,
+span.navbar-brand {
+  color: white !important;
 }
 
 .navbar-nav a.nav-link:hover {
   color: #fff;
   text-decoration: underline;
 }
+
+nav .container-fluid:after {
+  display: none;
+}
+
+
+
+
+
+
+@media (max-width: 1050px) {
+  .navbar-nav {
+    display: flex;
+    flex-direction: column !important;
+  }
+
+  nav .container-fluid {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+
+  nav .container-fluid:after {
+    display:block;
+    background-image: url(./assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png);
+    background-size: 150px 50px;
+    width: 150px;
+    height: 50px;
+    content: "";
+    position: absolute;
+    right: 20px;
+    top:20px;
+  }
+  .navbar:after {
+    display:none;
+  }
+}
+
+
+@media (max-width: 340px) {
+  nav .container-fluid:after {
+    display: none;
+  }
+}
+
+
+
+
+
 
 /* Set background image for navbar */
 .navbar:after {
@@ -29,14 +79,15 @@
 }
 
 /* Set styles for buttons */
-#generateBTN, #generateVolcano {
+#generateBTN,
+#generateVolcano {
   margin-bottom: 15px;
-  height:30px;
+  height: 30px;
 }
 
 /* Set error message color */
 .error {
-  color:red;
+  color: red;
 }
 
 /* Set styles for home image */
@@ -65,11 +116,11 @@
   .title-page {
     margin: 0px 3%;
   }
-  
+
   .title-page h1 {
     width: 100%;
   }
-  
+
   .navbar:after {
     content: none;
   }

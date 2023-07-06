@@ -1,12 +1,12 @@
 library(corrplot)
 
 # For mRNA and Protein  individual tabs:
-  # mat1 = # tumor samples (rows)
-  # mat2 = # normal samples (columns)
+# mat1 = # tumor samples (rows)
+# mat2 = # normal samples (columns)
 
 # For mRNA/Protein mix tab:
-  # mat1 = # mRNA (rows)
-  # mat2 = # Protein (columns)
+# mat1 = # mRNA (rows)
+# mat2 = # Protein (columns)
 
 
 cor.mat <- cor(mat1, mat2, use = "pairwise.complete.obs", method = "spearman")
