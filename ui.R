@@ -206,6 +206,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                sidebarPanel(
                  tabsetPanel(id = "GvGpanel",selected = "mRNA",
                              tabPanel("mRNA",
+                                      br(),
+                                      p("By this feature one can explore the correlation of two selected genes in the selected tissue type and patient cohorts."),
                                       selectizeInput(inputId = "inputGvgCorrRnaNameA",
                                                      choices = NULL,
                                                      label = "Choose protein A",options = list(`live-search` = TRUE),  multiple = F),
@@ -223,6 +225,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                                       actionButton("generateGvgCorrRna", label = "Start Analysis")
                                       ),
                              tabPanel("Protein",
+                                      br(),
+                                      p("By this feature one can explore the correlation of two selected proteins in the selected tissue type and patient cohorts."),
                                       selectizeInput(inputId = "inputGvgCorrProteinNameA",
                                                      choices = NULL,
                                                      label = "Choose protein A",options = list(`live-search` = TRUE),  multiple = F),
@@ -240,6 +244,8 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                                       actionButton("generateGvgCorrProtein", label = "Start Analysis")
                                       ),
                              tabPanel("mRNA/Protein",
+                                      br(),
+                                      p("By this feature one can explore the correlation of a selected gene and protein in the selected tissue type and patient cohorts."),
                                       selectizeInput(inputId = "inputGvgCorrBothNameA",
                                                      choices = NULL,
                                                      label = "Choose protein",options = list(`live-search` = TRUE),  multiple = F),
@@ -261,15 +267,17 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                  conditionalPanel(condition = "input.GvGpanel == 'mRNA'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvgCorrRna"),color = "#6A2798"),
                                   tableOutput(outputId = "outputTabGvgCorrRna"),
-                                  uiOutput(outputId = "downLoadButtonGvgCorrRna")
+                                  uiOutput(outputId = "downLoadButtonGvgCorrRnaPlotUI")
                                   ),
                  conditionalPanel(condition = "input.GvGpanel == 'Protein'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvgCorrProtein"),color = "#6A2798"),
-                                  tableOutput(outputId = "outputTabGvgCorrProtein")
+                                  tableOutput(outputId = "outputTabGvgCorrProtein"),
+                                  uiOutput(outputId = "downLoadButtonGvgCorrProteinPlotUI")
                                   ),
                  conditionalPanel(condition = "input.GvGpanel == 'mRNA/Protein'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvgCorrBoth"),color = "#6A2798"),
-                                  tableOutput(outputId = "outputTabGvgCorrBoth")
+                                  tableOutput(outputId = "outputTabGvgCorrBoth"),
+                                  uiOutput(outputId = "downLoadButtonGvgCorrBothPlotUI")
                  )
                  
                )
@@ -279,6 +287,9 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                sidebarPanel(
                  tabsetPanel(id = "GvApanel", selected = "mRNA",
                              tabPanel(title = "mRNA",
+                                      br(),
+                                      p("By this feature users can explore the correlation profile of a selected gene based on a user defined correlation cutoff intervall. The algorithm perfomrs a correlation analysis with all available genes and filters based on the predefined parameters.",
+                                        "As output users get a table with proteins meeting all the criteria, and a plot where the y axis is the -log 10 of the P values and the x axis is the correlation coefficient."),
                                       selectizeInput(inputId = "inputGvACorrRnaGeneName",
                                                      choices = NULL,
                                                      label = "Choose a gene",options = list(`live-search` = TRUE),  multiple = F),
@@ -296,6 +307,9 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                                       actionButton("generateGvACorrRna", label = "Start Analysis")
                                       ),
                              tabPanel(title = "Protein",
+                                      br(),
+                                      p("By this feature users can explore the correlation profile of a selected protein based on a user defined correlation cutoff intervall. The algorithm perfomrs a correlation analysis with all available proteins and filters based on the predefined parameters.",
+                                        "As output users get a table with proteins meeting all the criteria, and a plot where the y axis is the -log 10 of the P values and the x axis is the correlation coefficient."),
                                       selectizeInput(inputId = "inputGvACorrProteinGeneName",
                                                      choices = NULL,
                                                      label = "Choose a protein",options = list(`live-search` = TRUE),  multiple = F),
@@ -320,13 +334,16 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                                   fluidRow(column(width = 4, 
                                                   withSpinner(dataTableOutput(outputId = "outputTabGvACorrProtein"),color = "#6A2798")),
                                            column(width = 8, 
-                                                  withSpinner(plotOutput(outputId = "outputPlotGvACorrProtein"),color = "#6A2798")))
+                                                  withSpinner(plotOutput(outputId = "outputPlotGvACorrProtein"),color = "#6A2798"),
+                                                  uiOutput(outputId = "downLoadButtonGvACorrProteinPlotUI")
+                                                  ))
                                   ),
                  conditionalPanel(condition = "input.GvApanel == 'mRNA'",
                                   fluidRow(column(width = 4, 
                                                   withSpinner(dataTableOutput(outputId = "outputTabGvACorrRna"),color = "#6A2798")),
                                            column(width = 8, 
-                                                  withSpinner(plotOutput(outputId = "outputPlotGvACorrRna"),color = "#6A2798")))
+                                                  withSpinner(plotOutput(outputId = "outputPlotGvACorrRna"),color = "#6A2798"),
+                                                  uiOutput(outputId = "downLoadButtonGvACorrRnaPlotUI")))
                                   )
                )
              )
@@ -336,6 +353,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                sidebarPanel(
                  tabsetPanel(id = "GvPpanel",selected = "mRNA",
                              tabPanel("mRNA",
+                                      br(),
+                                      p("By using the gene panel correlation feature, useres can generate a correlation matrix using the genes of interests in the selected patient cohorts and tissue types.",
+                                        "The resulting plot is a bubble plot where the size of the dots are proportional to the negative 10 logarithm of the adjusted P value, the color of the dots represents the correletion coefficient.",
+                                        "If the q value is smaller then 0.01 the dot is highlighted with a black outline. ",
+                                        "Please note that the minimum number of input genes is five."),
                                       selectizeInput(inputId = "inputGvpCorrRnaGeneName",
                                                      choices = NULL,
                                                      label = "Choose gene",options = list(`live-search` = TRUE),  multiple = TRUE),
@@ -349,6 +371,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                                       actionButton("generateGvpCorrRna", label = "Start Analysis")
                              ),
                              tabPanel("Protein",
+                                      br(),
+                                      p("By using the protein panel correlation feature, useres can generate a correlation matrix using the proteins of interests in the selected patient cohorts and tissue types.",
+                                        "The resulting plot is a bubble plot where the size of the dots are proportional to the negative 10th logarithm of the adjusted P value, the color of the dots represents the correletion coefficient.",
+                                        "If the q value is smaller then 0.01 the dot is highlighted with a black outline.",
+                                        "Please note that the minimum number of input proteins is five."),
                                       selectizeInput(inputId = "inputGvpCorrProteinGeneName",
                                                      choices = NULL,
                                                      label = "Choose gene",options = list(`live-search` = TRUE),  multiple = TRUE),
@@ -362,6 +389,11 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                                       actionButton("generateGvpCorrProtein", label = "Start Analysis")
                              ),
                              tabPanel("mRNA/Protein",
+                                      br(),
+                                      p("By using the mRNA/Protein panel correlation feature, useres can generate a correlation matrix using the proteins and genes of interests in the selected patient cohorts and tissue types.",
+                                        "The resulting plot is a bubble plot where the size of the dots are proportional to the negative 10th logarithm of the adjusted P value, the color of the dots represents the correletion coefficient.",
+                                        "If the q value is smaller then 0.01 the dot is highlighted with a black outline.",
+                                        "Please note that the minimum number of input genes and proteins is five."),
                                       selectizeInput(inputId = "inputGvpCorrBothGeneNameA",
                                                      choices = NULL,
                                                      label = "Choose gene",options = list(`live-search` = TRUE),  multiple = TRUE),
@@ -381,15 +413,21 @@ shinyUI(navbarPage("ubiDash", theme = bs_theme(version = 5, bootswatch = "pulse"
                mainPanel(
                  conditionalPanel(condition = "input.GvPpanel == 'mRNA'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvpCorrRna"),color = "#6A2798"),
-                                  uiOutput("dataDownLoadGvpCorrRna")
+                                  uiOutput("dataDownLoadGvpCorrRna"),
+                                  br(),
+                                  uiOutput("GvpCorrRnaDownloadPlotUi")
                  ),
                  conditionalPanel(condition = "input.GvPpanel == 'Protein'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvpCorrProtein"),color = "#6A2798"),
-                                  uiOutput("dataDownLoadGvpCorrProtein")
+                                  uiOutput("dataDownLoadGvpCorrProtein"),
+                                  br(),
+                                  uiOutput("GvpCorrProteinDownloadPlotUi")
                  ),
                  conditionalPanel(condition = "input.GvPpanel == 'mRNA/Protein'",
                                   withSpinner(plotOutput(outputId = "outputPlotGvpCorrBoth"),color = "#6A2798"),
-                                  uiOutput("dataDownLoadGvpCorrBoth")
+                                  uiOutput("dataDownLoadGvpCorrBoth"),
+                                  br(),
+                                  uiOutput("GvpCorrBothDownloadPlotUi")
                  )
                  
                )

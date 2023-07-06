@@ -599,6 +599,15 @@ shinyServer(function(input, output, session) {
   output$outputPlotGvgCorrRna <- renderPlot({resGvgCorrRna()$singCorrPlot})
   output$outputTabGvgCorrRna <- renderTable({resGvgCorrRna()$singCorrTab},rownames = T, colnames = F)
   
+  #HiRes plot download
+  output$downLoadButtonGvgCorrRnaPlotUI <- renderUI({
+    req(input$generateGvgCorrRna)
+    downloadButton("downLoadButtonGvgCorrRnaPlot", label = "Download plot in high resolution") })
+  
+  output$downLoadButtonGvgCorrRnaPlot <- downloadHandler(filename = function() {paste0(input$inputGvgCorrRnaNameA,"_",input$inputGvgCorrRnaNameB,"_mRNA_Corr", '.pdf')},
+                                                       content = function(file) {ggsave(plot = resGvgCorrRna()$singCorrPlot,scale = 3,
+                                                                                        filename =  file, device = "pdf",dpi = "retina")})
+  
   #Protein vs Protein correlation RNA
   updateSelectizeInput(session, 'inputGvgCorrProteinNameA', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
   updateSelectizeInput(session, 'inputGvgCorrProteinNameB', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "A2M", options = list(placeholder = 'Type gene name'))
@@ -613,6 +622,15 @@ shinyServer(function(input, output, session) {
   
   output$outputPlotGvgCorrProtein <- renderPlot({resGvgCorrProtein()$singCorrPlot})
   output$outputTabGvgCorrProtein <- renderTable({resGvgCorrProtein()$singCorrTab},rownames = T, colnames = F)
+  
+  #HiRes plot download
+  output$downLoadButtonGvgCorrProteinPlotUI <- renderUI({
+    req(input$generateGvgCorrProtein)
+    downloadButton("downLoadButtonGvgCorrProteinPlot", label = "Download plot in high resolution") })
+  
+  output$downLoadButtonGvgCorrProteinPlot <- downloadHandler(filename = function() {paste0(input$inputGvgCorrProteinNameA,"_",input$inputGvgCorrProteinNameB,"_Protein_Corr", '.pdf')},
+                                                         content = function(file) {ggsave(plot = resGvgCorrProtein()$singCorrPlot,scale = 3,
+                                                                                          filename =  file, device = "pdf",dpi = "retina")})
   
   #Protein vs Gene correlation
   updateSelectizeInput(session, 'inputGvgCorrBothNameA', choices = as.list(intersect(rownames(cptac_protein),rownames(cptac_rna))), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type Protein name'))
@@ -629,6 +647,15 @@ shinyServer(function(input, output, session) {
   output$outputPlotGvgCorrBoth <- renderPlot({resGvgCorrBoth()$singCorrPlot})
   output$outputTabGvgCorrBoth <- renderTable({resGvgCorrBoth()$singCorrTab},rownames = T, colnames = F)
   
+  #HiRes plot download
+  output$downLoadButtonGvgCorrBothPlotUI <- renderUI({
+    req(input$generateGvgCorrBoth)
+    downloadButton("downLoadButtonGvgCorrBothPlot", label = "Download plot in high resolution") })
+  
+  output$downLoadButtonGvgCorrBothPlot <- downloadHandler(filename = function() {paste0(input$inputGvgCorrBothNameA,"_",input$inputGvgCorrBothNameB,"_mRNA-Protein_Corr", '.pdf')},
+                                                         content = function(file) {ggsave(plot = resGvgCorrBoth()$singCorrPlot,scale = 3,
+                                                                                          filename =  file, device = "pdf",dpi = "retina")})
+  
   #Gene vs All correlation for proteins
   updateSelectizeInput(session, 'inputGvACorrProteinGeneName', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
   resGvACorrProtein <- eventReactive(input$generateGvACorrProtein,{multiCorr(geneName = input$inputGvACorrProteinGeneName,
@@ -644,12 +671,21 @@ shinyServer(function(input, output, session) {
   output$outputTabGvACorrProtein <- DT::renderDataTable(server = FALSE,{resGvACorrProtein()$result},rownames = F,extensions = 'Buttons', options = list(
     dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
     buttons = list(
-      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrProteinGeneName, "_ProteinCorrelations"),
+      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrProteinGeneName, "_ProteinCorrelations_", resGvACorrProtein()$usedCohorts,"-",input$inputGvACorrProteinType),
            exportOptions = list(
              modifier = list(page = "all")
            )))))
   
   output$outputPlotGvACorrProtein <- renderPlot({resGvACorrProtein()$corrPlot})
+  
+  #HiRes plot download
+  output$downLoadButtonGvACorrProteinPlotUI <- renderUI({
+    req(input$generateGvACorrProtein)
+    downloadButton("downLoadButtonGvACorrProteinPlot", label = "Download plot in high resolution") })
+  
+  output$downLoadButtonGvACorrProteinPlot <- downloadHandler(filename = function() {paste0(input$inputGvACorrProteinGeneName,"-All_Protein", '.pdf')},
+                                                          content = function(file) {ggsave(plot = resGvACorrProtein()$corrPlot,scale = 3,
+                                                                                           filename =  file, device = "pdf",dpi = "retina")})
   
   #Gene vs All correlation for RNA
   updateSelectizeInput(session, 'inputGvACorrRnaGeneName', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
@@ -666,12 +702,21 @@ shinyServer(function(input, output, session) {
   output$outputTabGvACorrRna <- DT::renderDataTable(server = FALSE,{resGvACorrRna()$result},rownames = F,extensions = 'Buttons', options = list(
     dom = 'frtBip',#Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
     buttons = list(
-      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrRnaGeneName, "_RNAcorrelations"),
+      list(extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrRnaGeneName, "_RnaCorrelations_",resGvACorrRna()$usedCohorts,"-",input$inputGvACorrRnaType),
            exportOptions = list(
              modifier = list(page = "all")
            )))))
   
   output$outputPlotGvACorrRna <- renderPlot({resGvACorrRna()$corrPlot})
+  
+  #HiRes plot download
+  output$downLoadButtonGvACorrRnaPlotUI <- renderUI({
+    req(input$generateGvACorrRna)
+    downloadButton("downLoadButtonGvACorrRnaPlot", label = "Download plot in high resolution") })
+  
+  output$downLoadButtonGvACorrRnaPlot <- downloadHandler(filename = function() {paste0(input$inputGvACorrRnaGeneName,"-All_mRNA", '.pdf')},
+                                                             content = function(file) {ggsave(plot = resGvACorrRna()$corrPlot,scale = 3,
+                                                                                              filename =  file, device = "pdf",dpi = "retina")})
   
   #Gene panel correlation for RNA
   updateSelectizeInput(session, 'inputGvpCorrRnaGeneName', choices = as.list(rownames(cptac_rna)), server = TRUE,  options = list(placeholder = 'Type gene name'))
@@ -690,9 +735,18 @@ shinyServer(function(input, output, session) {
     req(input$generateGvpCorrRna)
     downloadButton("downLoadGvpCorrRna", label = "Download correlation data") })
   
-  output$downLoadGvpCorrRna <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
+  output$downLoadGvpCorrRna <- downloadHandler(filename = function() {paste0("GenePanelCorrelations_RNA-",resGvpCorrRna()$usedCohorts,"-",input$inputGvpCorrRnaStype,".xlsx")},
                                                    content = function(file) {
                                                      write.xlsx(resGvpCorrRna()$corTab, file,row.names = TRUE)})
+  
+  #HiRes plot download
+  output$GvpCorrRnaDownloadPlotUi <- renderUI({
+    req(input$generateGvpCorrRna)
+    downloadButton("GvpCorrRnaDownloadPlot", label = "Download plot in high resolution") })
+  
+  output$GvpCorrRnaDownloadPlot <- downloadHandler(filename = function() {paste0("GenePanelCorrelationsPlot_RNA-",resGvpCorrRna()$usedCohorts,"-",input$inputGvpCorrRnaStype, '.pdf') },
+                                                     content = function(file) {ggsave(plot = resGvpCorrRna()$corrPlot,scale = 3,
+                                                                                      filename =  file, device = "pdf",dpi = "retina")})
   
   
   #Gene panel correlation for Protein
@@ -712,9 +766,17 @@ shinyServer(function(input, output, session) {
     req(input$generateGvpCorrProtein)
     downloadButton("downLoadGvpCorrProtein", label = "Download correlation data") })
   
-  output$downLoadGvpCorrProtein <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
+  output$downLoadGvpCorrProtein <- downloadHandler(filename = function() {paste0("GenePanelCorrelations_Protein-",resGvpCorrProtein()$usedCohorts,"-",input$inputGvpCorrProteinStype,".xlsx")},
                                                content = function(file) {
                                                  write.xlsx(resGvpCorrProtein()$corTab, file,row.names = TRUE)})
+  #HiRes plot download
+  output$GvpCorrProteinDownloadPlotUi <- renderUI({
+    req(input$generateGvpCorrProtein)
+    downloadButton("GvpCorrProteinDownloadPlot", label = "Download plot in high resolution") })
+  
+  output$GvpCorrProteinDownloadPlot <- downloadHandler(filename = function() {paste0("GenePanelCorrelationsPlot_Protein-",resGvpCorrProtein()$usedCohorts,"-",input$inputGvpCorrProteinStype, '.pdf')},
+                                                   content = function(file) {ggsave(plot = resGvpCorrProtein()$corrPlot,scale = 3,
+                                                                                    filename =  file, device = "pdf",dpi = "retina")})
   
   #Gene panel correlation for Protein/RNA
   updateSelectizeInput(session, 'inputGvpCorrBothGeneNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, options = list(placeholder = 'Type gene name'))
@@ -734,8 +796,16 @@ shinyServer(function(input, output, session) {
     req(input$generateGvpCorrBoth)
     downloadButton("downLoadGvpCorrBoth", label = "Download correlation data") })
   
-  output$downLoadGvpCorrBoth <- downloadHandler(filename = function() {paste0("ubiDashCorrData",".xlsx")},
+  output$downLoadGvpCorrBoth <- downloadHandler(filename = function() {paste0("GenePanelCorrelations_Both-",resGvpCorrBoth()$usedCohorts,"-",input$inputGvpCorrBothStype,".xlsx")},
                                                content = function(file) {
                                                  write.xlsx(resGvpCorrBoth()$corTab, file,row.names = TRUE)})
+  #HiRes plot download
+  output$GvpCorrBothDownloadPlotUi <- renderUI({
+    req(input$generateGvpCorrBoth)
+    downloadButton("GvpCorrBothDownloadPlot", label = "Download plot in high resolution") })
+  
+  output$GvpCorrBothDownloadPlot <- downloadHandler(filename = function() {paste0("GenePanelCorrelationsPlot_Both-",resGvpCorrBoth()$usedCohorts,"-",input$inputGvpCorrBothStype, '.pdf')},
+                                                       content = function(file) {ggsave(plot = resGvpCorrBoth()$corrPlot,scale = 3,
+                                                                                        filename =  file, device = "pdf",dpi = "retina")})
   
 })
