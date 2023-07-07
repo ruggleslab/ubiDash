@@ -36,8 +36,15 @@ oncoplotUI <- function(id, cohorts){
       textOutput(ns("oncoError"))%>% 
         tagAppendAttributes(class = 'error'),
       # loading icons
-      shinycssloaders::withSpinner(plotOutput(ns("cohortOncoplot")), color = "#6A2798"),
-      shinycssloaders::withSpinner(plotOutput(ns("mutationOncoplot")), color = "#6A2798")
+      
+      tabsetPanel(
+        tabPanel("Cohort Oncoplot",
+                 shinycssloaders::withSpinner(plotOutput(ns("cohortOncoplot")), color = "#6A2798")
+        ),
+        tabPanel("Mutation Oncoplot",
+                 shinycssloaders::withSpinner(plotOutput(ns("mutationOncoplot")), color = "#6A2798")
+        )
+      ) 
     )
   )
 }
@@ -47,21 +54,34 @@ source('./RScripts/OncoplotColors.R')
 oncoplotServer <- function(id) {
   moduleServer(id,function(input,output,session){
     
-    
     # this is being loaded twice which is not optimal
     load("./data/defaults.RData")
     cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
     
+    cptac_samples <- readRDS("./data/cptac_sample_info.rds")
+    
+    
+    maf = read.maf("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf")
+    patients = maf@clinical.data$Tumor_Sample_Barcode
+    patients = data.frame(patients)
+    colnames(patients) = "harmonized_data_id"
+    
+    maf@clinical.data$cohort_code=  merge(x=patients,y=cptac_samples, 
+                                          by="harmonized_data_id", all.x=TRUE)$cohort_code
+    
+    
+    
+    
     genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
     
-    maf <- readRDS("./data/oncoplot_maf.rds")
+    maftable <- readRDS("./data/oncoplot_maf.rds")
     
     # total patients
-    nPatients = length(unique(maf$Tumor_Sample_Barcode))
+    nPatients = length(unique(maftable$Tumor_Sample_Barcode))
     
     CRLS = genes
     crl_genes = unique(CRLS$hgnc_symbol)
-    print("loaded oncoplot vars")
+    # print("loaded oncoplot vars")
     
     ctbl = reactiveVal(NULL)
     mtbl = reactiveVal(NULL)
@@ -69,6 +89,7 @@ oncoplotServer <- function(id) {
     mutationsreactive = reactiveVal(NULL)
     anno = reactiveVal(NULL)
     modifiedOncoInput = reactiveVal(FALSE)
+    colOrder = reactiveVal(NULL)
     
     
     updateSelectizeInput(session, 'inputOncoGenesTXT', 
@@ -98,7 +119,7 @@ oncoplotServer <- function(id) {
         }
         
         # maf with only most frequently mutated genes
-        smallFM = filter(maf, toupper(Hugo_Symbol) %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
+        smallFM = filter(maftable, toupper(Hugo_Symbol) %in% inputGenes & cohort_code %in% isolate(input$oncoCohortSelect))
         
         uniqueGenes = unique(smallFM$Hugo_Symbol)
         
@@ -106,6 +127,12 @@ oncoplotServer <- function(id) {
         rownames(mutationsTbl) = uniqueGenes
         colnames(mutationsTbl) = unique(smallFM$Tumor_Sample_Barcode)
         cohortsTbl = mutationsTbl
+        
+        
+        uniqueFM <- smallFM[!duplicated(smallFM$Tumor_Sample_Barcode), ]
+        
+        colOrder(with(uniqueFM, order(uniqueFM$Variant_Classification,uniqueFM$cohort_code)))
+        # print(colOrder())
         
         for(i in seq_along(rownames(smallFM))){
           id = smallFM[i,Tumor_Sample_Barcode]
@@ -171,36 +198,64 @@ oncoplotServer <- function(id) {
     output$mutationOncoplot = renderPlot({
       input$generateOnco
       
-      if(!modifiedOncoInput()) return(mutationsOnco)
-      
-      mutation_colors = get_mutation_colors(mutationsreactive())
-      mutation_alter_fun = get_mutation_alter_fun(mutation_colors)
       
       
-      tryCatch(
-        {
-          output$oncoError = renderText("")
-          
-          oncoPrint(
-            mtbl(), alter_fun = mutation_alter_fun, col = mutation_colors, 
-            row_names_side = "left", 
-            show_pct = FALSE,
-            
-            row_order = renderedGenes(),
-            
-            remove_empty_columns = !isolate(input$showEmptyColumns),
-            
-            heatmap_legend_param = list(title = "Alterations"),
-            
-            right_annotation = rowAnnotation(pct = anno_text(anno()), barplot = anno_oncoprint_barplot())
-          )
-        },
-        error = function(e){
-          output$oncoError = renderText("No Data")
-          print(e);
-          return()
-        }
-      )
+      
+      cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
+                                           CCRCC = "maroon4",
+                                           COAD = "goldenrod1",
+                                           GBM = "aquamarine",
+                                           HCC = "pink3",
+                                           HNSCC = "coral4",
+                                           LSCC = "slategray3",
+                                           LUAD = "mediumpurple",
+                                           OV = "seagreen",
+                                           PDA = "lightgoldenrod2",
+                                           UCEC = "orangered3"))
+      
+      
+      return(oncoplot(maf = maf,
+                      genes = rownames(ctbl()), 
+                      annotationColor = cohort_colors,
+                      sortByAnnotation = TRUE,
+                      clinicalFeatures = 'cohort_code'))
+      # return(oncoplot(maf = maf, genes = rownames(ctbl())))
+      
+      
+      
+      
+      # if(!modifiedOncoInput()) return(mutationsOnco)
+      # 
+      # mutation_colors = get_mutation_colors(mutationsreactive())
+      # mutation_alter_fun = get_mutation_alter_fun(mutation_colors)
+      # 
+      # 
+      # tryCatch(
+      #   {
+      #     output$oncoError = renderText("")
+      #     
+      #     oncoPrint(
+      #       mtbl(), alter_fun = mutation_alter_fun, col = mutation_colors, 
+      #       row_names_side = "left", 
+      #       show_pct = FALSE,
+      #       
+      #       row_order = renderedGenes(),
+      #       
+      #       remove_empty_columns = !isolate(input$showEmptyColumns),
+      #       
+      #       heatmap_legend_param = list(title = "Alterations"),
+      #       
+      #       column_order = colOrder(),
+      #       
+      #       right_annotation = rowAnnotation(pct = anno_text(anno()), barplot = anno_oncoprint_barplot())
+      #     )
+      #   },
+      #   error = function(e){
+      #     output$oncoError = renderText("No Data")
+      #     print(e);
+      #     return()
+      #   }
+      # )
     })
     # cohorts oncoplot
     output$cohortOncoplot = renderPlot({
@@ -222,6 +277,8 @@ oncoplotServer <- function(id) {
           remove_empty_columns = !isolate(input$showEmptyColumns),
           # 
           heatmap_legend_param = list(title = "Cohorts"),
+          
+          column_order = colOrder(),
           
           right_annotation = rowAnnotation(pct = anno_text(anno()), barplot = anno_oncoprint_barplot())
           

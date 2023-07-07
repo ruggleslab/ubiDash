@@ -80,9 +80,6 @@ source("./modules/violin.R")
 shinyServer(function(input, output, session) {
   
   
-  # oncoplot tab ----
-  oncoplotServer("oncoTab")
-  
   # heatmap tab ----
   
   heatmapServer("heatmapTab")
@@ -96,8 +93,13 @@ shinyServer(function(input, output, session) {
   # boxplot tab ----
   violinServer("violinTab")
   
+  
+  # maf = read.maf("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf")
+  # oncoplot tab ----
+  oncoplotServer("oncoTab")
+  
   # lollipop tab
-  lollipopServer("lollipopTab")
+  # lollipopServer("lollipopTab")
   
   # protein specific correlation ----
   source(file = "./RScripts/corrAnalysis.R")
