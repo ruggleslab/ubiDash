@@ -99,7 +99,7 @@ shinyServer(function(input, output, session) {
   oncoplotServer("oncoTab")
   
   # lollipop tab
-  # lollipopServer("lollipopTab")
+  lollipopServer("lollipopTab")
   
   # protein specific correlation ----
   source(file = "./RScripts/corrAnalysis.R")
