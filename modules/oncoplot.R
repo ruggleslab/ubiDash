@@ -18,7 +18,7 @@ oncoplotUI <- function(id, cohorts){
                   min = 1, max = 50,
                   value = 10),
       
-      # checkboxInput(ns("showEmptyColumns"), "Show empty columns", value = TRUE),
+      checkboxInput(ns("sortByCohort"), "Sort by Cohort", value = FALSE),
       
       h3("Cohorts"),
       selectizeInput(inputId = ns("oncoCohortSelect"),
@@ -99,7 +99,7 @@ oncoplotServer <- function(id) {
       return(oncoplot(maf = maf,
                       genes = inputGenes,
                       annotationColor = cohort_colors,
-                      sortByAnnotation = TRUE,
+                      sortByAnnotation = isolate(input$sortByCohort),
                       clinicalFeatures = 'cohort_code',
                       top = isolate(input$maxOncoGenes)
       )
