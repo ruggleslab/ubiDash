@@ -52,14 +52,16 @@ oncoplotServer <- function(id) {
     
     cptac_samples <- readRDS("./data/cptac_sample_info.rds")
     
-    maf = read.maf("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf")
-    patients = maf@clinical.data$Tumor_Sample_Barcode
-    patients = data.frame(patients)
-    colnames(patients) = "harmonized_data_id"
     
-    maf@clinical.data$cohort_code=  merge(x=patients,y=cptac_samples, 
-                                          by="harmonized_data_id", all.x=TRUE)$cohort_code
-    
+    maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+    # maf = read.maf("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf")
+    # patients = maf@clinical.data$Tumor_Sample_Barcode
+    # patients = data.frame(patients)
+    # colnames(patients) = "harmonized_data_id"
+    # 
+    # maf@clinical.data$cohort_code=  merge(x=patients,y=cptac_samples, 
+    #                                       by="harmonized_data_id", all.x=TRUE)$cohort_code
+    # 
     genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
     
     
