@@ -50,11 +50,12 @@ shinyUI(
                                        lollipopUI("lollipopTab", cohorts)
                               )
                    ),
+             navbarMenu("Expression Profile",
                    # heatmap tab ----
                    tabPanel("Heatmap",
                             heatmapUI("heatmapTab", cohorts)
                    ),
-                   
+             ),
                    # volcano plot tab ----
                    tabPanel("Volcano Plots", theme = bs_theme(version = 5, bootswatch = "pulse"),
                             volcanoUI("volcanoTab", cohortSheets)

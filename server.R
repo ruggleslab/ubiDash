@@ -27,17 +27,6 @@ source("./RScripts/SplitInputGenes.R")
 # heatmap variables ----
 source("./modules/heatmap.R")
 
-
-
-# This doesn't appear to be in use
-# colorsTbl = read.csv("./data/colors.csv")
-# colors = colorsTbl$color[1:11]
-# colorList <- list(
-#   Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
-#   Cohort = setNames(colors, nm = cohorts)
-# )
-
-
 # volcano plot variables ----
 source("./modules/volcano.R")
 
@@ -56,7 +45,7 @@ shinyServer(function(input, output, session) {
   
   
   # heatmap tab ----
-  heatmapServer("heatmapTab", cohorts, cptac_protein,tnlabels)
+  heatmapServer("heatmapTab", cohorts, cptac_protein,cptac_rna,tnlabels)
   
   # volcano plot tab ----
   volcanoServer("volcanoTab", cptac_protein, crl_genes)
