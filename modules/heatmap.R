@@ -47,30 +47,10 @@ heatmapUI <- function(id, cohorts){
   )
 }
 
-heatmapServer <- function(id) {
+heatmapServer <- function(id, cohorts, cptac_protein,tnlabels) {
   moduleServer(id,function(input,output,session){
     
     load("./data/defaults.RData")
-    
-    
-    # ccle dataset
-    ccle_rna <- readRDS(glue("./data/ccle_tpm_rna_expression.rds"))
-    ccle_protein <- readRDS("./data/ccle_tmt_protein_expression.rds")
-    ccle_samples <- readRDS("./data/ccle_sample_info.rds")
-    
-    # cptac dataset
-    cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
-    cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
-    cptac_samples <- readRDS("./data/cptac_sample_info.rds")
-    cptac_samples_subtypes <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
-    
-    
-    # cohort and sample type of all normal and tumor samples
-    # labels <- subset(cptac_samples, sample_type %in% c("T", "N","G"), select = c("sample_type", "cohort_code"))
-    tnlabels <- subset(cptac_samples_subtypes, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code","Cancer_subtype"))
-    # get list of cohorts
-    cohorts <- unique(tnlabels$cohort_code)
-    
     
     # cptac_protein <- cptac_protein[, ]
     filteredMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
@@ -131,7 +111,6 @@ heatmapServer <- function(id) {
         # print(inputGenesMat)
         
         if (is.null(inputGenesMat)) {
-          
           if (isolate(input$cluster) && isolate(input$separateNandT)) {
             return(defaultHeatmap)
           }

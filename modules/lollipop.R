@@ -18,13 +18,8 @@ lollipopUI <- function(id, cohortSheets){
   )
 }
 
-lollipopServer<- function(id) {
+lollipopServer<- function(id,maf) {
   moduleServer(id,function(input,output,session){
-    
-    maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-    # maf = read.maf("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf")
-    # maf@gene.summary$Hugo_Symbol = gsub('"',"", maf@gene.summary$Hugo_Symbol)
-    
     
     updateSelectizeInput(session, 'inputGene', 
                          choices = as.list(maf@gene.summary$Hugo_Symbol), 

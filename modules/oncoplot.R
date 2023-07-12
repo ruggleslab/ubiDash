@@ -41,33 +41,9 @@ oncoplotUI <- function(id, cohorts){
   )
 }
 
-source('./RScripts/OncoplotColors.R')
 
-oncoplotServer <- function(id) {
+oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes) {
   moduleServer(id,function(input,output,session){
-    
-    # this is being loaded twice which is not optimal
-    # load("./data/defaults.RData")
-    cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
-    
-    cptac_samples <- readRDS("./data/cptac_sample_info.rds")
-    
-    
-    maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-    # maf = read.maf("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf")
-    # patients = maf@clinical.data$Tumor_Sample_Barcode
-    # patients = data.frame(patients)
-    # colnames(patients) = "harmonized_data_id"
-    # 
-    # maf@clinical.data$cohort_code=  merge(x=patients,y=cptac_samples, 
-    #                                       by="harmonized_data_id", all.x=TRUE)$cohort_code
-    # 
-    genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
-    
-    
-    
-    CRLS = genes
-    crl_genes = unique(CRLS$hgnc_symbol)
      
     
     updateSelectizeInput(session, 'inputOncoGenesTXT', 
@@ -90,18 +66,6 @@ oncoplotServer <- function(id) {
       cohorts = maf@clinical.data[cohort_code %in% isolate(input$oncoCohortSelect)]
       filteredMaf = subsetMaf(maf, tsb = cohorts$Tumor_Sample_Barcode, genes = inputGenes)
       
-      
-      cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
-                                           CCRCC = "maroon4",
-                                           COAD = "goldenrod1",
-                                           GBM = "aquamarine",
-                                           HCC = "pink3",
-                                           HNSCC = "coral4",
-                                           LSCC = "slategray3",
-                                           LUAD = "mediumpurple",
-                                           OV = "seagreen",
-                                           PDA = "lightgoldenrod2",
-                                           UCEC = "orangered3"))
       
       return(oncoplot(maf = filteredMaf,
                       top = isolate(input$maxOncoGenes),

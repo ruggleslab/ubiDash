@@ -1,0 +1,123 @@
+# Datasets ----
+
+# ccle dataset
+ccle_rna <- readRDS(glue("./data/ccle_tpm_rna_expression.rds"))
+ccle_protein <- readRDS("./data/ccle_tmt_protein_expression.rds")
+ccle_samples <- readRDS("./data/ccle_sample_info.rds")
+
+# cptac dataset
+cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
+cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
+cptac_samples <- readRDS("./data/cptac_sample_info.rds")
+
+# for correlations tab
+plot_tab <- readRDS("./data/cptac_multi_omic_correlations.rds")
+
+# maf for lollipop and oncoplot tabs 
+maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+
+
+
+# Information used by various modules ----
+
+# cohort  and sample type of all normal and tumor samples
+tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
+# get list of cohorts
+cohorts <- unique(tnlabels$cohort_code)
+
+genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
+crl_genes = unique(genes$hgnc_symbol)
+
+getInputGenes <- function(CSV, TXT, delim = "tab") {
+  delims = c(
+    tab = "\t",
+    comma = ","
+  )
+  inFile <- CSV
+  if (!is.null(inFile)) {
+    return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = delims[delim])))
+  }
+  return(TXT)
+}
+
+
+getInputGenes <- function(CSV, TXT, delim = "tab") {
+  delims = c(
+    tab = "\t",
+    comma = ","
+  )
+  inFile <- CSV
+  if (!is.null(inFile)) {
+    return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = delims[delim])))
+  }
+  return(TXT)
+}
+
+
+
+# Tab-specific variables ----
+
+# Oncoplot ----
+
+cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
+                                     CCRCC = "maroon4",
+                                     COAD = "goldenrod1",
+                                     GBM = "aquamarine",
+                                     HCC = "pink3",
+                                     HNSCC = "coral4",
+                                     LSCC = "slategray3",
+                                     LUAD = "mediumpurple",
+                                     OV = "seagreen",
+                                     PDA = "lightgoldenrod2",
+                                     UCEC = "orangered3"))
+
+# Violin ----
+
+# labeling instructions
+p <- c("GMCL1", "USP28", "TP53BP1", "APC","RB1", "TP53", "MYC", "CCND1")
+POIs <- ccle_rna[, p, drop = F]
+POIs$DepMap_ID <- rownames(POIs)
+
+lab <- data.frame(genes = colnames(POIs[1:8]),
+                  driver = c(rep("Unknown", 3), # "GMCL1"   "USP28"   "TP53BP1"
+                             rep("Tumor Suppressor", 3), # "APC"     "RB1"  "TP53" 
+                             rep("Oncogene", 2))) # "MYC"     "CCND1"  
+
+# constructing violin.input table for ggplot in the long format
+violin.input <- reshape2::melt(POIs, id.vars="DepMap_ID") %>% 
+  mutate(driver = rep("Unknown", nrow(.))) 
+
+violin.input$driver <- ifelse(violin.input$variable %in% c("MYC","CCND1"),
+                              "Oncogene", violin.input$driver) 
+
+violin.input$driver <- ifelse(violin.input$variable %in% c("APC","RB1","TP53"),
+                              "Tumor Suppressor", violin.input$driver)
+
+# Correlations ----
+source("./RScripts/GenerateCorrPlot.R")
+
+lines = list(geom_hline(yintercept=.5, color = "red") ,
+             geom_hline(yintercept=-.5,  color = "red") ,
+             geom_vline(xintercept=-.5,color = "red") ,
+             geom_vline(xintercept=--.5, color = "red") ,
+             geom_hline(yintercept=0, size = 1, color = "black") ,
+             geom_vline(xintercept=-0, size = 1, color = "black"))
+
+
+
+# Heatmap ----
+getCohortPatients <- function(labels, cohortSelect) {
+  patients <- filter(labels, cohort_code %in% cohortSelect)
+  return(patients)
+}
+
+
+drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster){
+  hm <- Heatmap(inputGenesMat,
+                name = "Log2(Relative Abundance)",
+                show_column_names = FALSE, show_row_names = TRUE,
+                top_annotation = annotation, heatmap_legend_param = list(direction = "horizontal"),
+                column_split = colsplit, cluster_columns = cluster
+  )
+  return(draw(hm, heatmap_legend_side = "bottom", annotation_legend_side = "right"))
+}

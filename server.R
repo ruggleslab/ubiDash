@@ -27,39 +27,15 @@ source("./RScripts/SplitInputGenes.R")
 # heatmap variables ----
 source("./modules/heatmap.R")
 
-source('./RScripts/HeatmapFunctions.R')
 
 
-# ccle dataset
-ccle_rna <- readRDS(glue("./data/ccle_tpm_rna_expression.rds"))
-ccle_protein <- readRDS("./data/ccle_tmt_protein_expression.rds")
-ccle_samples <- readRDS("./data/ccle_sample_info.rds")
-
-# cptac dataset
-cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
-cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
-cptac_samples <- readRDS("./data/cptac_sample_info.rds")
-
-
-# cohort  and sample type of all normal and tumor samples
-# labels <- subset(cptac_samples, sample_type %in% c("T", "N","G"), select = c("sample_type", "cohort_code"))
-tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
-# get list of cohorts
-cohorts <- unique(tnlabels$cohort_code)
-
-
-# cptac_protein <- cptac_protein[, ]
-filteredMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
-
-# remove rows with over 50% NA
-filteredMat <- filteredMat[which(rowMeans(!is.na(filteredMat)) > 0.5), ]
-
-colorsTbl = read.csv("./data/colors.csv")
-colors = colorsTbl$color[1:11]
-colorList <- list(
-  Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
-  Cohort = setNames(colors, nm = cohorts)
-)
+# This doesn't appear to be in use
+# colorsTbl = read.csv("./data/colors.csv")
+# colors = colorsTbl$color[1:11]
+# colorList <- list(
+#   Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
+#   Cohort = setNames(colors, nm = cohorts)
+# )
 
 
 # volcano plot variables ----
@@ -67,7 +43,6 @@ source("./modules/volcano.R")
 
 # oncoplot variables ----
 source('./modules/oncoplot.R')
-
 
 # correlation variables ----
 source("./modules/correlations.R")
@@ -81,25 +56,22 @@ shinyServer(function(input, output, session) {
   
   
   # heatmap tab ----
-  
-  heatmapServer("heatmapTab")
+  heatmapServer("heatmapTab", cohorts, cptac_protein,tnlabels)
   
   # volcano plot tab ----
-  volcanoServer("volcanoTab")
+  volcanoServer("volcanoTab", cptac_protein, crl_genes)
   
   # correlation tab (----
-  correlationsServer("corrTab")
+  correlationsServer("corrTab", plot_tab, lines)
   
   # boxplot tab ----
-  violinServer("violinTab")
+  violinServer("violinTab", ccle_rna, violin.input, POIS)
   
-  
-  # maf = read.maf("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf")
   # oncoplot tab ----
-  oncoplotServer("oncoTab")
+  oncoplotServer("oncoTab", cptac_protein,cptac_samples, maf,crl_genes)
   
   # lollipop tab
-  lollipopServer("lollipopTab")
+  lollipopServer("lollipopTab",maf)
   
   # protein specific correlation ----
   source(file = "./RScripts/corrAnalysis.R")
