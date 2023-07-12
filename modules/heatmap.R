@@ -23,11 +23,11 @@ heatmapUI <- function(id, cohorts){
         selectizeInput(inputId = ns("inputGenesTXT"),
                        choices = NULL,
                        label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
-        p("OR"),
-        fileInput(ns("inputGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
-        # actionButton("resetHeatmapGenesCSV","clear"),
-        selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),               
-        
+        # p("OR"),
+        # fileInput(ns("inputGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+        # # actionButton("resetHeatmapGenesCSV","clear"),
+        # selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),               
+        # 
         # cohort seleciton checkboxes
         h3("Cohorts"),
         selectizeInput(inputId = ns("cohortSelect"),

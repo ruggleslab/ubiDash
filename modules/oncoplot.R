@@ -9,7 +9,7 @@ oncoplotUI <- function(id, cohorts){
       selectizeInput(inputId = ns("inputOncoGenesTXT"),
                      choices = NULL,
                      label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
-      p("OR"),
+      # p("OR"),
       # fileInput(ns("inputOncoGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
       # selectInput(ns("oncoDelims"), "Delimiter", c("tab", "comma")),               
       # 

@@ -10,9 +10,9 @@ volcanoUI <- function(id, cohortSheets){
       selectizeInput(inputId = ns("inputVolcanoGenesTXT"),
                      choices = NULL,
                      label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
-      p("OR"),
-      fileInput(ns("inputVolcanoGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
-      selectInput(ns("volcanoDelims"), "Delimiter", c("tab", "comma")),               
+      # p("OR"),
+      # fileInput(ns("inputVolcanoGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+      # selectInput(ns("volcanoDelims"), "Delimiter", c("tab", "comma")),               
       
       # cutoff options
       selectInput(ns("PValCutoff"), "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
