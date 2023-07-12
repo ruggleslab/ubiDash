@@ -22,8 +22,6 @@ cohorts = c("BRCA","CCRCC","COAD","GBM","HCC","HNSCC","LSCC","LUAD","OV","PDA","
 cohortSheets <- excel_sheets(path = filepath)
 abstract =  paste(read.delim("./www/assets/abstract.txt"))
 
-
-# source: https://stackoverflow.com/questions/38558827/making-an-image-hyperlink-in-r-shiny-header
 shinyUI(
   
   navbarPage(img(src="assets/ubiDash_logo.png", width="120"), theme = bs_theme(version = 5, bootswatch = "pulse"),

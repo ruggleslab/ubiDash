@@ -24,18 +24,11 @@ load("./data/defaults.RData")
 
 source("./RScripts/SplitInputGenes.R")
 
-# heatmap variables ----
+# load modules
 source("./modules/heatmap.R")
-
-# volcano plot variables ----
 source("./modules/volcano.R")
-
-# oncoplot variables ----
 source('./modules/oncoplot.R')
-
-# correlation variables ----
 source("./modules/correlations.R")
-# boxplot variables ----
 source("./modules/violin.R")
 
 
@@ -43,9 +36,10 @@ source("./modules/violin.R")
 
 shinyServer(function(input, output, session) {
   
-  
   # heatmap tab ----
-  heatmapServer("heatmapTab", cohorts, cptac_protein,cptac_rna,tnlabels)
+  heatmapServer("heatmapTab", cohorts, cptac_protein,cptac_rna,tnlabels, 
+                colorsList, filteredProteinMat, filteredMRNAMat, 
+                filteredTnlabels, defaultHeatmap, genesSubset)
   
   # volcano plot tab ----
   volcanoServer("volcanoTab", cptac_protein, crl_genes)

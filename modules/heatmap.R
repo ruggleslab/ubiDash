@@ -1,7 +1,6 @@
 heatmapUI <- function(id, cohorts){
   ns <- NS(id)
   
-  
   sidebarLayout(
     sidebarPanel(
       h3("Heatmap"),
@@ -19,6 +18,7 @@ heatmapUI <- function(id, cohorts){
                   ),
       ),
       div(
+                           br(),
         # make sure these do not interfere
         selectizeInput(inputId = ns("inputGenesTXT"),
                        choices = NULL,
@@ -59,35 +59,16 @@ heatmapUI <- function(id, cohorts){
   
 }
 
-heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels) {
+heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels, 
+                          colorsList, filteredProteinMat, filteredMRNAMat, 
+                          filteredTnlabels, defaultHeatmap, genesSubset) {
   moduleServer(id,function(input,output,session){
-    
-    colorsTbl = read.csv("./data/colors.csv")
-    colors = colorsTbl$color[1:11]
-    colorList <- list(
-      Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
-      Cohort = setNames(colors, nm = cohorts)
-    )
-    
-    
-    load("./data/defaults.RData")
-    
-    filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
-    # remove rows with over 50% NA
-    filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
-    
-    filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
-    filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
-    # remove rows with over 50% NA
-    filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
     
     updateSelectizeInput(session, 'inputGenesTXT', 
                          choices = as.list(rownames(cptac_protein)), 
                          server = TRUE)
     
-    # add download heatmap button
-    
-    # default plot height maybe automate this 
+    # default plot height: maybe automate this 
     plotHeight <- reactiveVal(956)
     
     # matrix with only genes to plot

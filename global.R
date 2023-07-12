@@ -104,8 +104,26 @@ lines = list(geom_hline(yintercept=.5, color = "red") ,
              geom_vline(xintercept=-0, size = 1, color = "black"))
 
 
-
 # Heatmap ----
+load("./data/defaults.RData")
+
+filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
+# remove rows with over 50% NA
+filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
+
+filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
+filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
+# remove rows with over 50% NA
+filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
+
+
+colorsTbl = read.csv("./data/colors.csv")
+colors = colorsTbl$color[1:11]
+colorList <- list(
+  Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
+  Cohort = setNames(colors, nm = cohorts)
+)
+
 getCohortPatients <- function(labels, cohortSelect) {
   patients <- filter(labels, cohort_code %in% cohortSelect)
   return(patients)
