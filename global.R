@@ -112,9 +112,9 @@ getCohortPatients <- function(labels, cohortSelect) {
 }
 
 
-drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster){
+drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster, legendName){
   hm <- Heatmap(inputGenesMat,
-                name = "Log2(Relative Abundance)",
+                name = legendName,
                 show_column_names = FALSE, show_row_names = TRUE,
                 top_annotation = annotation, heatmap_legend_param = list(direction = "horizontal"),
                 column_split = colsplit, cluster_columns = cluster

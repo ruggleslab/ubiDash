@@ -1,31 +1,6 @@
 heatmapUI <- function(id, cohorts){
   ns <- NS(id)
   
-  sidebarContent = function(){
-    return(div(
-      # make sure these do not interfere
-      selectizeInput(inputId = ns("inputGenesTXT"),
-                     choices = NULL,
-                     label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
-      p("OR"),
-      fileInput(ns("inputGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
-      # actionButton("resetHeatmapGenesCSV","clear"),
-      selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),               
-      
-      # cohort seleciton checkboxes
-      h3("Cohorts"),
-      selectizeInput(inputId = ns("cohortSelect"),
-                     choices = cohorts,selected = cohorts,
-                     label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
-      checkboxInput(ns("cluster"), "Cluster columns",
-                    value = TRUE),
-      
-      # toggle clustering and separation by tumor and normal
-      checkboxInput(ns("separateNandT"), "Separate normal and tumor",
-                    value = TRUE),
-    ))
-    
-  }
   
   sidebarLayout(
     sidebarPanel(
@@ -33,20 +8,42 @@ heatmapUI <- function(id, cohorts){
       
       tabsetPanel(id = "GvGpanel",selected = "Protein",
                   tabPanel("Protein",
-                           sidebarContent(),
-                           
+                           br(),
                            actionButton(ns("generateProteinHeatmap"), "Generate Protein Heatmap"),
+                           br(),
                   ),
                   tabPanel("mRNA",
-                             sidebarContent(),
-                             
-                             actionButton(ns("generateMRNAHeatmap"), "Generate mRNA Heatmap"),
-                  )
+                           br(),
+                           actionButton(ns("generateMRNAHeatmap"), "Generate mRNA Heatmap"),
+                           br(),
+                  ),
+      ),
+      div(
+        # make sure these do not interfere
+        selectizeInput(inputId = ns("inputGenesTXT"),
+                       choices = NULL,
+                       label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
+        p("OR"),
+        fileInput(ns("inputGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+        # actionButton("resetHeatmapGenesCSV","clear"),
+        selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),               
+        
+        # cohort seleciton checkboxes
+        h3("Cohorts"),
+        selectizeInput(inputId = ns("cohortSelect"),
+                       choices = cohorts,selected = cohorts,
+                       label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
+        checkboxInput(ns("cluster"), "Cluster columns",
+                      value = TRUE),
+        
+        # toggle clustering and separation by tumor and normal
+        checkboxInput(ns("separateNandT"), "Separate normal and tumor",
+                      value = TRUE),
       ),
       
-      p("Download this data"),
-      downloadButton(outputId = ns("downloadData"), label = "Download"),
       
+      p("Download this data"),
+      downloadButton(outputId = ns("downloadData"), label = "Download")
       
     ),
     
@@ -58,8 +55,8 @@ heatmapUI <- function(id, cohorts){
         tagAppendAttributes(class = 'error'),
       shinycssloaders::withSpinner(plotOutput(ns("heatmap")), color = "#6A2798"),
     )
-    
   )
+  
 }
 
 heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels) {
@@ -103,21 +100,21 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels) {
       if (length(inputGenes) == 0) {
         # print(cohortSubsetLabels)
         if(protein){
-        return(filteredProteinMat[, rownames(cohortSubsetLabels)])
+          return(filteredProteinMat[, rownames(cohortSubsetLabels)])
         }else{
-        return(filteredMRNAMat[, rownames(cohortSubsetLabels)])
-            
-          }
+          return(filteredMRNAMat[, rownames(cohortSubsetLabels)])
+          
+        }
       }
       if(protein){
-      return(cptac_protein[inputGenes, rownames(cohortSubsetLabels)])
+        return(cptac_protein[inputGenes, rownames(cohortSubsetLabels)])
       } else{
         return(cptac_rna[inputGenes, rownames(cohortSubsetLabels)])
         
       }
     }
     
-    protein = reactiveVal(FALSE)
+    protein = reactiveVal(TRUE)
     
     observeEvent(input$generateProteinHeatmap,{
       protein(TRUE)
@@ -129,20 +126,25 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels) {
     
     output$heatmap <- renderPlot(
       {
+        instanceTnLabels = NULL;
+        if(protein()){
+          legendName = "Log2(Relative Abundance)"
+          instanceTnLabels = tnlabels;
+        } else {
+          legendName = "Log2(TPM + 1)"
+          instanceTnLabels = filteredTnlabels;
+          
+        }
         
         # Button will trigger rerender
         input$generateProteinHeatmap
         input$generateMRNAHeatmap
-       
+        
         
         # get cohorts selected by user
         cohortSubsetLabels = NULL
-        if(protein()){
-          cohortSubsetLabels =getCohortPatients(tnlabels, isolate(input$cohortSelect))
-        } else {
-          cohortSubsetLabels =getCohortPatients(filteredTnlabels, isolate(input$cohortSelect))
-          
-        }
+        cohortSubsetLabels =getCohortPatients(instanceTnLabels, isolate(input$cohortSelect))
+        
         
         if(nrow(cohortSubsetLabels) == 0){
           output$rowscut <- renderText({
@@ -161,10 +163,11 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels) {
           }
           
           if(protein()){
-            return(filteredProteinMat)
+            inputGenesMat = filteredProteinMat
+          } else{
+            inputGenesMat = filteredMRNAMat
           }
-            return(filteredMRNAMat)
-
+          
           
         } else {
           inputGenesMat <- as.matrix(inputGenesMat[which(rowMeans(!is.na(inputGenesMat)) > 0.5), ])
@@ -192,10 +195,7 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels) {
         
         colsplit = NULL
         if(isolate(input$separateNandT)){
-          if(protein()){
-            colsplit = getCohortPatients(tnlabels,isolate(input$cohortSelect))$sample_type}
-          else{
-            colsplit = getCohortPatients(filteredTnlabels,isolate(input$cohortSelect))$sample_type}
+          colsplit = getCohortPatients(instanceTnLabels,isolate(input$cohortSelect))$sample_type
         }
         
         
@@ -206,13 +206,13 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels) {
             output$err <- renderText({
               ""
             })
-            return(drawHeatmap(inputGenesMat, ha, colsplit, isolate(input$cluster)))
+            return(drawHeatmap(inputGenesMat, ha, colsplit, isolate(input$cluster), legendName))
           },
           error = function(e) {
             output$err <- renderText({
               "Warning: Not enough data to cluster columns"
             })
-            return(drawHeatmap(inputGenesMat, ha, colsplit, FALSE))
+            return(drawHeatmap(inputGenesMat, ha, colsplit, FALSE,legendName))
             
           }
         )
