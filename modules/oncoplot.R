@@ -65,6 +65,7 @@ oncoplotServer <- function(id) {
     genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
     
     
+    
     CRLS = genes
     crl_genes = unique(CRLS$hgnc_symbol)
      
@@ -80,11 +81,14 @@ oncoplotServer <- function(id) {
       inputGenes = isolate(input$inputOncoGenesTXT)
       # print(inputGenes)
       
+      
       if(!isTruthy(inputGenes)){
-        # inputGenes = crl_genes
-        inputGenes = NULL
+        inputGenes = crl_genes
+        # inputGenes = NULL
       }
       
+      remove = maf@data$Hugo_Symbol[!(maf@data$Hugo_Symbol%in% inputGenes)]
+      filteredMaf = filterMaf(maf, genes=remove)
       
       cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
                                            CCRCC = "maroon4",
@@ -98,12 +102,12 @@ oncoplotServer <- function(id) {
                                            PDA = "lightgoldenrod2",
                                            UCEC = "orangered3"))
       
-      return(oncoplot(maf = maf,
-                      genes = inputGenes,
+      return(oncoplot(maf = filteredMaf,
+                      top = isolate(input$maxOncoGenes),
+                      # genes = inputGenes,
                       annotationColor = cohort_colors,
                       sortByAnnotation = isolate(input$sortByCohort),
-                      clinicalFeatures = 'cohort_code',
-                      top = isolate(input$maxOncoGenes)
+                      clinicalFeatures = 'cohort_code'
       )
       )
     })
