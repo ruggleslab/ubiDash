@@ -87,8 +87,9 @@ oncoplotServer <- function(id) {
         # inputGenes = NULL
       }
       
-      remove = maf@data$Hugo_Symbol[!(maf@data$Hugo_Symbol%in% inputGenes)]
-      filteredMaf = filterMaf(maf, genes=remove)
+      cohorts = maf@clinical.data[cohort_code %in% isolate(input$oncoCohortSelect)]
+      filteredMaf = subsetMaf(maf, tsb = cohorts$Tumor_Sample_Barcode, genes = inputGenes)
+      
       
       cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
                                            CCRCC = "maroon4",
