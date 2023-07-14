@@ -4,7 +4,7 @@ library("tidyverse")
 # Datasets ----
 
 # ccle dataset
-ccle_rna <- readRDS(glue("./data/ccle_tpm_rna_expression.rds"))
+ccle_rna <- readRDS("./data/ccle_tpm_rna_expression.rds")
 ccle_protein <- readRDS("./data/ccle_tmt_protein_expression.rds")
 ccle_samples <- readRDS("./data/ccle_sample_info.rds")
 
