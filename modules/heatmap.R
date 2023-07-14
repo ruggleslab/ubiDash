@@ -33,6 +33,11 @@ heatmapUI <- function(id, cohorts){
         selectizeInput(inputId = ns("cohortSelect"),
                        choices = cohorts,selected = cohorts,
                        label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
+        
+        selectizeInput(inputId = ns("subtypeSelect"),
+                       choices = cohorts,selected = cohorts,
+                       label = "Select subtypes",options = list(`live-search` = TRUE),  multiple = TRUE),
+        
         checkboxInput(ns("cluster"), "Cluster columns",
                       value = TRUE),
         
@@ -68,13 +73,21 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels,
                          choices = as.list(rownames(cptac_protein)), 
                          server = TRUE)
     
+    
+
+    updateSelectizeInput(session, 'subtypeSelect', 
+                         choices = tnlabels$Cancer_subtype, 
+                         selected =tnlabels$Cancer_subtype, 
+                         server = TRUE)
+    
     # default plot height: maybe automate this 
     plotHeight <- reactiveVal(956)
     
     # matrix with only genes to plot
     getGenesMat <- function(inputGenes,cohortSubsetLabels,protein) {
       if (length(inputGenes) == 0 &
-          length(isolate(isolate(input$cohortSelect))) == length(cohorts)) {
+          length(isolate(input$cohortSelect)) == length(cohorts) & 
+          length(isolate(input$subtypeSelect)) == length(tnlabels$Cancer_subtype)) {
         return(NULL)
       }
       
@@ -107,6 +120,8 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels,
     
     output$heatmap <- renderPlot(
       {
+
+        
         instanceTnLabels = NULL;
         if(protein()){
           legendName = "Log2(Relative Abundance)"
@@ -122,14 +137,18 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels,
         input$generateMRNAHeatmap
         
         
+        
         # get cohorts selected by user
         cohortSubsetLabels = NULL
-        cohortSubsetLabels =getCohortPatients(instanceTnLabels, isolate(input$cohortSelect))
+        cohortSubsetLabels = filter(instanceTnLabels, 
+                                    cohort_code %in% isolate(input$cohortSelect) 
+                                    & Cancer_subtype %in% isolate(input$subtypeSelect))
+        
         
         
         if(nrow(cohortSubsetLabels) == 0){
           output$rowscut <- renderText({
-            paste("Error: Please select at least one cohort")
+            paste("Error: Please select at least one cohort and one subtype")
           })
           return()
         }
@@ -176,7 +195,7 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels,
         
         colsplit = NULL
         if(isolate(input$separateNandT)){
-          colsplit = getCohortPatients(instanceTnLabels,isolate(input$cohortSelect))$sample_type
+          colsplit =  cohortSubsetLabels$sample_type
         }
         
         

@@ -11,7 +11,7 @@ ccle_samples <- readRDS("./data/ccle_sample_info.rds")
 # cptac dataset
 cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
 cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
-cptac_samples <- readRDS("./data/cptac_sample_info.rds")
+cptac_samples <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
 
 # for correlations tab
 plot_tab <- readRDS("./data/cptac_multi_omic_correlations.rds")
@@ -24,7 +24,7 @@ maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
 # Information used by various modules ----
 
 # cohort  and sample type of all normal and tumor samples
-tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code"))
+tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code", "Cancer_subtype"))
 # get list of cohorts
 cohorts <- unique(tnlabels$cohort_code)
 
@@ -129,10 +129,10 @@ colorList <- list(
   Cohort = setNames(colors, nm = cohorts)
 )
 
-getCohortPatients <- function(labels, cohortSelect) {
-  patients <- filter(labels, cohort_code %in% cohortSelect)
-  return(patients)
-}
+# getCohortPatients <- function(labels, cohortSelect) {
+#   patients <- filter(labels, cohort_code %in% cohortSelect)
+#   return(patients)
+# }
 
 
 drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster, legendName){
