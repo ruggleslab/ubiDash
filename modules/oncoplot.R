@@ -42,7 +42,7 @@ oncoplotUI <- function(id, cohorts){
 }
 
 
-oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes) {
+oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crls, cohorts) {
   moduleServer(id,function(input,output,session){
      
     
@@ -59,17 +59,19 @@ oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes) {
       
       
       if(!isTruthy(inputGenes)){
-        inputGenes = crl_genes
-        # inputGenes = NULL
+        inputGenes = top_crls[1:isolate(input$maxOncoGenes)]
       }
       
-      cohorts = maf@clinical.data[cohort_code %in% isolate(input$oncoCohortSelect)]
-      filteredMaf = subsetMaf(maf, tsb = cohorts$Tumor_Sample_Barcode, genes = inputGenes)
+      filteredMaf = maf;
+      if(length(isolate(input$oncoCohortSelect)) !=  length(cohorts)){
+        inputCohorts = maf@clinical.data[cohort_code %in% isolate(input$oncoCohortSelect)]
+        filteredMaf = subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode, genes = inputGenes)
+      }
       
       
       return(oncoplot(maf = filteredMaf,
-                      top = isolate(input$maxOncoGenes),
-                      # genes = inputGenes,
+                      # top = isolate(input$maxOncoGenes),
+                      genes = inputGenes,
                       annotationColor = cohort_colors,
                       sortByAnnotation = isolate(input$sortByCohort),
                       clinicalFeatures = 'cohort_code'

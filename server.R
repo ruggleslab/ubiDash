@@ -42,7 +42,7 @@ shinyServer(function(input, output, session) {
   violinServer("violinTab", ccle_rna, violin.input, POIS)
   
   # oncoplot tab ----
-  oncoplotServer("oncoTab", cptac_protein,cptac_samples, maf,crl_genes)
+  oncoplotServer("oncoTab", cptac_protein,cptac_samples, maf,crl_genes, top_crls, cohorts)
   
   # lollipop tab
   lollipopServer("lollipopTab",maf)

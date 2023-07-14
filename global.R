@@ -74,6 +74,8 @@ cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
                                      PDA = "lightgoldenrod2",
                                      UCEC = "orangered3"))
 
+top_crls = readRDS("./data/topcrls.rds")
+
 # Violin ----
 
 # labeling instructions
