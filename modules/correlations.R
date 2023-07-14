@@ -44,21 +44,10 @@ correlationsUI <- function(id){
   )
 }
 
-correlationsServer <- function(id) {
+correlationsServer <- function(id, plot_tab, lines) {
   moduleServer(id,function(input,output,session){
     
-    plot_tab <- readRDS("./data/cptac_multi_omic_correlations.rds")
-    source("./RScripts/GenerateCorrPlot.R")
-    lines = list(geom_hline(yintercept=.5, color = "red") ,
-                 geom_hline(yintercept=-.5,  color = "red") ,
-                 geom_vline(xintercept=-.5,color = "red") ,
-                 geom_vline(xintercept=--.5, color = "red") ,
-                 geom_hline(yintercept=0, size = 1, color = "black") ,
-                 geom_vline(xintercept=-0, size = 1, color = "black"))
-    
-    
-    
-    
+
     warning = reactiveVal("")
     
     

@@ -10,9 +10,9 @@ volcanoUI <- function(id, cohortSheets){
       selectizeInput(inputId = ns("inputVolcanoGenesTXT"),
                      choices = NULL,
                      label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
-      p("OR"),
-      fileInput(ns("inputVolcanoGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
-      selectInput(ns("volcanoDelims"), "Delimiter", c("tab", "comma")),               
+      # p("OR"),
+      # fileInput(ns("inputVolcanoGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
+      # selectInput(ns("volcanoDelims"), "Delimiter", c("tab", "comma")),               
       
       # cutoff options
       selectInput(ns("PValCutoff"), "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
@@ -31,18 +31,10 @@ volcanoUI <- function(id, cohortSheets){
 }
 
 
-volcanoServer <- function(id) {
+volcanoServer <- function(id, cptac_protein, crl_genes) {
   moduleServer(id,function(input,output,session){
     
-    
-    # this is imported again in other places
-    cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
-    source('./RScripts/HeatmapFunctions.R')
-    
-    
     filepath <- "./data/DE_protein.xlsx"
-    genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
-    unique_genes <- unique(genes$hgnc_symbol)
     
     updateSelectizeInput(session, 'inputVolcanoGenesTXT', 
                          choices = as.list(rownames(cptac_protein)), 
@@ -64,12 +56,12 @@ volcanoServer <- function(id) {
       # prepare dataframe
       data <- read_excel(path = filepath, sheet = isolate(input$cohort))
       data$POI <- "Other"
-      data$POI[data$gene %in% unique_genes] = "CRL"
+      data$POI[data$gene %in% crl_genes] = "CRL"
       data$POI[toupper(data$gene) %in% inputGenes] = "Potential Substrate"
       data$log.scal.pval <- -log10(data$sca.adj.pval)
       
       # get significant genes
-      labeledPoints <- filter(data, (gene %in% unique_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% inputGenes)
+      labeledPoints <- filter(data, (gene %in% crl_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% inputGenes)
       
       p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = POI)) +
         ylab("-Log10(adjusted p-val)") +

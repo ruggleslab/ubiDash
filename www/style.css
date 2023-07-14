@@ -1,15 +1,16 @@
 /* Set styles for navbar and links */
-.navbar.navbar-default.navbar-static-topav{
-  background-color: #6A2798!important;
-  color:white!important;
+.navbar.navbar-default.navbar-static-topav {
+  background-color: #6A2798 !important;
+  color: white !important;
 }
 
-.navbar.navbar-default{
-  background-color: #6A2798!important;
+.navbar.navbar-default {
+  background-color: #6A2798 !important;
 }
 
-.navbar-nav a.nav-link, span.navbar-brand{
-  color:white!important;
+.navbar-nav a.nav-link,
+span.navbar-brand {
+  color: white !important;
 }
 
 .navbar-nav a.nav-link:hover {
@@ -17,7 +18,24 @@
   text-decoration: underline;
 }
 
-/* Set background image for navbar */
+nav .container-fluid:after {
+  display: none;
+}
+
+body .container-fluid {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+
+#burger {
+  display: none
+}
+
+#burger-label{
+  display:none;
+}
+
 .navbar:after {
   background-image: url(./assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png);
   background-size: 150px 50px;
@@ -28,15 +46,17 @@
   right: 20px;
 }
 
+
 /* Set styles for buttons */
-#generateBTN, #generateVolcano {
+#generateBTN,
+#generateVolcano {
   margin-bottom: 15px;
-  height:30px;
+  height: 30px;
 }
 
 /* Set error message color */
 .error {
-  color:red;
+  color: red;
 }
 
 /* Set styles for home image */
@@ -62,15 +82,61 @@
 
 /* Media query for smaller screens */
 @media (max-width: 680px) {
+
+
+  nav .container-fluid:after {
+    display: none;
+  }
+
   .title-page {
     margin: 0px 3%;
   }
-  
+
   .title-page h1 {
     width: 100%;
   }
-  
+
   .navbar:after {
     content: none;
+  }
+}
+
+
+@media (max-width: 1120px) {
+
+  .navbar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding-right: 30px;
+  }
+
+  .collapsed-nav .navbar-nav {
+    display: none !important;
+  }
+
+
+  #burger-label {
+    display: block;
+    background-image: url("./assets/navbarcollapse.svg");
+    background-repeat: no-repeat;
+    height:25px;
+    width: 25px;
+  }
+
+  .navbar-nav {
+    display: flex;
+    flex-direction: column !important;
+  }
+
+  nav .container-fluid {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+
+  .navbar:after {
+    display: none;
   }
 }
