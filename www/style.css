@@ -22,52 +22,20 @@ nav .container-fluid:after {
   display: none;
 }
 
-
-
-
-
-
-@media (max-width: 1050px) {
-  .navbar-nav {
-    display: flex;
-    flex-direction: column !important;
-  }
-
-  nav .container-fluid {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-  }
-
-
-  nav .container-fluid:after {
-    display:block;
-    background-image: url(./assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png);
-    background-size: 150px 50px;
-    width: 150px;
-    height: 50px;
-    content: "";
-    position: absolute;
-    right: 20px;
-    top:20px;
-  }
-  .navbar:after {
-    display:none;
-  }
+body .container-fluid {
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 
-@media (max-width: 340px) {
-  nav .container-fluid:after {
-    display: none;
-  }
+#burger {
+  display: none
 }
 
+#burger-label{
+  display:none;
+}
 
-
-
-
-
-/* Set background image for navbar */
 .navbar:after {
   background-image: url(./assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png);
   background-size: 150px 50px;
@@ -77,6 +45,7 @@ nav .container-fluid:after {
   position: absolute;
   right: 20px;
 }
+
 
 /* Set styles for buttons */
 #generateBTN,
@@ -113,6 +82,12 @@ nav .container-fluid:after {
 
 /* Media query for smaller screens */
 @media (max-width: 680px) {
+
+
+  nav .container-fluid:after {
+    display: none;
+  }
+
   .title-page {
     margin: 0px 3%;
   }
@@ -123,5 +98,45 @@ nav .container-fluid:after {
 
   .navbar:after {
     content: none;
+  }
+}
+
+
+@media (max-width: 1120px) {
+
+  .navbar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding-right: 30px;
+  }
+
+  .collapsed-nav .navbar-nav {
+    display: none !important;
+  }
+
+
+  #burger-label {
+    display: block;
+    background-image: url("./assets/navbarcollapse.svg");
+    background-repeat: no-repeat;
+    height:25px;
+    width: 25px;
+  }
+
+  .navbar-nav {
+    display: flex;
+    flex-direction: column !important;
+  }
+
+  nav .container-fluid {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+
+  .navbar:after {
+    display: none;
   }
 }

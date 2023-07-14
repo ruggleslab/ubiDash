@@ -1,3 +1,6 @@
+library("glue")
+library("readxl")
+library("tidyverse")
 # Datasets ----
 
 # ccle dataset

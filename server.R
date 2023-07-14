@@ -1,12 +1,3 @@
-# library(shiny)
-# library(ComplexHeatmap)
-# library(readxl)
-# library(tidyverse)
-# library(RColorBrewer)
-# library(plotly)
-
-
-
 packagelist = c("shiny", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools")
   
 lapply(packagelist, function(x) {
