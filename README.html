@@ -449,8 +449,33 @@ status.</li>
 </ul></li>
 </ol>
 </div>
-<div id="accessing-the-shiny-server-from-ultraviolet" class="section level2">
-<h2>Accessing the shiny-server from UltraViolet</h2>
+<div id="accessing-shiny-server-from-local-terminal" class="section level2">
+<h2>Accessing shiny-server from local terminal</h2>
+<ul>
+<li><p>From local terminal</p>
+<ul>
+<li><p><code>ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no YOUR_KID@YOUR_KID#nyumc.org@SERVER_NAME.nyumc.org@psmp.nyumc.org</code></p></li>
+<li><p>You will receive a DUO approval request, approve and your in the
+server.</p></li>
+<li><p>Troubleshooting:</p>
+<ul>
+<li><p>Make sure CyberArk account is created prior to login
+attempt</p></li>
+<li><p>Make sure no duplicate accounts exist in CyberArk</p></li>
+</ul></li>
+</ul></li>
+<li><p>Example accessing the new server:</p>
+<ul>
+<li><code>ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no tgr248@tgr248#nyumc.org@spaapplpdcdvm02.nyumc.org@psmp.nyumc.org</code></li>
+</ul></li>
+<li><p>Examples accessing the old server:</p>
+<ul>
+<li><code>ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no tgr248@tgr248#nyumc.org@ssplcdcdvm04.nyumc.org@psmp.nyumc.org</code></li>
+</ul></li>
+</ul>
+</div>
+<div id="accessing-the-shiny-server-from-ultraviolet-deprecated" class="section level2">
+<h2>Accessing the shiny-server from UltraViolet (deprecated)</h2>
 <ul>
 <li><p>log-in to UltraViolet as you would normally do</p></li>
 <li><p>then log-in to the shiny-server:
@@ -461,8 +486,8 @@ status.</li>
 <ul>
 <li><p>Will need login credentials to the ruggleslab github
 account</p></li>
-<li><p><input type="checkbox" disabled checked></input>would it be
-possible to create a ssh key? (Yes) see documentation on <a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent">how
+<li><p><input type="checkbox" checked></input>would it be possible to
+create a ssh key? (Yes) see documentation on <a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent">how
 to create ssh keys</a>.</p></li>
 </ul></li>
 </ul>

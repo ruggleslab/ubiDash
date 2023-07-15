@@ -73,7 +73,29 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
         -   **NOTE:** The -d option only deletes the branch if it has already been merged. The -D option is a shortcut for \--delete \--force, which deletes the branch irrespective of its merged status.
 
-## Accessing the shiny-server from UltraViolet
+## Accessing shiny-server from local terminal
+
+-   From local terminal
+
+    -   `ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no YOUR_KID@YOUR_KID#nyumc.org@SERVER_NAME.nyumc.org@psmp.nyumc.org`
+
+    -   You will receive a DUO approval request, approve and your in the server.
+
+    -   Troubleshooting:
+
+        -   Make sure CyberArk account is created prior to login attempt
+
+        -   Make sure no duplicate accounts exist in CyberArk
+
+-   Example accessing the new server:
+
+    -   `ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no tgr248@tgr248#nyumc.org@spaapplpdcdvm02.nyumc.org@psmp.nyumc.org`
+
+-   Examples accessing the old server:
+
+    -   `ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no tgr248@tgr248#nyumc.org@ssplcdcdvm04.nyumc.org@psmp.nyumc.org`
+
+## Accessing the shiny-server from UltraViolet (deprecated)
 
 -   log-in to UltraViolet as you would normally do
 
