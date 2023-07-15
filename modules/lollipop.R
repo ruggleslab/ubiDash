@@ -7,37 +7,36 @@ lollipopUI <- function(id, cohortSheets){
       selectizeInput(inputId = ns("inputGene"),
                      choices = NULL,
                      multiple = FALSE,
-                     label =  "Input gene",options = list(`live-search` = TRUE),),
+                     label =  "Input gene",
+                     options = list(`live-search` = TRUE),
+                     ),
     ),
     
     mainPanel(
-      textOutput(ns("err"))%>% 
+      textOutput(ns("err")) %>% 
         tagAppendAttributes(class = 'error'),
-      shinycssloaders::withSpinner(plotOutput(ns("lollipop")), color = "#6A2798"),
+      shinycssloaders::withSpinner(plotOutput(ns("lollipop")), 
+                                   color = "#6A2798"),
     )
   )
 }
 
-lollipopServer<- function(id,maf) {
+lollipopServer <- function(id,maf) {
   moduleServer(id,function(input,output,session){
     
     updateSelectizeInput(session, 'inputGene', 
                          choices = as.list(maf@gene.summary$Hugo_Symbol), 
-                         server = TRUE, selected = NULL,)
-    
-    
+                         server = TRUE, selected = "VHL")
+      
     output$lollipop = renderPlot({
       inputGene = input$inputGene
-      
-      if(!isTruthy(inputGene)){ 
-        inputGene = "VHL"
-      }
       
       return (lollipopPlot(
         maf = maf,
         gene = inputGene,
         AACol = 'Protein_Change',
         showMutationRate = TRUE,
+        roundedRect = FALSE,
         # labelPos = 882
       ))
     })

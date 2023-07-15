@@ -8,7 +8,9 @@ oncoplotUI <- function(id, cohorts){
       
       selectizeInput(inputId = ns("inputOncoGenesTXT"),
                      choices = NULL,
-                     label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
+                     label =  "Input genes",
+                     options = list(`live-search` = TRUE),  
+                     multiple = TRUE),
       # p("OR"),
       # fileInput(ns("inputOncoGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
       # selectInput(ns("oncoDelims"), "Delimiter", c("tab", "comma")),               
@@ -22,8 +24,11 @@ oncoplotUI <- function(id, cohorts){
       
       h3("Cohorts"),
       selectizeInput(inputId = ns("oncoCohortSelect"),
-                     choices = cohorts,selected = cohorts,
-                     label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
+                     choices = cohorts,
+                     selected = cohorts,
+                     label = "Select cohorts",
+                     options = list(`live-search` = TRUE),  
+                     multiple = TRUE),
       
       actionButton(ns("generateOnco"), "Generate Plot"),
       
@@ -57,15 +62,14 @@ oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crl
       inputGenes = isolate(input$inputOncoGenesTXT)
       # print(inputGenes)
       
-      
       if(!isTruthy(inputGenes)){
         inputGenes = top_crls[1:isolate(input$maxOncoGenes)]
       }
       
-      filteredMaf = maf;
+      filteredMaf = maf
       if(length(isolate(input$oncoCohortSelect)) !=  length(cohorts)){
         inputCohorts = maf@clinical.data[cohort_code %in% isolate(input$oncoCohortSelect)]
-        filteredMaf = subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode, genes = inputGenes)
+        filteredMaf = subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode)
       }
       
       
@@ -74,6 +78,8 @@ oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crl
                       genes = inputGenes,
                       annotationColor = cohort_colors,
                       sortByAnnotation = isolate(input$sortByCohort),
+                      # drawColBar = F,
+                      # cBioPortal = T,
                       clinicalFeatures = 'cohort_code'
       )
       )
