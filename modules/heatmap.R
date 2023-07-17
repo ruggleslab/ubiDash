@@ -220,20 +220,13 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels,
       height = plotHeight
     )
     
-    # output$downloadData <- downloadHandler(
-    #   filename = function() {
-    #     paste("data-", Sys.Date(), ".csv", sep = "")
-    #   },
-    #   content = function(file) {
-    #     cohortSubsetLabels <- getCohortPatients(tnlabels, isolate(input$cohortSelect))
-    #     inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT), delim = isolate(input$volcanoDelims))
-    #     inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
-    #     
-    #     if (length(inputGenesMat) == 0) {
-    #       inputGenesMat <- filteredMat
-    #     }
-    #     write.csv(inputGenesMat, file)
-    #   }
-    # )
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        paste("data-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(cptac_protein, file)
+      }
+    )
   })
 }

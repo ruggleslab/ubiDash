@@ -90,7 +90,7 @@ oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crl
         paste("data-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(maf, file)
+        write.csv(maf@data, file)
       }
     )
     
