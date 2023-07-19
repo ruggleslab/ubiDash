@@ -3,6 +3,7 @@ oncoplotUI <- function(id, cohorts){
   
   sidebarLayout(
     sidebarPanel(
+      h3("Oncoplot"),
       
       # gene inputs
       

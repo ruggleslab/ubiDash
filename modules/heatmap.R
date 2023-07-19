@@ -29,7 +29,6 @@ heatmapUI <- function(id, cohorts){
         # selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),               
         # 
         # cohort seleciton checkboxes
-        h3("Cohorts"),
         selectizeInput(inputId = ns("cohortSelect"),
                        choices = cohorts,selected = cohorts,
                        label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
@@ -93,7 +92,6 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels,
       }
       
       if (length(inputGenes) == 0) {
-        # print(cohortSubsetLabels)
         if(protein){
           return(filteredProteinMat[, rownames(cohortSubsetLabels)])
         }else{

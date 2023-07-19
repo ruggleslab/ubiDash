@@ -4,6 +4,8 @@ lollipopUI <- function(id, cohortSheets){
   sidebarLayout(
     
     sidebarPanel(
+      h3("Lollipop Plot"),
+      
       selectizeInput(inputId = ns("inputGene"),
                      choices = NULL,
                      multiple = FALSE,
