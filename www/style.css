@@ -1,4 +1,8 @@
 /* Set styles for navbar and links */
+.body{
+  overflow-x: hidden  ;
+}
+
 .navbar.navbar-default.navbar-static-topav {
   background-color: #6A2798 !important;
   color: white !important;
@@ -78,6 +82,29 @@ body .container-fluid {
   width: 75%;
   margin: 0 auto;
   text-align: center;
+}
+
+.title-page{
+overflow:auto!important;}
+
+footer{
+  margin:0;
+  padding:30px;
+  display:flex;
+  align-items: center;
+  justify-content: space-around;
+  background-color: #6A2798 !important;
+}
+
+
+footer p{
+  padding: 0;
+  margin: 0;
+  color:white;
+}
+
+img {
+  height:100%;
 }
 
 /* Media query for smaller screens */
