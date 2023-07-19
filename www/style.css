@@ -1,6 +1,6 @@
 /* Set styles for navbar and links */
-.body{
-  overflow-x: hidden  ;
+body{
+  overflow-x: hidden;
 }
 
 .navbar.navbar-default.navbar-static-topav {
@@ -39,7 +39,7 @@ body .container-fluid {
 #burger-label{
   display:none;
 }
-
+/* 
 .navbar:after {
   background-image: url(./assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png);
   background-size: 150px 50px;
@@ -48,7 +48,7 @@ body .container-fluid {
   content: "";
   position: absolute;
   right: 20px;
-}
+} */
 
 
 /* Set styles for buttons */

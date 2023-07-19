@@ -57,22 +57,24 @@ shinyUI(
                  tabPanel("Heatmap", theme = bs_theme(version = 5, bootswatch = "flatly"),
                           heatmapUI("heatmapTab", cohorts)
                  ),
+                 # volcano plot tab ----
+                 tabPanel("Volcano Plots", theme = bs_theme(version = 5, bootswatch = "pulse"),
+                          volcanoUI("volcanoTab", cohortSheets)
+                 ),
       ),
-      # volcano plot tab ----
-      tabPanel("Volcano Plots", theme = bs_theme(version = 5, bootswatch = "pulse"),
-               volcanoUI("volcanoTab", cohortSheets)
-      ),
-      
-      # correlation tab ----
-      tabPanel("Correlations", theme = bs_theme(version = 5, bootswatch = "pulse"),
-               correlationsUI("corrTab")
-               
-      ),
-      # violin plot tap ----
-      # need to let users input genes of interest
-      tabPanel("Violin Plot", theme = bs_theme(version = 5, bootswatch = "pulse"),
-               
-               violinUI("violinTab")
+      navbarMenu("Functional Analysis",
+                 
+                 # correlation tab ----
+                 tabPanel("Correlations", theme = bs_theme(version = 5, bootswatch = "pulse"),
+                          correlationsUI("corrTab")
+                          
+                 ),
+                 # violin plot tap ----
+                 # need to let users input genes of interest
+                 tabPanel("Violin Plot", theme = bs_theme(version = 5, bootswatch = "pulse"),
+                          
+                          violinUI("violinTab")
+                 ),
       ),
       corrAnalysisUI("corrAnalysisTab", cohorts),
     ),

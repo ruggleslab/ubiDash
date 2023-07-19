@@ -1,4 +1,4 @@
-packagelist = c("shiny", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools")
+packagelist = c("shiny", "DT", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools")
   
 lapply(packagelist, function(x) {
   suppressMessages(require(x, character.only = T,
