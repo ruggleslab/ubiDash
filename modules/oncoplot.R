@@ -49,6 +49,8 @@ oncoplotUI <- function(id, cohorts){
 
 oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crls, cohorts) {
   moduleServer(id,function(input,output,session){
+    
+    downloadableMaf = reactiveVal(maf)
      
     
     updateSelectizeInput(session, 'inputOncoGenesTXT', 
@@ -72,6 +74,8 @@ oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crl
         filteredMaf = subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode)
       }
       
+      downloadableMaf(filteredMaf)
+      
       
       return(oncoplot(maf = filteredMaf,
                       # top = isolate(input$maxOncoGenes),
@@ -90,7 +94,7 @@ oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crl
         paste("data-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(maf@data, file)
+        write.csv(downloadableMaf()@data, file)
       }
     )
     

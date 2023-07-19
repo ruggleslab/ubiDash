@@ -48,7 +48,8 @@ heatmapUI <- function(id, cohorts){
       
       
       p("Download this data"),
-      downloadButton(outputId = ns("downloadData"), label = "Download")
+      downloadButton(outputId = ns("downloadData"), label = "Download Data"),
+      downloadButton(outputId = ns("downloadAnno"), label = "Download Annotation")
       
     ),
     
@@ -226,6 +227,14 @@ heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels,
       },
       content = function(file) {
         write.csv(cptac_protein, file)
+      }
+    )
+    output$downloadAnno <- downloadHandler(
+      filename = function() {
+        paste("annotation-data-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(cptac_samples, file)
       }
     )
   })
