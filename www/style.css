@@ -3,6 +3,13 @@ body{
   overflow-x: hidden;
 }
 
+body > .container-fluid {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .navbar.navbar-default.navbar-static-topav {
   background-color: #6A2798 !important;
   color: white !important;
@@ -107,6 +114,10 @@ img {
   height:100%;
 }
 
+.spacer{
+  flex:1
+}
+
 /* Media query for smaller screens */
 @media (max-width: 680px) {
 
@@ -129,7 +140,7 @@ img {
 }
 
 
-@media (max-width: 1120px) {
+@media (max-width: 850px) {
 
   .navbar-header {
     display: flex;

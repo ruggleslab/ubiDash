@@ -78,6 +78,8 @@ shinyUI(
       ),
       corrAnalysisUI("corrAnalysisTab", cohorts),
     ),
+    tags$div()%>% 
+      tagAppendAttributes(class = 'spacer'),
     tags$footer(
       img(src="assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png", width="200"),
       tags$div(
