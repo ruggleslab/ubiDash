@@ -25,9 +25,16 @@ abstract =  paste(read.delim("./www/assets/abstract.txt"))
 
 shinyUI(
   fluidPage(
+      titlePanel(
+        windowTitle = "UbiDash",
+        title = tags$head(tags$link(rel="icon",
+                                    href="/favicon.png",
+                                    type="image/png")
+        )),
     includeCSS("./www/style.css"),
     
     navbarPage(
+      
       
       img(src="assets/ubiDash_logo.png", width="120"), theme = bs_theme(version = 5, bootswatch = "pulse"),
       # home page tab ----
