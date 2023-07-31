@@ -1,4 +1,4 @@
-packagelist = c("shiny", "DT", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools")
+packagelist = c("shiny", "DT", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools","circlize","ggrepel")
   
 lapply(packagelist, function(x) {
   suppressMessages(require(x, character.only = T,
@@ -22,6 +22,7 @@ source('./modules/oncoplot.R')
 source("./modules/correlations.R")
 source("./modules/violin.R")
 source("./modules/corranalysis.R")
+source("./modules/drugresponse.R")
 
 
 # server ----
@@ -49,6 +50,8 @@ shinyServer(function(input, output, session) {
   lollipopServer("lollipopTab", maf)
   
   corrAnalysisServer("corrAnalysisTab", cohorts, cptac_protein,cptac_rna,cptac_samples)
+  
+  drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, crl_genes)
   
    
 })

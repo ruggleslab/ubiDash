@@ -14,6 +14,7 @@ source('./modules/correlations.R')
 source('./modules/violin.R')
 source('./modules/lollipop.R')
 source('./modules/corranalysis.R')
+source("./modules/drugresponse.R")
 
 
 # make plot square
@@ -81,6 +82,10 @@ shinyUI(
                  tabPanel("Violin Plot", theme = bs_theme(version = 5, bootswatch = "pulse"),
                           
                           violinUI("violinTab")
+                 ),
+                 tabPanel("Drug Sensitivity", theme = bs_theme(version = 5, bootswatch = "pulse"),
+                          
+                          drugResponseUI("drugResponseTab")
                  ),
       ),
       corrAnalysisUI("corrAnalysisTab", cohorts),

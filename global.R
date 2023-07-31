@@ -144,3 +144,14 @@ drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster, legendName)
   )
   return(draw(hm, heatmap_legend_side = "bottom", annotation_legend_side = "right"))
 }
+
+
+
+# Drug Sensitivity ----
+drug <- read.csv("./data/drugsensitivity/drug_longdf.csv", row.names = 1)
+#drug pathway and targets annotation
+drugpath <- read.csv("./data/drugsensitivity/drugpath.csv", row.names = 1)
+
+exp <- read.delim("./data/drugsensitivity/Cell_line_RMA_proc_basalExp.txt", header = T)
+cell = read.csv("./data/drugsensitivity/MatchedCellAnno.csv", row.names = 1)
+
