@@ -75,11 +75,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       selected_gene_exp <- as.data.frame(selected_gene_exp)
       
       
-      
-       selected_gene_exp$Data <- rownames(selected_gene_exp) #add column of sample IDs
+      selected_gene_exp$Data <- rownames(selected_gene_exp) #add column of sample IDs
      
-     
-      
       
       colnames(selected_gene_exp)[1] <- "Exp"
       rownames(selected_gene_exp) <- NULL

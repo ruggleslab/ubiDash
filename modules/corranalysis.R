@@ -203,6 +203,8 @@ corrAnalysisServer <- function(id, cohorts, cptac_protein,cptac_rna,cptac_sample
     # protein specific correlation ----
     source(file = "./RScripts/corrAnalysis.R")
     
+    print("corr analysis server")
+    
     #Gene vs Gene correlation RNA
     updateSelectizeInput(session, 'inputGvgCorrRnaNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
     updateSelectizeInput(session, 'inputGvgCorrRnaNameB', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "A2M", options = list(placeholder = 'Type gene name'))
@@ -338,6 +340,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_protein,cptac_rna,cptac_sample
     #Gene panel correlation for Protein/RNA
     updateSelectizeInput(session, 'inputGvpCorrBothGeneNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, options = list(placeholder = 'Type gene name'))
     updateSelectizeInput(session, 'inputGvpCorrBothGeneNameB', choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = 'Type protein name'))
+
     
     resGvpCorrBoth <- eventReactive(input$generateGvpCorrBoth,{panelCorr(geneNamesRNA = input$inputGvpCorrBothGeneNameA,
                                                                          geneNamesProtein = input$inputGvpCorrBothGeneNameB, 
