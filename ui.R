@@ -39,7 +39,7 @@ shinyUI(
       
       img(src="assets/ubiDash_logo.png", width="120"), theme = bs_theme(version = 5, bootswatch = "pulse"),
       # home page tab ----
-      tabPanel("Home", theme = bs_theme(version = 5, bootswatch = "flatly"),
+      tabPanel("Home", theme = bs_theme(version = 5, bootswatch = "pulse"),
                tags$div(
                  h1("Integrated multi-omic analysis of Cullin-RING E3 ligases in cancer"),
                  p(abstract),
@@ -52,17 +52,17 @@ shinyUI(
       navbarMenu("Mutations",
                  
                  # oncoplot tab ----
-                 tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "flatly"),
+                 tabPanel("Oncoplot", theme = bs_theme(version = 5, bootswatch = "pulse"),
                           oncoplotUI("oncoTab", cohorts)
                  ),
                  # lollipop tab ----
-                 tabPanel("Lollipop", theme = bs_theme(version = 5, bootswatch = "flatly"),
+                 tabPanel("Lollipop", theme = bs_theme(version = 5, bootswatch = "pulse"),
                           lollipopUI("lollipopTab", cohorts)
                  )
       ),
       navbarMenu("Expression Profile",
                  # heatmap tab ----
-                 tabPanel("Heatmap", theme = bs_theme(version = 5, bootswatch = "flatly"),
+                 tabPanel("Heatmap", theme = bs_theme(version = 5, bootswatch = "pulse"),
                           heatmapUI("heatmapTab", cohorts)
                  ),
                  # volcano plot tab ----

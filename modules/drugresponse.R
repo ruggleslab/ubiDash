@@ -10,6 +10,12 @@ drugResponseUI <- function(id) {
         label =  "Input gene",
         options = list(`live-search` = TRUE),
       ),
+      p("Download this data"),
+      downloadButton(outputId = ns("selected_gene_drugmat"), label = "selected_gene_drugmat"),
+      downloadButton(outputId = ns("selected_gene_all_wilcoxon"), label = "selected_gene_all_wilcoxon"),
+      downloadButton(outputId = ns("selected_gene_sigdrug_wilcoxon"), label = "selected_gene_sigdrug_wilcoxon"),
+      downloadButton(outputId = ns("selected_gene_subdrugmat"), label = "selected_gene_subdrugmat"),
+      downloadButton(outputId = ns("selected_gene_corr"), label = "selected_gene_corr")
     ),
     
     mainPanel(
@@ -21,6 +27,8 @@ drugResponseUI <- function(id) {
                                    color = "#6A2798"),
       shinycssloaders::withSpinner(plotOutput(ns("plot3")),
                                    color = "#6A2798"),
+      
+      
     )
   )
 }
@@ -36,6 +44,15 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
     updateSelectizeInput(session, 'inputGene', 
                          choices = as.list(crl_genes), 
                          server = TRUE, selected = "VHL")
+    
+   
+    selected_gene_drugmat = reactiveVal()
+    selected_gene_all_wilcoxon = reactiveVal()
+    selected_gene_sigdrug_wilcoxon = reactiveVal()
+    selected_gene_subdrugmat = reactiveVal()
+    selected_gene_corr = reactiveVal()
+    
+    
     
     observe({
       selected_gene_name = input$inputGene
@@ -56,6 +73,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       selected_gene_exp <- exp[exp$GENE_SYMBOLS == selected_gene_name, ]
       selected_gene_exp <- t(selected_gene_exp[, -c(1:2)]) #transpose
       selected_gene_exp <- as.data.frame(selected_gene_exp)
+      
       
       
        selected_gene_exp$Data <- rownames(selected_gene_exp) #add column of sample IDs
@@ -143,6 +161,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         drugmat <- as.matrix(drugmat)
         df <- as.data.frame(drugmat)
         #200 cell lines + 542 drugs
+        
+        selected_gene_drugmat(df)
         # write.csv(df, "/Users/staceyvann/Desktop/Lab/Drug Sensitivity/selected_gene/selected_gene_drugmat.csv", row.names = T)
         
         #expression data for heatmap
@@ -218,6 +238,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         drug_sub <- drugpath[drugindex, ]
         topdrug$pathway <- druganno
         
+        selected_gene_all_wilcoxon(test)
+        selected_gene_sigdrug_wilcoxon(topdrug)
         # write.csv(test, "/Users/staceyvann/Desktop/Lab/Drug Sensitivity/selected_gene/selected_gene_all_wilcoxon.csv")
         # write.csv(topdrug, "/Users/staceyvann/Desktop/Lab/Drug Sensitivity/selected_gene/selected_gene_sigdrug_wilcoxon_0.5+p.csv")
         
@@ -233,6 +255,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         drugmat_sub <- scale(drugmat_sub, center = T, scale = T)
         drugmat_sub[is.nan(drugmat_sub)] <- NA
         #200 cell lines + topdrugs (86)
+        
+        selected_gene_subdrugmat(drugmat_sub)
         # write.csv(drugmat_sub, "/Users/staceyvann/Desktop/Lab/Drug Sensitivity/selected_gene/selected_gene_subdrugmat.csv", row.names = T)
         
         ##generate heatmap
@@ -404,6 +428,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       testdf_ <-
         testdf_[order(testdf_$corr.coef , decreasing = F), ] #order result table by correlation estimates
       
+      selected_gene_corr(testdf_)
       # write.csv(testdf_, "/Users/staceyvann/Desktop/Lab/Drug Sensitivity/selected_gene/selected_gene_corr.csv",row.names = F)
       
       #generate volcano plot_met
@@ -469,6 +494,52 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       
     })
     })
+    
+    output$selected_gene_drugmat =  downloadHandler(
+      filename = function() {
+        paste("selected_gene_drugmat-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(selected_gene_drugmat(), file)
+      }
+    )
+    
+    output$selected_gene_all_wilcoxon =  downloadHandler(
+      filename = function() {
+        paste("selected_gene_all_wilcoxon-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(selected_gene_all_wilcoxon(), file)
+      }
+    )
+    
+    output$selected_gene_sigdrug_wilcoxon =  downloadHandler(
+      filename = function() {
+        paste("selected_gene_sigdrug_wilcoxon-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(selected_gene_sigdrug_wilcoxon(), file)
+      }
+    )
+    
+    output$selected_gene_subdrugmat =  downloadHandler(
+      filename = function() {
+        paste("selected_gene_subdrugmat-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(selected_gene_subdrugmat(), file)
+      }
+    )
+    
+    output$selected_gene_corr =  downloadHandler(
+      filename = function() {
+        paste("selected_gene_corr-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(selected_gene_corr(), file)
+      }
+    )
+    
     
     
   })
