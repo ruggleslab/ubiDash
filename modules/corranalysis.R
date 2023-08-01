@@ -6,7 +6,7 @@ corrAnalysisUI <- function(id, cohorts){
              sidebarLayout(
                sidebarPanel(
                  tabsetPanel(id = ns("GvGpanel"),selected = "mRNA",
-                             tabPanel("mRNA",
+                             tabPanel(title = "mRNA",
                                       selectizeInput(inputId =ns("inputGvgCorrRnaNameA"),
                                                                   choices = NULL,
                                                      label = "Choose protein A",options = list(`live-search` = TRUE),  multiple = F),
@@ -23,7 +23,7 @@ corrAnalysisUI <- function(id, cohorts){
                                       
                                       actionButton(ns("generateGvgCorrRna"), label = "Start Analysis")
                              ),
-                             tabPanel("Protein",
+                             tabPanel(title ="Protein",
                                       selectizeInput(inputId = ns("inputGvgCorrProteinNameA"),
                                                      choices = NULL,
                                                      label = "Choose protein A",options = list(`live-search` = TRUE),  multiple = F),
@@ -38,9 +38,10 @@ corrAnalysisUI <- function(id, cohorts){
                                       
                                       radioButtons(inputId = ns("inputGvgCorrProteinStype"), label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Tumor"),
                                       
+                                      
                                       actionButton(ns("generateGvgCorrProtein"), label = "Start Analysis")
                              ),
-                             tabPanel("mRNA/Protein",
+                             tabPanel(title ="mRNA/Protein",
                                       selectizeInput(inputId = ns("inputGvgCorrBothNameA"),
                                                      choices = NULL,
                                                      label = "Choose protein",options = list(`live-search` = TRUE),  multiple = F),
@@ -59,16 +60,16 @@ corrAnalysisUI <- function(id, cohorts){
                              ))
                ),
                mainPanel(
-                 conditionalPanel(condition = "input.GvGpanel == 'mRNA'",
+                 conditionalPanel(condition = paste0('input[\'', ns('GvGpanel'), "\'] == \'mRNA\'"),
                                   withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrRna")),color = "#6A2798"),
                                   tableOutput(outputId = ns("outputTabGvgCorrRna")),
                                   uiOutput(outputId = ns("downLoadButtonGvgCorrRna"))
                  ),
-                 conditionalPanel(condition = "input.GvGpanel == 'Protein'",
+                 conditionalPanel(condition = paste0('input[\'', ns('GvGpanel'), "\'] == \'Protein\'"),
                                   withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrProtein")),color = "#6A2798"),
                                   tableOutput(outputId = ns("outputTabGvgCorrProtein"))
                  ),
-                 conditionalPanel(condition = "input.GvGpanel == 'mRNA/Protein'",
+                 conditionalPanel(condition = paste0('input[\'', ns('GvGpanel'), "\'] == \'mRNA/Protein\'"),
                                   withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrBoth")),color = "#6A2798"),
                                   tableOutput(outputId = ns("outputTabGvgCorrBoth"))
                  )
@@ -78,7 +79,7 @@ corrAnalysisUI <- function(id, cohorts){
     tabPanel("Gene vs All",
              sidebarLayout(
                sidebarPanel(
-                 tabsetPanel(id = "GvApanel", selected = "mRNA",
+                 tabsetPanel(id = ns("GvApanel"), selected = "mRNA",
                              tabPanel(title = "mRNA",
                                       selectizeInput(inputId = ns("inputGvACorrRnaGeneName"),
                                                      choices = NULL,
@@ -117,13 +118,13 @@ corrAnalysisUI <- function(id, cohorts){
                  
                ),
                mainPanel(
-                 conditionalPanel(condition = "input.GvApanel == 'Protein'",
+                 conditionalPanel(condition = paste0('input[\'', ns('GvApanel'), "\'] == \'Protein\'"),
                                   fluidRow(column(width = 4, 
                                                   withSpinner(dataTableOutput(outputId = ns("outputTabGvACorrProtein")),color = "#6A2798")),
                                            column(width = 8, 
                                                   withSpinner(plotOutput(outputId = ns("outputPlotGvACorrProtein")),color = "#6A2798")))
                  ),
-                 conditionalPanel(condition = "input.GvApanel == 'mRNA'",
+                 conditionalPanel(condition = paste0('input[\'', ns('GvApanel'), "\'] == \'mRNA\'"),
                                   fluidRow(column(width = 4, 
                                                   withSpinner(dataTableOutput(outputId = ns("outputTabGvACorrRna")),color = "#6A2798")),
                                            column(width = 8, 
@@ -135,7 +136,7 @@ corrAnalysisUI <- function(id, cohorts){
     tabPanel("Gene Panel",
              sidebarLayout(
                sidebarPanel(
-                 tabsetPanel(id = "GvPpanel",selected = "mRNA",
+                 tabsetPanel(id = ns("GvPpanel"),selected = "mRNA",
                              tabPanel("mRNA",
                                       selectizeInput(inputId = ns("inputGvpCorrRnaGeneName"),
                                                      choices = NULL,
@@ -180,15 +181,15 @@ corrAnalysisUI <- function(id, cohorts){
                              ))
                ),
                mainPanel(
-                 conditionalPanel(condition = "input.GvPpanel == 'mRNA'",
+                 conditionalPanel(condition =  paste0('input[\'', ns('GvPpanel'), "\'] == \'mRNA\'"),
                                   withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrRna")),color = "#6A2798"),
                                   uiOutput(ns("dataDownLoadGvpCorrRna"))
                  ),
-                 conditionalPanel(condition = "input.GvPpanel == 'Protein'",
+                 conditionalPanel(condition =  paste0('input[\'', ns('GvPpanel'), "\'] == \'Protein\'"),
                                   withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrProtein")),color = "#6A2798"),
                                   uiOutput(ns("dataDownLoadGvpCorrProtein"))
                  ),
-                 conditionalPanel(condition = "input.GvPpanel == 'mRNA/Protein'",
+                 conditionalPanel(condition =  paste0('input[\'', ns('GvPpanel'), "\'] == \'mRNA/Protein\'"),
                                   withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrBoth")),color = "#6A2798"),
                                   uiOutput(ns("dataDownLoadGvpCorrBoth"))
                  )
@@ -203,7 +204,19 @@ corrAnalysisServer <- function(id, cohorts, cptac_protein,cptac_rna,cptac_sample
     # protein specific correlation ----
     source(file = "./RScripts/corrAnalysis.R")
     
-    print("corr analysis server")
+    observe({
+      input$generateGvgCorrProtein
+      print("input$generateGvgCorrProtein")
+    })
+    observe({
+      input$generateGvgCorrRna
+      print("input$generateGvgCorrRna")
+    })
+    observe({
+      input$generateGvgCorrBoth
+      print("input$generateGvgCorrBoth")
+    })
+    
     
     #Gene vs Gene correlation RNA
     updateSelectizeInput(session, 'inputGvgCorrRnaNameA', choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
@@ -220,6 +233,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_protein,cptac_rna,cptac_sample
     output$outputPlotGvgCorrRna <- renderPlot({resGvgCorrRna()$singCorrPlot})
     output$outputTabGvgCorrRna <- renderTable({resGvgCorrRna()$singCorrTab},rownames = T, colnames = F)
     
+    
     #Protein vs Protein correlation RNA
     updateSelectizeInput(session, 'inputGvgCorrProteinNameA', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = 'Type gene name'))
     updateSelectizeInput(session, 'inputGvgCorrProteinNameB', choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "A2M", options = list(placeholder = 'Type gene name'))
@@ -231,6 +245,8 @@ corrAnalysisServer <- function(id, cohorts, cptac_protein,cptac_rna,cptac_sample
                                                                                 cptac_protein = cptac_protein,
                                                                                 cptac_rna = NULL, 
                                                                                 cptac_samples = cptac_samples)})
+    
+   
     
     output$outputPlotGvgCorrProtein <- renderPlot({resGvgCorrProtein()$singCorrPlot})
     output$outputTabGvgCorrProtein <- renderTable({resGvgCorrProtein()$singCorrTab},rownames = T, colnames = F)
