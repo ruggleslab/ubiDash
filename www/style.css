@@ -10,7 +10,7 @@ body > .container-fluid {
   justify-content: space-between;
 }
 
-#heatmapTab-heatmap.shiny-plot-output{
+#heatmapTab-heatmap.shiny-plot-output, #simplifiedHeatmapTab-heatmap.shiny-plot-output{
   height:auto!important;
   min-height:400px;
 }

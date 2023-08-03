@@ -93,7 +93,7 @@ cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
 top_crls = readRDS("./data/topcrls.rds")
 
 currentTime =  as.numeric(Sys.time())
-print(glue("Initialized global functions in {(currentTime- time) * 1000} ms"))
+print(glue("Prepared oncoplot data in {(currentTime- time) * 1000} ms"))
 time = currentTime
 
 
@@ -197,32 +197,8 @@ time = currentTime
 
 #Simplified Heatmap ----
 
-source("./data/simplifiedheatmap/tgr_misc.R")
-# source("./envs/env-parameterSetup.R")
-
-
-prt <-
-  readRDS(file = "./data/cptac_tmt-log2-AI_protein_expression.rds")
-labels <- read.csv("./data/simplifiedheatmap/sub_types.csv")
-
-
-currentTime =  as.numeric(Sys.time())
-print(glue("Read simplified heatmap datasets in {(currentTime- time) * 1000} ms"))
-time = currentTime
-
-
-prt <- data_norm(prt, col_center = T)
-
-normals <-
-  subset(
-    labels,
-    Dataset == "CPTAC" & Sample_type == "Normal",
-    select = c(Sample_id, Tissue_type)
-  )
-normals <- normals[normals$Sample_id %in% colnames(prt), ]
-
-prt <- prt[, normals$Sample_id]
-prt.n <- aggregate_by(input = prt, label = normals$Tissue_type)
+# source("./data/simplifiedheatmap/tgr_misc.R")
+prt.n = readRDS("./data/simplifiedheatmap/prt_n.rds")
 
 tertiles <- function(x) {
   vTert <- quantile(x, c(0:3 / 3), na.rm = TRUE)
@@ -233,7 +209,6 @@ tertiles <- function(x) {
     labels = c("Low", "Medium", "High")
   )
 }
-
 
 
 # Apply function to each column of the matrix

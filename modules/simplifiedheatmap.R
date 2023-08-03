@@ -26,24 +26,32 @@ simplifiedHeatmapUI <- function(id, cohorts) {
 
 
 simplifiedHeatmapServer <-
-  function(id, prt.n, normals, tertiles, mTert, my.colors) {
+  function(id, prt.n, tertiles, mTert, my.colors) {
     moduleServer(id, function(input, output, session) {
+      
+      height = reactiveVal(600)
+      
+      
       output$heatmap = renderPlot({
         selected_geneset = input$inputGeneset
+        height(1000)
         
         input = read_excel(path = "./data/simplifiedheatmap/AllCRLs.v6.xlsx")
         
         if (selected_geneset == "E1") {
           input <-
             read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx", sheet = 2) ### update
+            height(300)
         }
         if (selected_geneset == "E2") {
           input <-
             read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx", sheet = 3) ### update
+            height(600)
         }
         if (selected_geneset == "E3") {
           input <-
             read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx", sheet = 4) ### update
+            height(2500)
         }
         
         
@@ -72,11 +80,10 @@ simplifiedHeatmapServer <-
         # ht
         
         # pdf(glue("../output/{geneset}-profile_human-healthy-tissue_cptac-dataset.pdf"))
-        
-        height = 100
+     
         draw(ht)
         
-      })
+      }, height = height)
       # dev.off()
       
       # save corresponding abundance table

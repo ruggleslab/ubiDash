@@ -54,7 +54,7 @@ shinyServer(function(input, output, session) {
   
   drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, crl_genes)
   
-  simplifiedHeatmapServer("simplifiedHeatmapTab", prt.n, normals, tertiles,mTert,my.colors)
+  simplifiedHeatmapServer("simplifiedHeatmapTab", prt.n, tertiles,mTert,my.colors)
   
    
 })
