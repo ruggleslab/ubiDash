@@ -15,6 +15,7 @@ source('./modules/violin.R')
 source('./modules/lollipop.R')
 source('./modules/corranalysis.R')
 source("./modules/drugresponse.R")
+source("./modules/simplifiedheatmap.R")
 
 
 # make plot square
@@ -64,6 +65,9 @@ shinyUI(
                  # heatmap tab ----
                  tabPanel("Heatmap", theme = bs_theme(version = 5, bootswatch = "pulse"),
                           heatmapUI("heatmapTab", cohorts)
+                 ),
+                 tabPanel("Summarized Profile", theme = bs_theme(version = 5, bootswatch = "pulse"),
+                          simplifiedHeatmapUI("simplifiedHeatmapTab")
                  ),
                  # volcano plot tab ----
                  tabPanel("Volcano Plots", theme = bs_theme(version = 5, bootswatch = "pulse"),

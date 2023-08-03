@@ -203,19 +203,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_protein,cptac_rna,cptac_sample
   moduleServer(id,function(input,output,session){
     # protein specific correlation ----
     source(file = "./RScripts/corrAnalysis.R")
-    
-    observe({
-      input$generateGvgCorrProtein
-      print("input$generateGvgCorrProtein")
-    })
-    observe({
-      input$generateGvgCorrRna
-      print("input$generateGvgCorrRna")
-    })
-    observe({
-      input$generateGvgCorrBoth
-      print("input$generateGvgCorrBoth")
-    })
+
     
     
     #Gene vs Gene correlation RNA

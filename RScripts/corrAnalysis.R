@@ -26,7 +26,7 @@
 # asd$singCorrTab
 
 singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, cptac_rna, cptac_samples){
-  print("single corr")
+
   if (!is.null(cptac_protein) & !is.null(cptac_rna)) {
     #cohort filter
     cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
@@ -145,9 +145,8 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
           axis.title.y = element_text(size = 26, face = "bold",  vjust = 2),
           axis.title.x = element_text(size = 26, face = "bold",  vjust = 2))
   # scatPlot
-  print("end of single corr")
-  print(scatPlot)
-  print(singCorrTab)
+
+  
   res <- list(singCorrPlot = scatPlot, singCorrTab = singCorrTab)
   return(res)
   

@@ -60,15 +60,11 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         selected_gene_name = "VHL"
       }
       
-      print(selected_gene_name)
-      
       if(!is.na(prev_gene_name()) & selected_gene_name == prev_gene_name()){
         return()
       }
       prev_gene_name(selected_gene_name)
-      
-      print("selected gene name")
-      print(selected_gene_name)
+  
       
       selected_gene_exp <- exp[exp$GENE_SYMBOLS == selected_gene_name, ]
       selected_gene_exp <- t(selected_gene_exp[, -c(1:2)]) #transpose

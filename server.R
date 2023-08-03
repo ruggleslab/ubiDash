@@ -23,6 +23,7 @@ source("./modules/correlations.R")
 source("./modules/violin.R")
 source("./modules/corranalysis.R")
 source("./modules/drugresponse.R")
+source("./modules/simplifiedheatmap.R")
 
 
 # server ----
@@ -52,6 +53,8 @@ shinyServer(function(input, output, session) {
   corrAnalysisServer("corrAnalysisTab", cohorts, cptac_protein,cptac_rna,cptac_samples)
   
   drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, crl_genes)
+  
+  simplifiedHeatmapServer("simplifiedHeatmapTab", prt.n, normals, tertiles,mTert,my.colors)
   
    
 })

@@ -1,6 +1,9 @@
 library("glue")
 library("readxl")
 library("tidyverse")
+
+time = as.numeric(Sys.time())
+startTime = time
 # Datasets ----
 
 # ccle dataset
@@ -16,9 +19,17 @@ cptac_samples <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
 # for correlations tab
 plot_tab <- readRDS("./data/cptac_multi_omic_correlations.rds")
 
+
+currentTime =  as.numeric(Sys.time())
+print(glue("read datasets in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
 # maf for lollipop and oncoplot tabs 
 maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
 
+currentTime =  as.numeric(Sys.time())
+print(glue("read maf in {(currentTime- time) * 1000} ms"))
+time = currentTime
 
 
 # Information used by various modules ----
@@ -58,6 +69,11 @@ getInputGenes <- function(CSV, TXT, delim = "tab") {
 
 
 
+currentTime =  as.numeric(Sys.time())
+print(glue("Initialized global functions in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
+
 # Tab-specific variables ----
 
 # Oncoplot ----
@@ -75,6 +91,11 @@ cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
                                      UCEC = "orangered3"))
 
 top_crls = readRDS("./data/topcrls.rds")
+
+currentTime =  as.numeric(Sys.time())
+print(glue("Initialized global functions in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
 
 # Violin ----
 
@@ -98,6 +119,10 @@ violin.input$driver <- ifelse(violin.input$variable %in% c("MYC","CCND1"),
 violin.input$driver <- ifelse(violin.input$variable %in% c("APC","RB1","TP53"),
                               "Tumor Suppressor", violin.input$driver)
 
+currentTime =  as.numeric(Sys.time())
+print(glue("Prepared violin plot data in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
 # Correlations ----
 source("./RScripts/GenerateCorrPlot.R")
 
@@ -108,6 +133,10 @@ lines = list(geom_hline(yintercept=.5, color = "red") ,
              geom_hline(yintercept=0, size = 1, color = "black") ,
              geom_vline(xintercept=-0, size = 1, color = "black"))
 
+
+currentTime =  as.numeric(Sys.time())
+print(glue("Prepared correlations data in {(currentTime- time) * 1000} ms"))
+time = currentTime
 
 # Heatmap ----
 load("./data/defaults.RData")
@@ -147,11 +176,81 @@ drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster, legendName)
 
 
 
+currentTime =  as.numeric(Sys.time())
+print(glue("Prepared heatmap data in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
 # Drug Sensitivity ----
 drug <- read.csv("./data/drugsensitivity/drug_longdf.csv", row.names = 1)
 #drug pathway and targets annotation
 drugpath <- read.csv("./data/drugsensitivity/drugpath.csv", row.names = 1)
 
-exp <- read.delim("./data/drugsensitivity/Cell_line_RMA_proc_basalExp.txt", header = T)
+# exp <- read.delim("./data/drugsensitivity/Cell_line_RMA_proc_basalExp.txt", header = T)
+exp <- readRDS("./data/drugsensitivity/Cell_line_RMA_proc_basalExp.rds")
 cell = read.csv("./data/drugsensitivity/MatchedCellAnno.csv", row.names = 1)
+
+
+currentTime =  as.numeric(Sys.time())
+print(glue("Prepared drug sensitivity data in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
+
+#Simplified Heatmap ----
+
+source("./data/simplifiedheatmap/tgr_misc.R")
+# source("./envs/env-parameterSetup.R")
+
+
+prt <-
+  readRDS(file = "./data/cptac_tmt-log2-AI_protein_expression.rds")
+labels <- read.csv("./data/simplifiedheatmap/sub_types.csv")
+
+
+currentTime =  as.numeric(Sys.time())
+print(glue("Read simplified heatmap datasets in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
+
+prt <- data_norm(prt, col_center = T)
+
+normals <-
+  subset(
+    labels,
+    Dataset == "CPTAC" & Sample_type == "Normal",
+    select = c(Sample_id, Tissue_type)
+  )
+normals <- normals[normals$Sample_id %in% colnames(prt), ]
+
+prt <- prt[, normals$Sample_id]
+prt.n <- aggregate_by(input = prt, label = normals$Tissue_type)
+
+tertiles <- function(x) {
+  vTert <- quantile(x, c(0:3 / 3), na.rm = TRUE)
+  cut(
+    x,
+    vTert,
+    include.lowest = TRUE,
+    labels = c("Low", "Medium", "High")
+  )
+}
+
+
+
+# Apply function to each column of the matrix
+mTert <- apply(prt.n, 2, tertiles)
+row.names(mTert) <- row.names(prt.n)
+
+
+my.colors <-
+  setNames(c("#070A52", "#6C9BCF", "#AFD3E2"),
+           # colors to use
+           nm = c("High", "Medium", "Low")) # for each category
+
+currentTime =  as.numeric(Sys.time())
+print(glue("Prepared simplified heatmap data in {(currentTime- time) * 1000} ms"))
+time = currentTime
+
+print(glue("Total startup time was {(time-startTime) * 1000} ms"))
+rm(time,currentTime,startTime)
+
 
