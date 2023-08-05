@@ -109,8 +109,16 @@ shinyUI(
     tags$footer(
       img(src = "assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png", width = "200"),
       tags$div(
-        p("Footer placeholder text"),
-        p("Footer placeholder text")
+        p(
+          strong("Contact:"), "tania.gonzalez-robles@nyulangone.org"
+        ),
+        p(
+          strong("Kindly cite:"),
+          tags$a(
+            href = "citation-link-here", "González-Robles et al. 2024",
+            style = "color: white"
+          )
+        )
       ),
       img(src = "assets/HHMI-Gilliam-Logo-cropped.png", width = "256"),
     ),
