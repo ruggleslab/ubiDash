@@ -4,6 +4,10 @@ library("tidyverse")
 
 time = as.numeric(Sys.time())
 startTime = time
+
+skip_load_data = FALSE
+
+if(!skip_load_data){
 # Datasets ----
 
 # ccle dataset
@@ -225,6 +229,7 @@ my.colors <-
 currentTime =  as.numeric(Sys.time())
 print(glue("Prepared simplified heatmap data in {(currentTime- time) * 1000} ms"))
 time = currentTime
+}
 
 print(glue("Total startup time was {(time-startTime) * 1000} ms"))
 rm(time,currentTime,startTime)

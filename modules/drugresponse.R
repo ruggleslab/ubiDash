@@ -25,7 +25,7 @@ drugResponseUI <- function(id) {
                                    color = "#6A2798"),
       shinycssloaders::withSpinner(plotOutput(ns("plot2")),
                                    color = "#6A2798"),
-      shinycssloaders::withSpinner(plotOutput(ns("plot3")),
+      shinycssloaders::withSpinner(plotlyOutput(ns("plot3")),
                                    color = "#6A2798"),
       
       
@@ -39,13 +39,13 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
     #read data frames generated from Processing.R
     #selected_gene expression df
     #drug ic50 longerdf
-    prev_gene_name = reactiveVal(NA)
     
     updateSelectizeInput(session, 'inputGene', 
                          choices = as.list(crl_genes), 
                          server = TRUE, selected = "VHL")
     
    
+    prev_gene_name = reactiveVal(NA)
     selected_gene_drugmat = reactiveVal()
     selected_gene_all_wilcoxon = reactiveVal()
     selected_gene_sigdrug_wilcoxon = reactiveVal()
@@ -55,6 +55,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
     
     
     observe({
+      # generate data for selected gene ----
       selected_gene_name = input$inputGene
       if(!isTruthy(selected_gene_name)){
         selected_gene_name = "VHL"
@@ -367,9 +368,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         # dev.off()
         
       })
-      
-      output$plot3 = renderPlot({
       #3. volcano plots of spearman correlation among all drugs and cell lines ----
+      output$plot3 = renderPlotly({
       #spearman correlation
       drugall <- drug[, c(1, 2, 5)] # keep cell line, ic50 and drugname
       #wider df
@@ -427,13 +427,19 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       #generate volcano plot_met
       # pdf(file="/Users/staceyvann/Desktop/Lab/Drug Sensitivity/selected_gene/selected_gene_Corr_vln.pdf",width=11,height=9)
       # vln <-
-      return(
+      print(head(testdf))
+      text = paste(
+                   "<b>","Drug Name: ",  testdf$DRUG_NAME, "</b>", "\n",
+                   "corr coeff: ", testdf$corr.coef, "\n",
+                   "log10 padj: ", testdf$log10.padj, "\n"
+                   )
+      plt = 
         ggplot(testdf, aes(x = corr.coef, y = log10.padj)) +
-        geom_point(aes(color = label), size = 3) +
+        geom_point(aes(color = label, text = text), size = 3) +
         xlim(-0.4, 0.4) + #x and y range
         ylim(0, 10) +
         xlab("Spearman Correlation Coefficient") +
-        ylab(expression(paste(-log[10], '(Q-value)'))) +
+        ylab('-log<sub>10</sub> (Q-value)') +
         ggtitle("Spearman correlation test between selected_gene expression and drug ln(IC50)") +
         theme_bw() +
         theme(panel.background = element_blank()) +
@@ -452,21 +458,21 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         theme(legend.position = "right") +
         labs(color = "padj") +
         geom_vline(xintercept = 0, linetype = "dotted") +
-        geom_text_repel(
-          #top drugs label
-          data = subset(testdf, group == "Top"),
-          aes(label = testdf$DRUG_NAME[which(testdf$group == "Top")]),
-          size = 4,
-          box.padding = unit(0.35, "lines"),
-          point.padding = unit(0.5, "lines"),
-          max.overlaps = Inf
-        ) +
+        # geom_text_repel(
+        #   #top drugs label
+        #   data = subset(testdf, group == "Top"),
+        #   aes(label = testdf$DRUG_NAME[which(testdf$group == "Top")]),
+        #   size = 4,
+        #   box.padding = unit(0.35, "lines"),
+        #   point.padding = unit(0.5, "lines"),
+        #   max.overlaps = Inf
+        # ) +
         #change text according to x range
         annotate(
           "text",
           x = -0.25,
           y = 0,
-          label = c("bold(Sensitive)"),
+          label = c("<b>Sensitive</b>"),
           parse = T,
           size = 5
         ) +
@@ -474,20 +480,19 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           "text",
           x = 0.25,
           y = 0,
-          label = c("bold(Resistant)"),
+          label = c("<b>Resistant</b>"),
           parse = T,
           size = 5
         )
       
       # print(vln)
       # dev.off()
-      
-      )
+      return (ggplotly(plt, tooltip = "text"))
       
       
     })
     })
-    
+    # downloads ----
     output$selected_gene_drugmat =  downloadHandler(
       filename = function() {
         paste("selected_gene_drugmat-", Sys.Date(), ".csv", sep = "")
