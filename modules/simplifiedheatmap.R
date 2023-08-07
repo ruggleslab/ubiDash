@@ -12,6 +12,10 @@ simplifiedHeatmapUI <- function(id, cohorts) {
         label = "Geneset",
         options = list(`live-search` = TRUE),
       ),
+      p("Download this data"),
+      downloadButton(outputId = ns("downloadMtert"), label = "Tertile data"),
+      downloadButton(outputId = ns("downloadPrtn"), label = "Original Data")
+      
     ),
     mainPanel(
       textOutput(ns("err")) %>%
@@ -27,6 +31,7 @@ simplifiedHeatmapUI <- function(id, cohorts) {
 simplifiedHeatmapServer <-
   function(id, prt.n, tertiles, mTert, my.colors) {
     moduleServer(id, function(input, output, session) {
+      
       height <- reactiveVal(600)
 
 
@@ -95,5 +100,23 @@ simplifiedHeatmapServer <-
       #   ),
       #   row.names = T
       # )
+    output$downloadMtert =  downloadHandler(
+      filename = function() {
+        paste("mtert-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(mTert, file)
+      }
+    )
+    output$downloadPrtn =  downloadHandler(
+      filename = function() {
+        paste("prtn-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(prt.n, file)
+      }
+    )
     })
+    
+    
   }
