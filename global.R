@@ -5,21 +5,6 @@ library("tidyverse")
 time = as.numeric(Sys.time())
 startTime = time
 
-source("./modules/oncoplot.R")
-source("./modules/heatmap.R")
-source("./modules/volcano.R")
-source("./modules/correlations.R")
-source("./modules/violin.R")
-source("./modules/lollipop.R")
-source("./modules/corranalysis.R")
-source("./modules/drugresponse.R")
-source("./modules/simplifiedheatmap.R")
-
-currentTime =  as.numeric(Sys.time())
-print(glue("sourced modules in {(currentTime- time) * 1000} ms"))
-time = currentTime
-
-
 skip_load_data = F
 
 if(!skip_load_data){
@@ -144,7 +129,7 @@ if(!skip_load_data){
   time = currentTime
   
   # Correlations ----
-  source("./RScripts/GenerateCorrPlot.R")
+  source("./scripts/GenerateCorrPlot.R")
   
   lines = list(geom_hline(yintercept=.5, color = "red") ,
                geom_hline(yintercept=-.5,  color = "red") ,

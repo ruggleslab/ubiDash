@@ -254,7 +254,7 @@ corrAnalysisUI <- function(id, cohorts) {
 corrAnalysisServer <- function(id, cohorts, cptac_protein, cptac_rna, cptac_samples) {
   moduleServer(id, function(input, output, session) {
     # protein specific correlation ----
-    source(file = "./RScripts/corrAnalysis.R")
+    source(file = "./scripts/corrAnalysis.R")
 
 
 

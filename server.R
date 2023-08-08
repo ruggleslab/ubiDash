@@ -15,7 +15,7 @@ load("./data/defaults.RData")
 # cohortsOnco
 # mutationsOnco
 
-source("./RScripts/SplitInputGenes.R")
+source("./scripts/SplitInputGenes.R")
 
 
 # server ----
