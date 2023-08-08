@@ -7,15 +7,6 @@ library(DT)
 library(corrplot)
 library(openxlsx)
 
-source("./modules/oncoplot.R")
-source("./modules/heatmap.R")
-source("./modules/volcano.R")
-source("./modules/correlations.R")
-source("./modules/violin.R")
-source("./modules/lollipop.R")
-source("./modules/corranalysis.R")
-source("./modules/drugresponse.R")
-source("./modules/simplifiedheatmap.R")
 
 
 # make plot square
