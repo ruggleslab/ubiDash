@@ -35,7 +35,7 @@ shinyServer(function(input, output, session) {
   correlationsServer("corrTab", plot_tab, lines)
 
   # boxplot tab ----
-  violinServer("violinTab", ccle_rna, violin.input, POIS)
+  violinServer("violinTab",ccle_rna, cptac_protein,cptac_samples)
 
   # oncoplot tab ----
   oncoplotServer("oncoTab", cptac_protein, cptac_samples, maf, crl_genes, top_crls, cohorts)

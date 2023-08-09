@@ -5,7 +5,7 @@ library("tidyverse")
 time = as.numeric(Sys.time())
 startTime = time
 
-skip_load_data = T
+skip_load_data = F
 
 if(!skip_load_data){
   # Datasets ----
