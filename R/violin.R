@@ -8,7 +8,8 @@ violinUI <- function(id, cohortSheets) {
         id = ns("datatype"),
         selected = "protein",
         
-        tabPanel("protein",
+        tabPanel(
+          "protein",
           selectizeInput(
             inputId = ns("proteinGenes"),
             choices = NULL,
@@ -18,17 +19,10 @@ violinUI <- function(id, cohortSheets) {
             options = list(`live-search` = TRUE),
           ),
           
-          selectizeInput(
-            inputId = ns("dataset"),
-            choices = c("CPTAC"),
-            multiple = F,
-            selected = "CPTAC",
-            label =  "Data type",
-            options = list(`live-search` = TRUE),
-          )
         ),
         
-        tabPanel("mRNA",
+        tabPanel(
+          "mRNA",
           selectizeInput(
             inputId = ns("mRNAGenes"),
             choices = NULL,
@@ -38,15 +32,23 @@ violinUI <- function(id, cohortSheets) {
             options = list(`live-search` = TRUE),
           ),
           
-          selectizeInput(
-            inputId = ns("dataset"),
-            choices = c("CPTAC"),
-            multiple = F,
-            selected = "CPTAC",
-            label =  "Dataset",
-            options = list(`live-search` = TRUE),
-          ),
         )
+      ),
+      selectizeInput(
+        inputId = ns("dataset"),
+        choices = c("CPTAC"),
+        multiple = F,
+        selected = "CPTAC",
+        label =  "Dataset",
+        options = list(`live-search` = TRUE),
+      ),
+      selectizeInput(
+        inputId = ns("colorby"),
+        choices = c("Cancer Type", "Sample Type"),
+        multiple = F,
+        selected = "Sample Type",
+        label =  "Color by",
+        options = list(`live-search` = TRUE),
       ),
       actionButton(ns("generate"), label = "Generate plot")
     ),
@@ -68,8 +70,6 @@ violinServer <-
            cptac_samples,
            cohort_colors) {
     moduleServer(id, function(input, output, session) {
-      
-      
       updateSelectizeInput(
         session,
         'mRNAGenes',
@@ -87,7 +87,6 @@ violinServer <-
       )
       
       output$violin = renderPlotly({
-        
         input$generate
         
         
@@ -100,7 +99,7 @@ violinServer <-
           p <- isolate(input$proteinGenes)
         } else{
           # there appear to be duplicate columns
-          dataset = t(cptac_rna[,!duplicated(colnames(cptac_rna))])
+          dataset = t(cptac_rna[, !duplicated(colnames(cptac_rna))])
           p <- isolate(input$mRNAGenes)
           
         }
@@ -131,17 +130,13 @@ violinServer <-
           "Cancer_subtype"
         )]
         
-        (cohort_colors)
-        
         
         violin = ggplot(violin.input, aes(x = variable, y = value)) +
           
-          
           geom_violin(show.legend = T) + # use geom_boxplot for boxplots format
-          geom_jitter(aes(color = cohort_code),
+          geom_jitter(aes(color = if(isolate(input$colorby) == "Cancer Type") cohort_code else Sample_type),
                       size = 0.1,
-                      show.legend = F,
-          ) + # resizing individual dots
+                      show.legend = F,) + # resizing individual dots
           theme_minimal() +
           
           # re-naming x and y axis
