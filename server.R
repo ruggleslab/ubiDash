@@ -1,4 +1,4 @@
-packagelist <- c("shiny", "DT", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools", "circlize", "ggrepel", "corrplot", "ggpubr")
+packagelist <- c("shiny", "DT", "ggprism", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools", "circlize", "ggrepel", "corrplot", "ggpubr")
 
 lapply(packagelist, function(x) {
   suppressMessages(require(x,

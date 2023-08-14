@@ -5,7 +5,7 @@ library("tidyverse")
 time = as.numeric(Sys.time())
 startTime = time
 
-skip_load_data = F
+skip_load_data = T
 
 if(!skip_load_data){
   # Datasets ----
@@ -105,24 +105,24 @@ if(!skip_load_data){
   # Violin ----
   
   # labeling instructions
-  p <- c("GMCL1", "USP28", "TP53BP1", "APC","RB1", "TP53", "MYC", "CCND1")
-  POIs <- ccle_rna[, p, drop = F]
-  POIs$DepMap_ID <- rownames(POIs)
-  
-  lab <- data.frame(genes = colnames(POIs[1:8]),
-                    driver = c(rep("Unknown", 3), # "GMCL1"   "USP28"   "TP53BP1"
-                               rep("Tumor Suppressor", 3), # "APC"     "RB1"  "TP53" 
-                               rep("Oncogene", 2))) # "MYC"     "CCND1"  
-  
-  # constructing violin.input table for ggplot in the long format
-  violin.input <- reshape2::melt(POIs, id.vars="DepMap_ID") %>% 
-    mutate(driver = rep("Unknown", nrow(.))) 
-  
-  violin.input$driver <- ifelse(violin.input$variable %in% c("MYC","CCND1"),
-                                "Oncogene", violin.input$driver) 
-  
-  violin.input$driver <- ifelse(violin.input$variable %in% c("APC","RB1","TP53"),
-                                "Tumor Suppressor", violin.input$driver)
+  # p <- c("GMCL1", "USP28", "TP53BP1", "APC","RB1", "TP53", "MYC", "CCND1")
+  # POIs <- ccle_rna[, p, drop = F]
+  # POIs$DepMap_ID <- rownames(POIs)
+  # 
+  # lab <- data.frame(genes = colnames(POIs[1:8]),
+  #                   driver = c(rep("Unknown", 3), # "GMCL1"   "USP28"   "TP53BP1"
+  #                              rep("Tumor Suppressor", 3), # "APC"     "RB1"  "TP53" 
+  #                              rep("Oncogene", 2))) # "MYC"     "CCND1"  
+  # 
+  # # constructing violin.input table for ggplot in the long format
+  # violin.input <- reshape2::melt(POIs, id.vars="DepMap_ID") %>% 
+  #   mutate(driver = rep("Unknown", nrow(.))) 
+  # 
+  # violin.input$driver <- ifelse(violin.input$variable %in% c("MYC","CCND1"),
+  #                               "Oncogene", violin.input$driver) 
+  # 
+  # violin.input$driver <- ifelse(violin.input$variable %in% c("APC","RB1","TP53"),
+  #                               "Tumor Suppressor", violin.input$driver)
   
   currentTime =  as.numeric(Sys.time())
   print(glue("Prepared violin plot data in {(currentTime- time) * 1000} ms"))

@@ -84,9 +84,9 @@ shinyUI(
         ),
         # violin plot tap ----
         # need to let users input genes of interest
-        tabPanel("Violin Plot",
+        tabPanel("Descriptive Statistics",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          violinUI("violinTab")
+          violinUI("violinTab",cohorts)
         ),
         tabPanel("Drug Sensitivity",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
