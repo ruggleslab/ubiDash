@@ -1,5 +1,5 @@
 load("./data/defaults.RData")
-source('./RScripts/HeatmapFunctions.R')
+source('./scripts/HeatmapFunctions.R')
 
 # cptac dataset
 cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")

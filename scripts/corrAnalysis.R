@@ -26,13 +26,13 @@
 # asd$singCorrTab
 
 singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, cptac_rna, cptac_samples){
-  
+
   if (!is.null(cptac_protein) & !is.null(cptac_rna)) {
     #cohort filter
     cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
     
-    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
-    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
+    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",]$harmonized_data_id, intersect(colnames(cptac_protein),colnames(cptac_rna))))
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,]$harmonized_data_id, intersect(colnames(cptac_protein),colnames(cptac_rna))))
     
     if (tissueType == "Tumor") {
       usedTissue <- tumNames
@@ -63,8 +63,8 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
     #cohort filter
     cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
     
-    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], colnames(inPut)))
-    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], colnames(inPut)))
+    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",]$harmonized_data_id, colnames(inPut)))
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,]$harmonized_data_id, colnames(inPut)))
     
    
     if (tissueType == "Tumor") {
@@ -95,8 +95,8 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
   selectedGeneA <- as.data.frame(t(selectedGeneA))
   selectedGeneB <- as.data.frame(t(selectedGeneB))
   
-  selectedGeneA$Cohort <- cptac_samples_filt[rownames(cptac_samples_filt) %in% rownames(selectedGeneA),1]
-  selectedGeneB$Cohort <- cptac_samples_filt[rownames(cptac_samples_filt) %in% rownames(selectedGeneB),1]
+  selectedGeneA$Cohort <- cptac_samples_filt[rownames(cptac_samples_filt) %in% rownames(selectedGeneA),]$cohort_code
+  selectedGeneB$Cohort <- cptac_samples_filt[rownames(cptac_samples_filt) %in% rownames(selectedGeneB),]$cohort_code
   colnames(selectedGeneA) <- c("ExpValueA", "Cohort")
   colnames(selectedGeneB) <- c("ExpValueB", "Cohort")
   
@@ -128,8 +128,7 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
 
   xmax <- max(dat$geneAExp)
   ymax <- max(dat$geneBExp)
-  
-  library(ggplot2)
+
   scatPlot <- ggplot(dat, aes(x = geneAExp, y = geneBExp, color = Cohort)) +
     geom_point(size = 4) +
     geom_smooth(method = "lm", size = 2) +
@@ -145,7 +144,8 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
           axis.text.y = element_text(size = 26, colour = "black"),
           axis.title.y = element_text(size = 26, face = "bold",  vjust = 2),
           axis.title.x = element_text(size = 26, face = "bold",  vjust = 2))
-  scatPlot
+  # scatPlot
+
   
   res <- list(singCorrPlot = scatPlot, singCorrTab = singCorrTab)
   return(res)
@@ -164,8 +164,8 @@ multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac
   #cohort filter
   cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
   
-  tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], colnames(inPut)))
-  normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], colnames(inPut)))
+  tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",]$harmonized_data_id, colnames(inPut)))
+  normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,]$harmonized_data_id, colnames(inPut)))
   
   
   if (tissueType == "Tumor") {
@@ -206,8 +206,6 @@ multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac
   plotTab$R_value <- as.numeric(plotTab$R_value)
   plotTab$P_value <- as.numeric(plotTab$P_value)  
   
-  library(ggrepel)
-  library(ggplot2)
   corrPlot <- ggplot(data=plotTab, aes(x=R_value, y=-log10(P_value), label = Genes)) +
     geom_point() + 
     theme_minimal() +
@@ -239,8 +237,13 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     #cohort filter
     cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
     
-    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
-    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], intersect(colnames(cptac_protein),colnames(cptac_rna))))
+    tumNames <- as.character(
+      intersect(
+        cptac_samples_filt[cptac_samples_filt$sample_type == "T",]$harmonized_data_id, 
+                intersect(colnames(cptac_protein),colnames(cptac_rna))
+        )
+      )
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,]$harmonized_data_id, intersect(colnames(cptac_protein),colnames(cptac_rna))))
 
     if (tissueType == "Tumor") {
       usedTissue <- tumNames
@@ -253,9 +256,12 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
       stop("Minimum number of input genes/proteins is five.")
     }
     
+   
+    
     #Filter for genes
     selectedGenesProt <- cptac_protein[rownames(cptac_protein) %in% geneNamesProtein,colnames(cptac_protein) %in% usedTissue]
     selectedGenesRna <- cptac_rna[rownames(cptac_rna) %in% geneNamesRNA,colnames(cptac_rna) %in% usedTissue]
+    
     
     protNAs <- rowSums(is.na(selectedGenesProt))
     protsToRemove <- ncol(selectedGenesProt) - protNAs
@@ -271,7 +277,7 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
       stop("One or more genes have missing values, therefore decreasing the number of samples available for analysis. Please, adjust input parameters (e.g., add cohorts and/or additional genes).")
     }
     
-    library(corrplot)
+  
     cor.mat <- cor(x = t(selectedGenesProt), y = t(selectedGenesRna), use = "pairwise.complete.obs", method = "spearman")
     p.mat <- cor.mtest(cor.mat, method = "spearman")
     
@@ -298,7 +304,6 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     df$qval <- p.adjust(df$p, method = "BH")
     df$Spearman <- c("Positive", "Negative")[ifelse(df$cor > 0, 1,2)]
     
-    library(ggpubr)
     corrPlot <- ggballoonplot(
       data =df,
       x = "row", 
@@ -333,8 +338,8 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     #cohort filter
     cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort,]
     
-    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",5], colnames(inPut)))
-    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,5], colnames(inPut)))
+    tumNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "T",]$harmonized_data_id, colnames(inPut)))
+    normNames <- as.character(intersect(cptac_samples_filt[cptac_samples_filt$sample_type == "N" | cptac_samples_filt$sample_type == "G" ,]$harmonized_data_id, colnames(inPut)))
     
     if (tissueType == "Tumor") {
       usedTissue <- tumNames
@@ -367,7 +372,7 @@ panelCorr <- function(geneNamesRNA,geneNamesProtein, tissueType, cohort, cptac_p
     df$qval <- p.adjust(df$p, method = "BH")
     df$Spearman <- c("Positive", "Negative")[ifelse(df$cor > 0, 1,2)]
     
-    library(ggpubr)
+  
     corrPlot <- ggballoonplot(
       data =df,
       x = "row", #pride

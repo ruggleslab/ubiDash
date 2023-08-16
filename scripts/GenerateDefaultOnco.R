@@ -54,7 +54,7 @@ cohortsTbl = cohortsTbl[rownames(pcts),]
 
 mutations = levels(smallFM$Variant_Classification)
 
-source("./RScripts/OncoplotColors.R")
+source("./scripts/OncoplotColors.R")
 
 mutation_colors = get_mutation_colors(mutations)
 mutation_alter_fun = get_mutation_alter_fun(mutation_colors)

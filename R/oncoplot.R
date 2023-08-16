@@ -1,8 +1,9 @@
 oncoplotUI <- function(id, cohorts){
   ns <- NS(id)
   
-  sidebarLayout(
+  sidebarLayout( 
     sidebarPanel(
+      h3("Oncoplot"),
       
       # gene inputs
       
