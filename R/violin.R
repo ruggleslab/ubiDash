@@ -23,14 +23,21 @@ violinUI <- function(id, cohorts) {
         
         tabPanel(
           "mRNA",
-          selectizeInput(
-            inputId = ns("mRNAGenes"),
-            choices = NULL,
-            multiple = T,
-            selected = c("BRWD3"),
-            label =  "Input genes",
-            options = list(`live-search` = TRUE),
+          conditionalPanel(
+            condition = paste0("input['", ns("dataset"), "'] != 'PRIDE'"),
+            selectizeInput(
+              inputId = ns("mRNAGenes"),
+              choices = NULL,
+              multiple = T,
+              selected = c("BRWD3"),
+              label =  "Input genes",
+              options = list(`live-search` = TRUE),
+            )
           ),
+          conditionalPanel(condition = paste0(
+            "input['", ns("dataset"), "'] == 'PRIDE'"
+          ),
+          p("no data"))
           
         )
       ),
@@ -63,7 +70,10 @@ violinUI <- function(id, cohorts) {
           multiple = TRUE
         ),
       ),
-      actionButton(ns("generate"), label = "Generate plot")
+      conditionalPanel(
+        condition = paste0("!(input['", ns("dataset"), "'] == 'PRIDE' && input['", ns("datatype"), "'] == 'mRNA')"),
+        actionButton(ns("generate"), label = "Generate plot")
+      )
     ),
     
     mainPanel(
@@ -264,24 +274,40 @@ violinServer <-
           violin = ggplot(violin.input,
                           aes(x =  Subtype, y = value), fill = "cyan")
         }
+        
+        
         if (isolate(input$dataset) != "PRIDE") {
           violin = violin +
             geom_boxplot(show.legend = FALSE,
-                         position = position_dodge()) + # use geom_boxplot for boxplots format
-            
-            geom_point(
-              position = (
-                if (isolate(input$dataset) == "CPTAC")
-                  position_jitterdodge(dodge.width = 0.9)
-                else
-                  position_jitter()
-              )
-              ,
+                         position = position_dodge())  # use geom_boxplot for boxplots format
+          
+          
+          if (isolate(input$dataset) == "CPTAC") {
+            violin = violin + geom_point(
+              position = (position_jitterdodge(dodge.width = 0.9)),
               alpha = .5,
               size = .75,
               stroke = .1
-              
-            ) +
+            )
+          } else if (isolate(input$dataset) == "CCLE") {
+            violin = violin + geom_point(
+              aes(
+                text = paste0("Subtype: ",
+                              Subtype,
+                              "\n",
+                              "Value: ",
+                              value,
+                              "\n")
+              ),
+              position = (position_jitter()),
+              alpha = .5,
+              size = .75,
+              stroke = .1
+            )
+          }
+          
+          
+          violin = violin +
             theme_prism() +
             
             # re-naming x and y axis
@@ -302,6 +328,7 @@ violinServer <-
               hjust = 1,
               size = 5
             ))
+          
         } else {
           violin = ggplot(violin.input,
                           aes(x =  0, y = value), fill = "cyan") +
