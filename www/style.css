@@ -3,6 +3,10 @@ body{
   overflow-x: hidden;
 }
 
+.shiny-spinner-hidden{
+  display: none;
+}
+
 body > .container-fluid {
   height: 100vh;
   display: flex;
