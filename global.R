@@ -21,6 +21,10 @@ if(!skip_load_data){
   cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
   cptac_samples <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
   
+  
+  #pride dataset
+  pride_protein <- readRDS("./data/pride_lfq_protein_expression.rds")
+  
   # for correlations tab
   plot_tab <- readRDS("./data/cptac_multi_omic_correlations.rds")
   
