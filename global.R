@@ -180,8 +180,19 @@ if(!skip_load_data){
   
   #Simplified Heatmap ----
   
-  # source("./data/simplifiedheatmap/tgr_misc.R")
-  prt.n = readRDS("./data/simplifiedheatmap/prt_n.rds")
+  source("./data/simplifiedheatmap/tgr_misc.R")
+  # prt.n = readRDS("./data/simplifiedheatmap/prt_n.rds")
+  
+  # prt.global.RI <-
+  #   readRDS(file = "./data/cptac_tmt-log2-RI_protein_expression.rds")
+  # prt.global.RI <- data_norm(prt.global.RI)
+
+  prt.global.AI <-
+    readRDS(file = "./data/cptac_tmt-log2-AI_protein_expression.rds")
+  prt.global.AI <- data_norm(prt.global.AI, col_center = T)
+  
+  labels <- read.csv("./data/simplifiedheatmap//sub_types.csv")
+  
   
   tertiles <- function(x) {
     vTert <- quantile(x, c(0:3 / 3), na.rm = TRUE)
@@ -195,8 +206,8 @@ if(!skip_load_data){
   
   
   # Apply function to each column of the matrix
-  mTert <- apply(prt.n, 2, tertiles)
-  row.names(mTert) <- row.names(prt.n)
+  # mTert <- apply(prt.n, 2, tertiles)
+  # row.names(mTert) <- row.names(prt.n)
   
   
   my.colors <-

@@ -14,7 +14,7 @@ violinUI <- function(id, cohorts) {
             inputId = ns("proteinGenes"),
             choices = NULL,
             multiple = T,
-            selected = c("VHL"),
+            selected = c("KBTBD11"),
             label =  "Input genes",
             options = list(`live-search` = TRUE),
           ),
@@ -29,7 +29,7 @@ violinUI <- function(id, cohorts) {
               inputId = ns("mRNAGenes"),
               choices = NULL,
               multiple = T,
-              selected = c("BRWD3"),
+              selected = c("KBTBD11"),
               label =  "Input genes",
               options = list(`live-search` = TRUE),
             )
@@ -100,7 +100,7 @@ violinServer <-
         'mRNAGenes',
         choices = rownames(cptac_rna),
         server = TRUE,
-        selected = "BRWD3"
+        selected = "KBTBD11"
       )
       
       updateSelectizeInput(
@@ -108,7 +108,7 @@ violinServer <-
         'proteinGenes',
         choices = rownames(cptac_protein),
         server = TRUE,
-        selected = "VHL"
+        selected = "KBTBD11"
       )
       
       observe({
@@ -120,7 +120,7 @@ violinServer <-
             'mRNAGenes',
             choices = colnames(ccle_rna),
             server = TRUE,
-            selected = "TSPAN6"
+            selected = "KBTBD11"
           )
           
           updateSelectizeInput(
@@ -128,7 +128,7 @@ violinServer <-
             'proteinGenes',
             choices = rownames(ccle_protein),
             server = TRUE,
-            selected = "A1CF"
+            selected = "KBTBD11"
           )
         }
         else if (input$dataset == "CPTAC") {
@@ -137,7 +137,7 @@ violinServer <-
             'mRNAGenes',
             choices = rownames(cptac_rna),
             server = TRUE,
-            selected = "BRWD3"
+            selected = "KBTBD11"
           )
           
           updateSelectizeInput(
@@ -145,7 +145,7 @@ violinServer <-
             'proteinGenes',
             choices = rownames(cptac_protein),
             server = TRUE,
-            selected = "VHL"
+            selected = "KBTBD11"
           )
         }
         else if (input$dataset == "PRIDE") {
@@ -154,7 +154,7 @@ violinServer <-
             'proteinGenes',
             choices = rownames(pride_protein),
             server = TRUE,
-            selected = "A1BG"
+            selected = "KBTBD11"
           )
         }
         
@@ -195,7 +195,7 @@ violinServer <-
         }
         
         if (is.null(p)) {
-          p = "VHL"
+          p = "KBTBD11"
         }
         if (is.null(dataset)) {
           dataset =  t(cptac_protein)
