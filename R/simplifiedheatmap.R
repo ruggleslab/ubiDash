@@ -4,6 +4,7 @@ simplifiedHeatmapUI <- function(id, cohorts) {
   sidebarLayout(
     sidebarPanel(
       h3("Summarized Profile"),
+      p("description paragraph here"),
       selectizeInput(
         inputId = ns("inputGeneset"),
         choices = c("E1", "E2", "E3", "CRLs"),
