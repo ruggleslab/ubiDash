@@ -52,15 +52,15 @@ violinUI <- function(id, cohorts) {
       
       conditionalPanel(
         condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
-        selectizeInput(
-          inputId = ns("colorby"),
-          choices = c("Cancer Type", "Sample Type"),
-          multiple = F,
-          selected = "Sample Type",
-          label =  "Color by",
-          options = list(`live-search` = TRUE),
-        ),
-        
+        # selectizeInput(
+        #   inputId = ns("colorby"),
+        #   choices = c("Cancer Type", "Sample Type"),
+        #   multiple = F,
+        #   selected = "Sample Type",
+        #   label =  "Color by",
+        #   options = list(`live-search` = TRUE),
+        # ),
+        # 
         selectizeInput(
           inputId = ns("cohorts"),
           choices = cohorts,
@@ -288,7 +288,8 @@ violinServer <-
               alpha = .5,
               size = .75,
               stroke = .1
-            )
+            ) + 
+              scale_fill_manual(values = c("Tumor" ="#FFBD42", "Normal" = "#BA5CF4"))
           } else if (isolate(input$dataset) == "CCLE") {
             violin = violin + geom_point(
               aes(
