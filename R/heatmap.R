@@ -1,48 +1,75 @@
-heatmapUI <- function(id, cohorts){
+heatmapUI <- function(id, cohorts) {
   ns <- NS(id)
   
   sidebarLayout(
     sidebarPanel(
       h3("Heatmap"),
       
-      tabsetPanel(id = "GvGpanel",selected = "Protein",
-                  tabPanel("Protein",
-                           br(),
-                           actionButton(ns("generateProteinHeatmap"), "Generate Protein Heatmap"),
-                           br(),
-                  ),
-                  tabPanel("mRNA",
-                           br(),
-                           actionButton(ns("generateMRNAHeatmap"), "Generate mRNA Heatmap"),
-                           br(),
-                  ),
+      tabsetPanel(
+        id = ns("datatype"),
+        selected = "Protein",
+        tabPanel("Protein",),
+        tabPanel("mRNA",),
       ),
       div(
-                           br(),
+        br(),
         # make sure these do not interfere
-        selectizeInput(inputId = ns("inputGenesTXT"),
-                       choices = NULL,
-                       label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
+        selectizeInput(
+          inputId = ns("genes"),
+          choices = NULL,
+          label =  "Input genes",
+          options = list(`live-search` = TRUE),
+          multiple = TRUE
+        ),
         # p("OR"),
         # fileInput(ns("inputGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
         # # actionButton("resetHeatmapGenesCSV","clear"),
-        # selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),               
-        # 
+        # selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),
+        #
         # cohort seleciton checkboxes
-        selectizeInput(inputId = ns("cohortSelect"),
-                       choices = cohorts,selected = cohorts,
-                       label = "Select cohorts",options = list(`live-search` = TRUE),  multiple = TRUE),
+        selectizeInput(
+          inputId = ns("dataset"),
+          choices = c("CPTAC", "CCLE", "PRIDE"),
+          selected = "CPTAC",
+          label = "Dataset",
+          options = list(`live-search` = TRUE),
+          multiple = FALSE
+        ),
+        conditionalPanel(
+          condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
+          selectizeInput(
+            inputId = ns("cohort"),
+            choices = cohorts,
+            selected = cohorts,
+            label = "Select cohorts",
+            options = list(`live-search` = TRUE),
+            multiple = TRUE
+          ),
+        ),
+        conditionalPanel(
+          condition = paste0("input['", ns("dataset"), "'] != 'PRIDE'"),
+          selectizeInput(
+            inputId = ns("subtype"),
+            choices = cohorts,
+            selected = cohorts,
+            label = "Select subtypes",
+            options = list(`live-search` = TRUE),
+            multiple = TRUE
+          ),
+        ),
+        checkboxInput(ns("clusterCol"), "Cluster columns",
+                      value = TRUE),
         
-        selectizeInput(inputId = ns("subtypeSelect"),
-                       choices = cohorts,selected = cohorts,
-                       label = "Select subtypes",options = list(`live-search` = TRUE),  multiple = TRUE),
-        
-        checkboxInput(ns("cluster"), "Cluster columns",
+        checkboxInput(ns("clusterRow"), "Cluster rows",
                       value = TRUE),
         
         # toggle clustering and separation by tumor and normal
+        conditionalPanel(
+          condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
         checkboxInput(ns("separateNandT"), "Separate normal and tumor",
                       value = TRUE),
+        ),
+        actionButton(ns("generateHeatmap"), "Generate Heatmap"),
       ),
       
       
@@ -54,9 +81,9 @@ heatmapUI <- function(id, cohorts){
     
     # Show a plot of the generated distribution
     mainPanel(
-      textOutput(ns("rowscut"))%>% 
+      textOutput(ns("rowscut")) %>%
         tagAppendAttributes(class = 'error'),
-      textOutput(ns("err"))%>% 
+      textOutput(ns("err")) %>%
         tagAppendAttributes(class = 'error'),
       shinycssloaders::withSpinner(plotOutput(ns("heatmap")), color = "#6A2798"),
     )
@@ -64,176 +91,269 @@ heatmapUI <- function(id, cohorts){
   
 }
 
-heatmapServer <- function(id, cohorts, cptac_protein,cptac_rna,tnlabels, 
-                          colorsList, filteredProteinMat, filteredMRNAMat, 
-                          filteredTnlabels, defaultHeatmap, genesSubset) {
-  moduleServer(id,function(input,output,session){
-    
-    updateSelectizeInput(session, 'inputGenesTXT', 
-                         choices = as.list(rownames(cptac_protein)), 
-                         server = TRUE)
-    
-    
-
-    updateSelectizeInput(session, 'subtypeSelect', 
-                         choices = tnlabels$Cancer_subtype, 
-                         selected =tnlabels$Cancer_subtype, 
-                         server = TRUE)
-    
-    # default plot height: maybe automate this 
-    plotHeight <- reactiveVal(956)
-    
-    # matrix with only genes to plot
-    getGenesMat <- function(inputGenes,cohortSubsetLabels,protein) {
-      if (length(inputGenes) == 0 &
-          length(isolate(input$cohortSelect)) == length(cohorts) & 
-          length(isolate(input$subtypeSelect)) == length(tnlabels$Cancer_subtype)) {
-        return(NULL)
-      }
+heatmapServer <-
+  function(id,
+           cohorts,
+           cptac_protein,
+           cptac_rna,
+           ccle_protein,
+           ccle_rna,
+           pride_protein,
+           tnlabels,
+           colorsList,
+           filteredProteinMat,
+           filteredMRNAMat,
+           filteredTnlabels,
+           defaultHeatmap,
+           genesSubset) {
+    moduleServer(id, function(input, output, session) {
+      updateSelectizeInput(session,
+                           'genes',
+                           choices = as.list(rownames(cptac_protein)),
+                           server = TRUE)
       
-      if (length(inputGenes) == 0) {
-        if(protein){
-          return(filteredProteinMat[, rownames(cohortSubsetLabels)])
-        }else{
-          return(filteredMRNAMat[, rownames(cohortSubsetLabels)])
-          
-        }
-      }
-      if(protein){
-        return(cptac_protein[inputGenes, rownames(cohortSubsetLabels)])
-      } else{
-        return(cptac_rna[inputGenes, rownames(cohortSubsetLabels)])
+      
+      
+      updateSelectizeInput(
+        session,
+        'subtype',
+        choices = tnlabels$Cancer_subtype,
+        selected = tnlabels$Cancer_subtype,
+        server = TRUE
+      )
+      
+      
+      observe({
+        input$dataset
         
-      }
-    }
-    
-    protein = reactiveVal(TRUE)
-    
-    observeEvent(input$generateProteinHeatmap,{
-      protein(TRUE)
-    })
-    observeEvent(input$generateMRNAHeatmap,{
-      protein(FALSE)
-    })
-    
-    
-    output$heatmap <- renderPlot(
-      {
-
-        
-        instanceTnLabels = NULL;
-        if(protein()){
-          legendName = "Log2(Relative Abundance)"
-          instanceTnLabels = tnlabels;
+        if (input$dataset == "CPTAC") {
+          updateSelectizeInput(session,
+                               'genes',
+                               choices = as.list(rownames(cptac_protein)),
+                               server = TRUE)
         } else {
-          legendName = "Log2(TPM + 1)"
-          instanceTnLabels = filteredTnlabels;
-          
+          updateSelectizeInput(session,
+                               'genes',
+                               choices = as.list(rownames(ccle_protein)),
+                               server = TRUE)
         }
+      })
+      observe({
+        input$dataset
         
-        # Button will trigger rerender
-        input$generateProteinHeatmap
-        input$generateMRNAHeatmap
-        
-        
-        
-        # get cohorts selected by user
-        cohortSubsetLabels = NULL
-        cohortSubsetLabels = filter(instanceTnLabels, 
-                                    cohort_code %in% isolate(input$cohortSelect) 
-                                    & Cancer_subtype %in% isolate(input$subtypeSelect))
-        
-        
-        
-        if(nrow(cohortSubsetLabels) == 0){
-          output$rowscut <- renderText({
-            paste("Error: Please select at least one cohort and one subtype")
-          })
-          return()
+        if (input$dataset == "CPTAC") {
+          updateSelectizeInput(
+            session,
+            'subtype',
+            choices = tnlabels$Cancer_subtype,
+            selected = tnlabels$Cancer_subtype,
+            server = TRUE
+          )
+        } else {
+          updateSelectizeInput(
+            session,
+            'subtype',
+            choices = unique(ccle_samples$Subtype),
+            selected = c(),
+            server = TRUE
+          )
         }
+      })
+      
+      # default plot height: maybe automate this
+      plotHeight <- reactiveVal(956)
+      
+      
+      output$heatmap <- renderPlot({
+        input$generateHeatmap
         
-        inputGenes <- getInputGenes(isolate(input$inputGenesCSV),isolate(input$inputGenesTXT), delim = isolate(input$heatmapDelims))
-        inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels, protein())
-        # print(inputGenesMat)
+        instanceTnLabels = NULL
+        dataset = NULL
         
-        if (is.null(inputGenesMat)) {
-          if (isolate(input$cluster) && isolate(input$separateNandT) & protein()) {
-            return(defaultHeatmap)
+        
+        
+        
+        if (isolate(input$dataset) == "CPTAC") {
+          if (length(isolate(input$cohort)) == 0 |
+              length(isolate(input$subtype)) == 0) {
+            output$rowscut <- renderText({
+              paste("Error: Please select at least one cohort and one subtype")
+            })
+            return()
           }
           
-          if(protein()){
-            inputGenesMat = filteredProteinMat
-          } else{
-            inputGenesMat = filteredMRNAMat
+          if (isolate(input$datatype) == "Protein") {
+            legendName = "Log2(Relative Abundance)"
+            dataset = cptac_protein
+            instanceTnLabels = tnlabels
+            
+          } else {
+            legendName = "Log2(TPM + 1)"
+            dataset = cptac_rna
+            instanceTnLabels = filteredTnlabels
           }
           
           
-        } else {
-          inputGenesMat <- as.matrix(inputGenesMat[which(rowMeans(!is.na(inputGenesMat)) > 0.5), ])
+          
+          cohortSubsetLabels = filter(
+            instanceTnLabels,
+            Cancer_subtype %in% isolate(input$subtype) &
+              cohort_code %in% isolate(input$cohort)
+          )
+          
+          
+          inputGenes <- isolate(input$genes)
+          if (!isTruthy(inputGenes)) {
+            inputGenes = genesSubset$genes
+          }
+          
+          inputGenesMat <-
+            dataset[inputGenes, rownames(cohortSubsetLabels)]
+          inputGenesMat <-
+            as.matrix(inputGenesMat[which(rowMeans(!is.na(inputGenesMat)) > 0.5), ])
+          
           plotHeight(nrow(inputGenesMat) * 12 + 200)
-        }
-        
-        cutout <- inputGenes[!(inputGenes %in% toupper(rownames(inputGenesMat)))]
-        
-        if (length(cutout) > 0 & (is.null(isolate(input$inputGenesCSV)) | length(inputGenesMat) > 0)) {
-          output$rowscut <- renderText({
-            paste("No Data:", paste(cutout, collapse = ", "))
-          })
-        } else if (length(cutout) > 0) {
-          output$rowscut <- renderText({
-            paste("No Data:", paste(cutout, collapse = ", "), ". Make sure delimiter is correct.")
-          })
-        } else {
-          output$rowscut <- renderText({
-            ""
-          })
-        }
-        
-        ha <- HeatmapAnnotation(Type = cohortSubsetLabels$sample_type, Cohort = cohortSubsetLabels$cohort_code, Subtype = cohortSubsetLabels$Cancer_subtype, col = colorList)
-        hm <- NULL
-        
-        colsplit = NULL
-        if(isolate(input$separateNandT)){
-          colsplit =  cohortSubsetLabels$sample_type
-        }
-        
-        
-        inputGenesMat <- as.matrix(inputGenesMat)
-        
-        tryCatch(
-          {
+          
+          if (nrow(inputGenesMat) < length(isolate(input$genes))) {
+            output$rowscut = renderText({
+              "Some genes removed for NA rows."
+            })
+          }
+          
+          
+          ha <-
+            HeatmapAnnotation(
+              Type = cohortSubsetLabels$sample_type,
+              Cohort = cohortSubsetLabels$cohort_code,
+              Subtype = cohortSubsetLabels$Cancer_subtype,
+              col = colorList
+            )
+          hm <- NULL
+          
+          colsplit = NULL
+          if (isolate(input$separateNandT)) {
+            colsplit =  cohortSubsetLabels$sample_type
+          }
+          
+          
+          tryCatch({
             output$err <- renderText({
               ""
             })
-            return(drawHeatmap(inputGenesMat, ha, colsplit, isolate(input$cluster), legendName))
+            return(drawHeatmap(
+              inputGenesMat,
+              ha,
+              colsplit,
+              isolate(input$clusterCol),
+              isolate(input$clusterRow),
+              legendName
+            ))
           },
           error = function(e) {
+            print(e)
             output$err <- renderText({
               "Warning: Not enough data to cluster columns"
             })
-            return(drawHeatmap(inputGenesMat, ha, colsplit, FALSE,legendName))
+            return(drawHeatmap(inputGenesMat, ha, colsplit, FALSE, FALSE, legendName))
             
+          })
+        }  else if (isolate(input$dataset) == "CCLE") {
+         
+          if (isolate(input$datatype) == "Protein") {
+            legendName = "Log2(Relative Abundance)"
+            dataset = ccle_protein
+            
+          } else {
+            legendName = "Log2(TPM + 1)"
+            
+            dataset = t(ccle_rna)
           }
-        )
+          
+          inputGenes = isolate(input$genes)
+          
+          if (!isTruthy(inputGenes)) {
+            inputGenes = genesSubset$genes[genesSubset$genes %in% rownames(dataset)]
+          }
+          
+          sub.ccle = dataset[inputGenes,]
+          
+          
+          
+          print(isolate(input$subtype))
+          if(length(isolate(input$subtype)) != 0){
+            
+            sub.samples = ccle_samples[ccle_samples$Subtype %in% isolate(input$subtype),]
+            sub.samples = sub.samples[rownames(sub.samples) %in% colnames(sub.ccle),]
+            sub.ccle = sub.ccle[,rownames(sub.samples)]
+          }
+          
+          sub.ccle <-
+            as.matrix(sub.ccle[which(rowMeans(!is.na(sub.ccle)) > 0.5), ])
+          
+          print(ncol(sub.ccle))
+          print(nrow(sub.ccle))
+          
+          
+          ha = HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle),]$Cancer_subtype)
+          
+          
+          output$err <- renderText({
+            ""
+          })
+          
+          Heatmap(
+            sub.ccle,
+            top_annotation = ha,
+            column_names_gp = grid::gpar(fontsize = 3),
+            cluster_columns = isolate(input$clusterCol),
+            cluster_rows = isolate(input$clusterRow)
+          )
+          
+          
+        } else if (isolate(input$dataset) == "PRIDE") {
+          dataset = (pride_protein)
+          
+          
+          inputGenes = isolate(input$genes)
+          
+          if (!isTruthy(inputGenes)) {
+            inputGenes = genesSubset$genes[genesSubset$genes %in% rownames(dataset)]
+          }
+          
+          sub.pride = pride_protein[inputGenes,]
+          
+          
+          Heatmap(
+            sub.pride,
+            column_names_gp = grid::gpar(fontsize = 8),
+            cluster_columns = isolate(input$clusterCol),
+            cluster_rows = isolate(input$clusterRow)
+          )
+          
+        }
+        
       },
-      height = plotHeight
-    )
-    
-    output$downloadData <- downloadHandler(
-      filename = function() {
-        paste("data-", Sys.Date(), ".csv", sep = "")
-      },
-      content = function(file) {
-        write.csv(cptac_protein, file)
-      }
-    )
-    output$downloadAnno <- downloadHandler(
-      filename = function() {
-        paste("annotation-data-", Sys.Date(), ".csv", sep = "")
-      },
-      content = function(file) {
-        write.csv(cptac_samples, file)
-      }
-    )
-  })
-}
+      height = plotHeight)
+      
+      
+      
+      # Download buttons ----
+      
+      output$downloadData <- downloadHandler(
+        filename = function() {
+          paste("data-", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(cptac_protein, file)
+        }
+      )
+      output$downloadAnno <- downloadHandler(
+        filename = function() {
+          paste("annotation-data-", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(cptac_samples, file)
+        }
+      )
+    })
+  }

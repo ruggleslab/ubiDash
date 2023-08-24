@@ -23,9 +23,19 @@ source("./scripts/SplitInputGenes.R")
 shinyServer(function(input, output, session) {
   # heatmap tab ----
   heatmapServer(
-    "heatmapTab", cohorts, cptac_protein, cptac_rna, tnlabels,
-    colorsList, filteredProteinMat, filteredMRNAMat,
-    filteredTnlabels, defaultHeatmap, genesSubset
+    "heatmapTab", cohorts,
+    cptac_protein,
+    cptac_rna,
+    ccle_protein,
+    ccle_rna,
+    pride_protein,
+    tnlabels,
+    colorsList,
+    filteredProteinMat,
+    filteredMRNAMat,
+    filteredTnlabels,
+    defaultHeatmap,
+    genesSubset
   )
 
   # volcano plot tab ----
@@ -35,7 +45,7 @@ shinyServer(function(input, output, session) {
   correlationsServer("corrTab", plot_tab, lines)
 
   # boxplot tab ----
-  violinServer("violinTab",cptac_rna, cptac_protein,cptac_samples, cohort_colors, pride_protein)
+  violinServer("violinTab",cptac_rna, cptac_protein,cptac_samples,  cohort_colors, pride_protein)
 
   # oncoplot tab ----
   oncoplotServer("oncoTab", cptac_protein, cptac_samples, maf, crl_genes, top_crls, cohorts)
