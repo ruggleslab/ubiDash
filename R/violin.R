@@ -23,27 +23,23 @@ violinUI <- function(id, cohorts) {
         
         tabPanel(
           "mRNA",
-          conditionalPanel(
-            condition = paste0("input['", ns("dataset"), "'] != 'PRIDE'"),
-            selectizeInput(
-              inputId = ns("mRNAGenes"),
-              choices = NULL,
-              multiple = T,
-              selected = c("KBTBD11"),
-              label =  "Input genes",
-              options = list(`live-search` = TRUE),
-            )
+          
+          selectizeInput(
+            inputId = ns("mRNAGenes"),
+            choices = NULL,
+            multiple = T,
+            selected = c("KBTBD11"),
+            label =  "Input genes",
+            options = list(`live-search` = TRUE),
+            
           ),
-          conditionalPanel(condition = paste0(
-            "input['", ns("dataset"), "'] == 'PRIDE'"
-          ),
-          p("no data"))
+          
           
         )
       ),
       selectizeInput(
         inputId = ns("dataset"),
-        choices = c("CPTAC", "CCLE", "PRIDE"),
+        choices = c("CPTAC", "CCLE"),
         multiple = F,
         selected = "CPTAC",
         label =  "Dataset",
@@ -52,15 +48,7 @@ violinUI <- function(id, cohorts) {
       
       conditionalPanel(
         condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
-        # selectizeInput(
-        #   inputId = ns("colorby"),
-        #   choices = c("Cancer Type", "Sample Type"),
-        #   multiple = F,
-        #   selected = "Sample Type",
-        #   label =  "Color by",
-        #   options = list(`live-search` = TRUE),
-        # ),
-        # 
+        
         selectizeInput(
           inputId = ns("cohorts"),
           choices = cohorts,
@@ -70,10 +58,8 @@ violinUI <- function(id, cohorts) {
           multiple = TRUE
         ),
       ),
-      conditionalPanel(
-        condition = paste0("!(input['", ns("dataset"), "'] == 'PRIDE' && input['", ns("datatype"), "'] == 'mRNA')"),
-        actionButton(ns("generate"), label = "Generate plot")
-      )
+      actionButton(ns("generate"), label = "Generate plot")
+      
     ),
     
     mainPanel(
@@ -92,8 +78,7 @@ violinServer <-
            cptac_rna,
            cptac_protein,
            cptac_samples,
-           cohort_colors,
-           pride_protein) {
+           cohort_colors) {
     moduleServer(id, function(input, output, session) {
       updateSelectizeInput(
         session,
@@ -148,15 +133,6 @@ violinServer <-
             selected = "KBTBD11"
           )
         }
-        else if (input$dataset == "PRIDE") {
-          updateSelectizeInput(
-            session,
-            'proteinGenes',
-            choices = rownames(pride_protein),
-            server = TRUE,
-            selected = "KBTBD11"
-          )
-        }
         
       })
       
@@ -187,10 +163,6 @@ violinServer <-
             dataset = ccle_rna
             p <- isolate(input$mRNAGenes)
           }
-          
-        } else if (isolate(input$dataset) == "PRIDE") {
-          dataset = t(pride_protein)
-          p <- isolate(input$proteinGenes)
           
         }
         
@@ -231,8 +203,6 @@ violinServer <-
           violin.input = violin.input[violin.input$cohort_code %in% isolate(input$cohorts),]
           
         } else if (isolate(input$dataset == "CCLE")) {
-          print(head(violin.input))
-          
           violin.input = merge(
             x = violin.input,
             y = ccle_samples,
@@ -245,6 +215,7 @@ violinServer <-
           )[c("Subtype",
               "variable",
               "value")]
+          violin.input$Sample_type = "Tumor"
         }
         
         
@@ -268,90 +239,76 @@ violinServer <-
                             y = value,
                             fill =
                               Sample_type
-                          ))
+                          )) +
+            geom_boxplot(show.legend = FALSE,
+                         position = position_dodge())
           
         } else if (isolate(input$dataset) == "CCLE") {
           violin = ggplot(violin.input,
-                          aes(x =  Subtype, y = value), fill = "cyan")
-        }
-        
-        
-        if (isolate(input$dataset) != "PRIDE") {
-          violin = violin +
-            geom_boxplot(show.legend = FALSE,
-                         position = position_dodge())  # use geom_boxplot for boxplots format
-          
-          
-          if (isolate(input$dataset) == "CPTAC") {
-            violin = violin + geom_point(
-              position = (position_jitterdodge(dodge.width = 0.9)),
-              alpha = .5,
-              size = .75,
-              stroke = .1
-            ) + 
-              scale_fill_manual(values = c("Tumor" ="#FFBD42", "Normal" = "#BA5CF4"))
-          } else if (isolate(input$dataset) == "CCLE") {
-            violin = violin + geom_point(
-              aes(
-                text = paste0("Subtype: ",
-                              Subtype,
-                              "\n",
-                              "Value: ",
-                              value,
-                              "\n")
-              ),
-              position = (position_jitter()),
-              alpha = .5,
-              size = .75,
-              stroke = .1
+                          aes(x =  Subtype, y = value)) +
+            geom_boxplot(
+              show.legend = FALSE,
+              position = position_dodge() ,
+              fill =   "#FFBD42"
             )
-          }
           
-          
-          violin = violin +
-            theme_prism() +
-            
-            # re-naming x and y axis
-            labs(
-              x = NULL,
-              y = ylab,
-              title = paste(
-                isolate(input$dataset),
-                isolate(input$datatype),
-                ", n =",
-                nrow(POIs)
-              )
-            ) +
-            facet_grid(rows = vars(violin.input$variable)) +
-            theme(axis.text.x = element_text(
-              angle = 60,
-              vjust = 0.5,
-              hjust = 1,
-              size = 5
-            ))
-          
-        } else {
-          violin = ggplot(violin.input,
-                          aes(x =  0, y = value), fill = "cyan") +
-            geom_boxplot(show.legend = FALSE,
-                         position = position_dodge()) + # use geom_boxplot for boxplots format
-            
-            geom_point(
-              aes(text =
-                    paste0("Type: ",
-                           sample_id)),
-              position = (position_jitter())
-              ,
-              alpha = .5,
-              size = .75,
-              stroke = .1
-              
-            ) +
-            theme_prism() +
-            labs(title = paste("PRIDE n =",
-                               nrow(POIs))) +
-            facet_grid(rows = vars(violin.input$variable))
         }
+        
+        
+        
+        
+        if (isolate(input$dataset) == "CPTAC") {
+          violin = violin + geom_point(
+            position = (position_jitterdodge(dodge.width = 0.9)),
+            alpha = .5,
+            size = .75,
+            stroke = .1
+          ) +
+            scale_fill_manual(values = c(
+              "Tumor" = "#FFBD42",
+              "Normal" = "#BA5CF4"
+            ))
+        } else if (isolate(input$dataset) == "CCLE") {
+          violin = violin + geom_point(
+            aes(text = paste0(
+              "Subtype: ",
+              Subtype,
+              "\n",
+              "Value: ",
+              value,
+              "\n"
+            )),
+            position = (position_jitter()),
+            alpha = .5,
+            size = .75,
+            stroke = .1
+          )
+        }
+        
+        
+        violin = violin +
+          theme_prism() +
+          
+          # re-naming x and y axis
+          labs(
+            x = NULL,
+            y = ylab,
+            title = paste(
+              isolate(input$dataset),
+              isolate(input$datatype),
+              ", n =",
+              nrow(POIs)
+            )
+          ) +
+          facet_grid(rows = vars(violin.input$variable)) +
+          theme(axis.text.x = element_text(
+            angle = 60,
+            vjust = 0.5,
+            hjust = 1,
+            size = 5
+          ))
+        
+        
         
         ggplotly(violin, tooltip = "text") %>%
           # https://stackoverflow.com/questions/58586314/keeping-dodge-position-in-boxplot-passed-to-plotly

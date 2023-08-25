@@ -266,7 +266,15 @@ heatmapServer <-
           } else {
             legendName = "Log2(TPM + 1)"
             
-            dataset = t(ccle_rna)
+            dataset = ccle_rna[rownames(ccle_rna) %in% ccle_samples$BROAD_ID,]
+            ccle_samples_sub = ccle_samples[ccle_samples$BROAD_ID %in% rownames(ccle_rna),]
+            ccle_samples_sub$id = rownames(ccle_samples_sub)
+            rownames(ccle_samples_sub) = ccle_samples_sub$BROAD_ID
+            ids = (ccle_samples_sub[rownames(ccle_rna),])[,c("id", "BROAD_ID")]
+            ids = ids[rowSums(is.na(ids)) != ncol(ids), ]
+            rownames(dataset) = ids$id
+            
+            dataset = t(dataset)
           }
           
           inputGenes = isolate(input$genes)
