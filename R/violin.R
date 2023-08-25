@@ -58,6 +58,17 @@ violinUI <- function(id, cohorts) {
           multiple = TRUE
         ),
       ),
+      conditionalPanel(
+        condition = paste0("input['", ns("dataset"), "'] == 'CCLE'"),
+        
+        selectizeInput(
+          inputId = ns("subtype"),
+          choices = c(),
+          label = "Select subtype",
+          options = list(`live-search` = TRUE),
+          multiple = TRUE
+        ),
+      ),
       actionButton(ns("generate"), label = "Generate plot")
       
     ),
@@ -86,6 +97,13 @@ violinServer <-
         choices = rownames(cptac_rna),
         server = TRUE,
         selected = "KBTBD11"
+      )
+      
+      updateSelectizeInput(
+        session,
+        'subtype',
+        choices = unique(ccle_samples$Subtype),
+        server = TRUE,
       )
       
       updateSelectizeInput(
@@ -151,7 +169,7 @@ violinServer <-
             p <- isolate(input$proteinGenes)
           } else{
             # there appear to be duplicate columns
-            dataset = t(cptac_rna[, !duplicated(colnames(cptac_rna))])
+            dataset = t(cptac_rna[,!duplicated(colnames(cptac_rna))])
             p <- isolate(input$mRNAGenes)
           }
         } else if (isolate(input$dataset) == "CCLE") {
@@ -199,8 +217,8 @@ violinServer <-
             "Cancer_subtype"
           )]
           
-          violin.input = violin.input[!is.na(violin.input$Sample_type),]
-          violin.input = violin.input[violin.input$cohort_code %in% isolate(input$cohorts),]
+          violin.input = violin.input[!is.na(violin.input$Sample_type), ]
+          violin.input = violin.input[violin.input$cohort_code %in% isolate(input$cohorts), ]
           
         } else if (isolate(input$dataset == "CCLE")) {
           violin.input = merge(
@@ -215,6 +233,10 @@ violinServer <-
           )[c("Subtype",
               "variable",
               "value")]
+          if (length(isolate(input$subtype)) != 0) {
+            violin.input = violin.input[violin.input$Subtype %in% isolate(input$subtype), ]
+          }
+          
           violin.input$Sample_type = "Tumor"
         }
         
@@ -306,7 +328,8 @@ violinServer <-
             vjust = 0.5,
             hjust = 1,
             size = 5
-          ))
+          )) + 
+          theme(axis.text.x = element_text(size=8)) 
         
         
         
