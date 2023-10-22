@@ -5,7 +5,7 @@ library("tidyverse")
 time = as.numeric(Sys.time())
 startTime = time
 
-skip_load_data = T
+skip_load_data = F
 
 if(!skip_load_data){
   # Datasets ----
@@ -17,7 +17,8 @@ if(!skip_load_data){
   
   # cptac dataset
   # cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
-  cptac_rna <- readRDS("./data/cptac_log-tpm_rna_expression.rds")
+  # cptac_rna <- readRDS("./data/cptac_log-tpm_rna_expression.rds")
+  cptac_rna <- readRDS("./data/duplicates_averaged_cptac_rna.rds")
   cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
   cptac_samples <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
   
