@@ -17,7 +17,8 @@ if(!skip_load_data){
   
   # cptac dataset
   # cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
-  cptac_rna <- readRDS("./data/cptac_log-tpm_rna_expression.rds")
+  # cptac_rna <- readRDS("./data/cptac_log-tpm_rna_expression.rds")
+  cptac_rna <- readRDS("./data/duplicates_averaged_cptac_rna.rds")
   cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
   cptac_samples <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
   
@@ -147,12 +148,12 @@ if(!skip_load_data){
   # }
   
   
-  drawHeatmap <- function(inputGenesMat, annotation,colsplit, cluster, legendName){
+  drawHeatmap <- function(inputGenesMat, annotation,colsplit, clusterCol, clusterRow, legendName){
     hm <- Heatmap(inputGenesMat,
                   name = legendName,
                   show_column_names = FALSE, show_row_names = TRUE,
                   top_annotation = annotation, heatmap_legend_param = list(direction = "horizontal"),
-                  column_split = colsplit, cluster_columns = cluster
+                  column_split = colsplit, cluster_columns = clusterCol, cluster_rows = clusterRow
     )
     return(draw(hm, heatmap_legend_side = "bottom", annotation_legend_side = "right"))
   }

@@ -106,7 +106,7 @@ shinyUI(
         p(
           strong("Kindly cite:"),
           tags$a(
-            href = "citation-link-here", "González-Robles et al. 2024",
+            href = "citation-link-here", "González-Robles et al. (coming soon)",
             style = "color: white"
           )
         )
