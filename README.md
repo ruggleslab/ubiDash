@@ -71,7 +71,7 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
     -   To delete a local branch use `$ git branch -d my-branch-name` or `$ git branch -D my-branch-name`
 
-        -   **NOTE:** The -d option only deletes the branch if it has already been merged. The -D option is a shortcut for \--delete \--force, which deletes the branch irrespective of its merged status.
+        -   **NOTE:** The -d option only deletes the branch if it has already been merged. The -D option is a shortcut for --delete --force, which deletes the branch irrespective of its merged status.
 
 ## Accessing shiny-server from local terminal
 
@@ -110,3 +110,15 @@ Before starting your work, make sure to setup the remote repo appropriately. The
     -   [x] would it be possible to create a ssh key? (Yes) see documentation on [how to create ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
 **Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.
+
+## Shinyapp.io app deployment
+
+Known issues as of 2024-03-12 with latest R versions:
+
+-   App deployment errors out due to unresolved bugs from posit's end.
+
+-   Temporary solution: downgrade to R 4.2.3 and retry
+
+    -   use `rig` package ([ref](https://github.com/r-lib/rig?tab=readme-ov-file#id-macos-installer)) to facilitate R version management.
+
+-   See [post](https://community.rstudio.com/t/app-deployment-fails-due-to-problems-in-building-biocgenerics/182879/2) on issue.
