@@ -128,3 +128,7 @@ Known issues as of 2024-03-12 with latest R versions:
     -   use `rig` package ([ref](https://github.com/r-lib/rig?tab=readme-ov-file#id-macos-installer)) to facilitate R version management.
 
 -   See [post](https://community.rstudio.com/t/app-deployment-fails-due-to-problems-in-building-biocgenerics/182879/2) on issue.
+
+## Optimizing and scaling performance
+
+-   Check out [here](https://support.posit.co/hc/en-us/articles/231874748-Scaling-and-Performance-Tuning-in-Posit-RStudio-Connect).
