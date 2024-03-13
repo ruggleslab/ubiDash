@@ -1,12 +1,12 @@
-packagelist <- c("shiny", "DT", "ggprism", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools", "circlize", "ggrepel", "corrplot", "ggpubr")
-
-lapply(packagelist, function(x) {
-  suppressMessages(require(x,
-    character.only = T,
-    quietly = T,
-    warn.conflicts = F
-  ))
-})
+# packagelist <- c("shiny", "DT", "ggprism", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools", "circlize", "ggrepel", "corrplot", "ggpubr")
+#
+# lapply(packagelist, function(x) {
+#   suppressMessages(require(x,
+#     character.only = T,
+#     quietly = T,
+#     warn.conflicts = F
+#   ))
+# })
 
 load("./data/defaults.RData")
 # loading default objects below:
@@ -45,7 +45,7 @@ shinyServer(function(input, output, session) {
   correlationsServer("corrTab", plot_tab, lines)
 
   # boxplot tab ----
-  violinServer("violinTab",cptac_rna, cptac_protein,cptac_samples,  cohort_colors)
+  violinServer("violinTab", cptac_rna, cptac_protein, cptac_samples, cohort_colors)
 
   # oncoplot tab ----
   oncoplotServer("oncoTab", cptac_protein, cptac_samples, maf, crl_genes, top_crls, cohorts)
@@ -57,5 +57,5 @@ shinyServer(function(input, output, session) {
 
   drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, crl_genes)
 
-  simplifiedHeatmapServer("simplifiedHeatmapTab",  tertiles,prt.global.AI, labels, my.colors)
+  simplifiedHeatmapServer("simplifiedHeatmapTab", tertiles, prt.global.AI, labels, my.colors)
 })

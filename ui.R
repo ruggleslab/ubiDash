@@ -1,11 +1,11 @@
-library(shiny)
-library(shinycssloaders)
-library(plotly)
-library(readxl)
-library(bslib)
-library(DT)
-library(corrplot)
-library(openxlsx)
+# library(shiny)
+# library(shinycssloaders)
+# library(plotly)
+# library(readxl)
+# library(bslib)
+# library(DT)
+# library(corrplot)
+# library(openxlsx)
 
 
 
@@ -86,7 +86,7 @@ shinyUI(
         # need to let users input genes of interest
         tabPanel("Descriptive Statistics",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          violinUI("violinTab",cohorts)
+          violinUI("violinTab", cohorts)
         ),
         tabPanel("Drug Sensitivity",
           theme = bs_theme(version = 5, bootswatch = "pulse"),

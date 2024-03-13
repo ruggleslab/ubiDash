@@ -111,6 +111,12 @@ Before starting your work, make sure to setup the remote repo appropriately. The
 
 **Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.
 
+## Keep tidy code with lintr and styler
+
+-   [lintr](https://www.tidyverse.org/blog/2022/07/lintr-3-0-0/) create markers of out of style code without making changes
+
+-   [styler](https://www.tidyverse.org/blog/2017/12/styler-1.0.0/) identifies and corrects out of style code
+
 ## Shinyapp.io app deployment
 
 Known issues as of 2024-03-12 with latest R versions:
