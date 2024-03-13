@@ -158,14 +158,26 @@ if (!skip_load_data) {
   # }
 
 
-  drawHeatmap <- function(inputGenesMat, annotation, colsplit, clusterCol, clusterRow, legendName) {
+  drawHeatmap <- function(inputGenesMat,
+                          annotation,
+                          colsplit,
+                          clusterCol,
+                          clusterRow,
+                          legendName) {
     hm <- Heatmap(inputGenesMat,
-      name = legendName,
-      show_column_names = FALSE, show_row_names = TRUE,
-      top_annotation = annotation, heatmap_legend_param = list(direction = "horizontal"),
-      column_split = colsplit, cluster_columns = clusterCol, cluster_rows = clusterRow
+                  name = legendName,
+                  show_column_names = FALSE,
+                  show_row_names = TRUE,
+                  top_annotation = annotation,
+                  heatmap_legend_param = list(direction = "horizontal"),
+                  column_split = colsplit,
+                  cluster_columns = clusterCol,
+                  cluster_rows = clusterRow
     )
-    return(draw(hm, heatmap_legend_side = "bottom", annotation_legend_side = "right"))
+    return(draw(hm,
+                heatmap_legend_side = "bottom",
+                annotation_legend_side = "right")
+           )
   }
 
 
@@ -204,16 +216,16 @@ if (!skip_load_data) {
 
   labels <- read.csv("./data/simplifiedheatmap//sub_types.csv")
 
-
-  tertiles <- function(x) {
-    vTert <- quantile(x, c(0:3 / 3), na.rm = TRUE)
-    cut(
-      x,
-      vTert,
-      include.lowest = TRUE,
-      labels = c("Low", "Medium", "High")
-    )
-  }
+  source("./scripts/tertiles.R")
+  # tertiles <- function(x) {
+  #   vTert <- quantile(x, c(0:3 / 3), na.rm = TRUE)
+  #   cut(
+  #     x,
+  #     vTert,
+  #     include.lowest = TRUE,
+  #     labels = c("Low", "Medium", "High")
+  #   )
+  # }
 
 
   # Apply function to each column of the matrix

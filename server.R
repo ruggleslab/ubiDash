@@ -1,13 +1,3 @@
-# packagelist <- c("shiny", "DT", "ggprism", "ComplexHeatmap", "openxlsx", "readxl", "tidyverse", "glue", "stringr", "reshape2", "RColorBrewer", "plotly", "maftools", "circlize", "ggrepel", "corrplot", "ggpubr")
-#
-# lapply(packagelist, function(x) {
-#   suppressMessages(require(x,
-#     character.only = T,
-#     quietly = T,
-#     warn.conflicts = F
-#   ))
-# })
-
 load("./data/defaults.RData")
 # loading default objects below:
 # genesSubset
@@ -23,7 +13,8 @@ source("./scripts/SplitInputGenes.R")
 shinyServer(function(input, output, session) {
   # heatmap tab ----
   heatmapServer(
-    "heatmapTab", cohorts,
+    "heatmapTab",
+    cohorts,
     cptac_protein,
     cptac_rna,
     ccle_protein,
@@ -39,23 +30,51 @@ shinyServer(function(input, output, session) {
   )
 
   # volcano plot tab ----
-  volcanoServer("volcanoTab", cptac_protein, crl_genes)
+  volcanoServer("volcanoTab",
+                cptac_protein,
+                crl_genes)
 
-  # correlation tab (----
-  correlationsServer("corrTab", plot_tab, lines)
+  # correlation tab ----
+  correlationsServer("corrTab",
+                     plot_tab,
+                     lines)
 
   # boxplot tab ----
-  violinServer("violinTab", cptac_rna, cptac_protein, cptac_samples, cohort_colors)
+  violinServer("violinTab",
+               cptac_rna,
+               cptac_protein,
+               cptac_samples,
+               cohort_colors)
 
   # oncoplot tab ----
-  oncoplotServer("oncoTab", cptac_protein, cptac_samples, maf, crl_genes, top_crls, cohorts)
+  oncoplotServer("oncoTab",
+                 cptac_protein,
+                 cptac_samples,
+                 maf,
+                 crl_genes,
+                 top_crls,
+                 cohorts)
 
   # lollipop tab
-  lollipopServer("lollipopTab", maf)
+  lollipopServer("lollipopTab",
+                 maf)
 
-  corrAnalysisServer("corrAnalysisTab", cohorts, cptac_protein, cptac_rna, cptac_samples)
+  corrAnalysisServer("corrAnalysisTab",
+                     cohorts,
+                     cptac_protein,
+                     cptac_rna,
+                     cptac_samples)
 
-  drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, crl_genes)
+  drugResponseServer("drugResponseTab",
+                     drug,
+                     drugpath,
+                     exp,
+                     cell,
+                     crl_genes)
 
-  simplifiedHeatmapServer("simplifiedHeatmapTab", tertiles, prt.global.AI, labels, my.colors)
+  simplifiedHeatmapServer("simplifiedHeatmapTab",
+                          tertiles,
+                          prt.global.AI,
+                          labels,
+                          my.colors)
 })
