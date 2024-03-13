@@ -3,6 +3,7 @@
 ##########################
 
 # loading R packages
+source("./scripts/load.packages.R")
 pks_lst <- readLines("./www/packages.txt")
 load.packages(pks_lst)
 
