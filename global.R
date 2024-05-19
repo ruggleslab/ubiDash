@@ -217,21 +217,10 @@ if (!skip_load_data) {
   labels <- read.csv("./data/simplifiedheatmap//sub_types.csv")
 
   source("./scripts/tertiles.R")
-  # tertiles <- function(x) {
-  #   vTert <- quantile(x, c(0:3 / 3), na.rm = TRUE)
-  #   cut(
-  #     x,
-  #     vTert,
-  #     include.lowest = TRUE,
-  #     labels = c("Low", "Medium", "High")
-  #   )
-  # }
-
 
   # Apply function to each column of the matrix
   # mTert <- apply(prt.n, 2, tertiles)
   # row.names(mTert) <- row.names(prt.n)
-
 
   my.colors <-
     setNames(c("#070A52", "#6C9BCF", "#AFD3E2"),

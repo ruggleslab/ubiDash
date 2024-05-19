@@ -89,19 +89,22 @@ simplifiedHeatmapServer <-
           }
           if (selected_geneset == "E1") {
             geneset_df <-
-              read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx", sheet = 2)
+              read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx",
+                         sheet = 2)
             height(300)
             fontSize(10)
           }
           if (selected_geneset == "E2") {
             geneset_df <-
-              read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx", sheet = 3)
+              read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx",
+                         sheet = 3)
             height(600)
             fontSize(10)
           }
           if (selected_geneset == "E3") {
             geneset_df <-
-              read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx", sheet = 4)
+              read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx",
+                         sheet = 4)
             height(2500)
             fontSize(4)
           }
