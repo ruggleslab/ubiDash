@@ -8,8 +8,8 @@ heatmapUI <- function(id, cohorts) {
       tabsetPanel(
         id = ns("datatype"),
         selected = "Protein",
-        tabPanel("Protein",),
-        tabPanel("mRNA",),
+        tabPanel("Protein", ),
+        tabPanel("mRNA", ),
       ),
       div(
         br(),
@@ -57,17 +57,14 @@ heatmapUI <- function(id, cohorts) {
             multiple = TRUE
           ),
         ),
-        checkboxInput(ns("clusterCol"), "Cluster columns",
-                      value = TRUE),
+        checkboxInput(ns("clusterCol"), "Cluster columns", value = TRUE),
         
-        checkboxInput(ns("clusterRow"), "Cluster rows",
-                      value = TRUE),
+        checkboxInput(ns("clusterRow"), "Cluster rows", value = TRUE),
         
         # toggle clustering and separation by tumor and normal
         conditionalPanel(
           condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
-        checkboxInput(ns("separateNandT"), "Separate normal and tumor",
-                      value = TRUE),
+          checkboxInput(ns("separateNandT"), "Separate normal and tumor", value = TRUE),
         ),
         actionButton(ns("generateHeatmap"), "Generate Heatmap"),
       ),
@@ -146,7 +143,7 @@ heatmapServer <-
             session,
             'subtype',
             choices = tnlabels$Cancer_subtype,
-            selected = tnlabels$Cancer_subtype,
+            selected = c(),
             server = TRUE
           )
         } else {
@@ -170,17 +167,13 @@ heatmapServer <-
         instanceTnLabels = NULL
         dataset = NULL
         
+        output$rowscut <- renderText({
+          paste("")
+        })
         
         
         
         if (isolate(input$dataset) == "CPTAC") {
-          if (length(isolate(input$cohort)) == 0 |
-              length(isolate(input$subtype)) == 0) {
-            output$rowscut <- renderText({
-              paste("Error: Please select at least one cohort and one subtype")
-            })
-            return()
-          }
           
           if (isolate(input$datatype) == "Protein") {
             legendName = "Log2(Relative Abundance)"
@@ -193,13 +186,22 @@ heatmapServer <-
             instanceTnLabels = filteredTnlabels
           }
           
+          cohortSubsetLabels = instanceTnLabels
           
-          
+          if(length(isolate(input$subtype)) != 0){
           cohortSubsetLabels = filter(
             instanceTnLabels,
-            Cancer_subtype %in% isolate(input$subtype) &
-              cohort_code %in% isolate(input$cohort)
-          )
+            Cancer_subtype %in% isolate(input$subtype))
+          
+          }
+          
+          
+          if(length(isolate(input$cohorts)) != 0){
+            cohortSubsetLabels = filter(
+              instanceTnLabels,
+              cohort_code %in% isolate(input$cohort))
+            
+          }
           
           
           inputGenes <- isolate(input$genes)
@@ -248,8 +250,7 @@ heatmapServer <-
               isolate(input$clusterRow),
               legendName
             ))
-          },
-          error = function(e) {
+          }, error = function(e) {
             print(e)
             output$err <- renderText({
               "Warning: Not enough data to cluster columns"
@@ -258,7 +259,6 @@ heatmapServer <-
             
           })
         }  else if (isolate(input$dataset) == "CCLE") {
-         
           if (isolate(input$datatype) == "Protein") {
             legendName = "Log2(Relative Abundance)"
             dataset = ccle_protein
@@ -266,11 +266,11 @@ heatmapServer <-
           } else {
             legendName = "Log2(TPM + 1)"
             
-            dataset = ccle_rna[rownames(ccle_rna) %in% ccle_samples$BROAD_ID,]
-            ccle_samples_sub = ccle_samples[ccle_samples$BROAD_ID %in% rownames(ccle_rna),]
+            dataset = ccle_rna[rownames(ccle_rna) %in% ccle_samples$BROAD_ID, ]
+            ccle_samples_sub = ccle_samples[ccle_samples$BROAD_ID %in% rownames(ccle_rna), ]
             ccle_samples_sub$id = rownames(ccle_samples_sub)
             rownames(ccle_samples_sub) = ccle_samples_sub$BROAD_ID
-            ids = (ccle_samples_sub[rownames(ccle_rna),])[,c("id", "BROAD_ID")]
+            ids = (ccle_samples_sub[rownames(ccle_rna), ])[, c("id", "BROAD_ID")]
             ids = ids[rowSums(is.na(ids)) != ncol(ids), ]
             rownames(dataset) = ids$id
             
@@ -283,26 +283,22 @@ heatmapServer <-
             inputGenes = genesSubset$genes[genesSubset$genes %in% rownames(dataset)]
           }
           
-          sub.ccle = dataset[inputGenes,]
+          sub.ccle = dataset[inputGenes, ]
           
           
           
           print(isolate(input$subtype))
-          if(length(isolate(input$subtype)) != 0){
-            
-            sub.samples = ccle_samples[ccle_samples$Subtype %in% isolate(input$subtype),]
-            sub.samples = sub.samples[rownames(sub.samples) %in% colnames(sub.ccle),]
-            sub.ccle = sub.ccle[,rownames(sub.samples)]
+          if (length(isolate(input$subtype)) != 0) {
+            sub.samples = ccle_samples[ccle_samples$Subtype %in% isolate(input$subtype), ]
+            sub.samples = sub.samples[rownames(sub.samples) %in% colnames(sub.ccle), ]
+            sub.ccle = sub.ccle[, rownames(sub.samples)]
           }
           
           sub.ccle <-
             as.matrix(sub.ccle[which(rowMeans(!is.na(sub.ccle)) > 0.5), ])
           
-          print(ncol(sub.ccle))
-          print(nrow(sub.ccle))
           
-          
-          ha = HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle),]$Cancer_subtype)
+          ha = HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle), ]$Cancer_subtype)
           
           
           output$err <- renderText({
@@ -328,7 +324,7 @@ heatmapServer <-
             inputGenes = genesSubset$genes[genesSubset$genes %in% rownames(dataset)]
           }
           
-          sub.pride = pride_protein[inputGenes,]
+          sub.pride = pride_protein[inputGenes, ]
           
           
           Heatmap(
@@ -340,8 +336,7 @@ heatmapServer <-
           
         }
         
-      },
-      height = plotHeight)
+      }, height = plotHeight)
       
       
       

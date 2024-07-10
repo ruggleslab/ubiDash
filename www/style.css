@@ -74,6 +74,10 @@ h2{
   margin:0;
 }
 
+.nav a {
+    border-bottom: 0 !important;
+}
+
 /* Set styles for buttons */
 #generateBTN,
 #generateVolcano {

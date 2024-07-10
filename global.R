@@ -6,7 +6,7 @@ library("googledrive")
 time = as.numeric(Sys.time())
 startTime = time
 
-skip_load_data = F
+skip_load_data = T
 
 if(!skip_load_data){
   
@@ -220,8 +220,7 @@ if(!skip_load_data){
   #   readRDS(file = "./data/cptac_tmt-log2-RI_protein_expression.rds")
   # prt.global.RI <- data_norm(prt.global.RI)
 
-  prt.global.AI <-
-    readRDS(file = "./data/cptac_tmt-log2-AI_protein_expression.rds")
+  prt.global.AI <- get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
   prt.global.AI <- data_norm(prt.global.AI, col_center = T)
   
   labels <- read.csv("./data/simplifiedheatmap//sub_types.csv")
