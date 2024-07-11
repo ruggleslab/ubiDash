@@ -1,109 +1,76 @@
-<<<<<<< HEAD
 ##########################
 #        ubiDash Global settings         #
 ##########################
-=======
-library("glue")
-library("readxl")
-library("tidyverse")
-library("googledrive")
->>>>>>> develop
 
 # loading R packages
 source("./scripts/load.packages.R")
 pks_lst <- readLines("./www/packages.txt")
 load.packages(pks_lst)
 
-<<<<<<< HEAD
+
 # loading datasets
 time <- as.numeric(Sys.time())
 startTime <- time
 
-skip_load_data <- F
-
-if (!skip_load_data) {
-=======
 skip_load_data = T
 
 if(!skip_load_data){
-  
+
   # drive config ----
-  
+
   options(
     gargle_oauth_email = "ruggleslab.shinyseq.backend@gmail.com",
     gargle_oauth_cache = ".secrets/" ## location within the shiny structure to store the auth token
   )
-  
+
   ## Getting the auth token (only needs to be done once, so if you have the file you don't need to do this)
   #drive_auth()
-  
+
   ## List all of the files that you have available to download
   # drive_find()
-  
-  
+
+
   get_from_drive <- function(filename){
     ## download the file in current wd and save the object so you know the location of the download
     ## This function can fail so wrap it in an error object to rerun it if it fails
     file_data <- drive_download(filename, overwrite = TRUE)
-    
+
     ## Loading the Rds object based on the local path that it's stored in
     data <- readRDS(file_data$local_path)
-    
+
     ## Deleting the file once it's loaded in to save on storage space
     if (file.exists(file_data$local_path)) {
       #Delete file if it exists
       file.remove(file_data$local_path)
     }
-    
+
     return(data)
   }
-  
-  
->>>>>>> develop
+
+
   # Datasets ----
 
-  # ccle dataset
-<<<<<<< HEAD
-  ccle_rna <- readRDS("./data/ccle_tpm_rna_expression.rds")
-  ccle_protein <- readRDS("./data/ccle_tmt_protein_expression.rds")
-  ccle_samples <- readRDS("./data/ccle_sample_info.rds")
-
-  # cptac dataset
-  # cptac_rna <- readRDS("./data/cptac_tpm_rna_expression.rds")
-  # cptac_rna <- readRDS("./data/cptac_log-tpm_rna_expression.rds")
-  cptac_rna <- readRDS("./data/duplicates_averaged_cptac_rna.rds")
-  cptac_protein <- readRDS("./data/cptac_tmt-log2-RI_protein_expression.rds")
-  cptac_samples <- readRDS("./data/cptac_sample_info_with_subtypes.rds")
-
-
-  # pride dataset
-  pride_protein <- readRDS("./data/pride_lfq_protein_expression.rds")
-
-  # for correlations tab
-  plot_tab <- readRDS("./data/cptac_multi_omic_correlations.rds")
-
-
   currentTime <- as.numeric(Sys.time())
-=======
+
   ccle_rna <- get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
   ccle_protein <- get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
   ccle_samples <- get_from_drive("ubidash/ccle_sample_info.rds")
-  
+
   # cptac dataset
   cptac_rna <- get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
   cptac_protein <- get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
   cptac_samples <- get_from_drive("ubidash/cptac_sample_info_with_subtypes.rds")
-  
+
 
   #pride dataset
   pride_protein <- get_from_drive("ubidash/pride_lfq_protein_expression.rds")
-  
+
   # for correlations tab
   plot_tab <- get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
-  
-  
+
+
   currentTime =  as.numeric(Sys.time())
->>>>>>> develop
+
   print(glue("read datasets in {(currentTime- time) * 1000} ms"))
   time <- currentTime
 
