@@ -104,9 +104,21 @@ shinyUI(
           strong("Contact:"), "Ruggleslab@gmail.com"
         ),
         p(
-          strong("Kindly cite:"),
+          strong("Citation:"),
           tags$a(
             href = "citation-link-here", "González-Robles et al. (coming soon)",
+            style = "color: white"
+          )
+        ),
+        p(
+          tags$a(
+            href = "https://www.paganolab.org", "The Pagano Lab",
+            style = "color: white"
+          )
+        ),
+        p(
+          tags$a(
+            href = "https://www.ruggleslab.org", "The Ruggles Lab",
             style = "color: white"
           )
         )
