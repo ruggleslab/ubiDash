@@ -2,6 +2,7 @@
 .Rhistory
 .Rproj.user
 .RData
+.secrets
 *.DS_Store
 refs/Icon?
 */Icon
@@ -10,6 +11,7 @@ refs/Icon?
 
 # Big folders
 ubiDash.Rproj
+UbiDash.Rproj
 data/
 data.zip
 # www/assets/

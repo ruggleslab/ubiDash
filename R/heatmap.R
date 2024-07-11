@@ -56,6 +56,7 @@ heatmapUI <- function(id, cohorts) {
             multiple = TRUE
           ),
         ),
+<<<<<<< HEAD
         checkboxInput(ns("clusterCol"), "Cluster columns",
           value = TRUE
         ),
@@ -69,6 +70,16 @@ heatmapUI <- function(id, cohorts) {
           checkboxInput(ns("separateNandT"), "Separate normal and tumor",
             value = TRUE
           ),
+=======
+        checkboxInput(ns("clusterCol"), "Cluster columns", value = TRUE),
+        
+        checkboxInput(ns("clusterRow"), "Cluster rows", value = TRUE),
+        
+        # toggle clustering and separation by tumor and normal
+        conditionalPanel(
+          condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
+          checkboxInput(ns("separateNandT"), "Separate normal and tumor", value = TRUE),
+>>>>>>> develop
         ),
         actionButton(ns("generateHeatmap"), "Generate Heatmap"),
       ),
@@ -146,7 +157,7 @@ heatmapServer <-
             session,
             "subtype",
             choices = tnlabels$Cancer_subtype,
-            selected = tnlabels$Cancer_subtype,
+            selected = c(),
             server = TRUE
           )
         } else {
@@ -162,6 +173,7 @@ heatmapServer <-
 
       # default plot height: maybe automate this
       plotHeight <- reactiveVal(956)
+<<<<<<< HEAD
 
 
       output$heatmap <- renderPlot(
@@ -199,6 +211,78 @@ heatmapServer <-
               instanceTnLabels,
               Cancer_subtype %in% isolate(input$subtype) &
                 cohort_code %in% isolate(input$cohort)
+=======
+      
+      
+      output$heatmap <- renderPlot({
+        input$generateHeatmap
+        
+        instanceTnLabels = NULL
+        dataset = NULL
+        
+        output$rowscut <- renderText({
+          paste("")
+        })
+        
+        
+        
+        if (isolate(input$dataset) == "CPTAC") {
+          
+          if (isolate(input$datatype) == "Protein") {
+            legendName = "Log2(Relative Abundance)"
+            dataset = cptac_protein
+            instanceTnLabels = tnlabels
+            
+          } else {
+            legendName = "Log2(TPM + 1)"
+            dataset = cptac_rna
+            instanceTnLabels = filteredTnlabels
+          }
+          
+          cohortSubsetLabels = instanceTnLabels
+          
+          if(length(isolate(input$subtype)) != 0){
+          cohortSubsetLabels = filter(
+            instanceTnLabels,
+            Cancer_subtype %in% isolate(input$subtype))
+          
+          }
+          
+          
+          if(length(isolate(input$cohorts)) != 0){
+            cohortSubsetLabels = filter(
+              instanceTnLabels,
+              cohort_code %in% isolate(input$cohort))
+            
+          }
+          
+          
+          inputGenes <- isolate(input$genes)
+          if (!isTruthy(inputGenes)) {
+            inputGenes = genesSubset$genes
+          }
+          
+          inputGenesMat <-
+            dataset[inputGenes, rownames(cohortSubsetLabels)]
+          inputGenesMat <-
+            as.matrix(inputGenesMat[which(rowMeans(!is.na(inputGenesMat)) > 0.5), ])
+          
+          plotHeight(nrow(inputGenesMat) * 12 + 200)
+          
+          if (nrow(inputGenesMat) < length(isolate(input$genes))) {
+            output$rowscut = renderText({
+              "Some genes removed for NA rows."
+            })
+          }
+          
+          
+          ha <-
+            HeatmapAnnotation(
+              Type = cohortSubsetLabels$sample_type,
+              Cohort = cohortSubsetLabels$cohort_code,
+              Subtype = cohortSubsetLabels$Cancer_subtype,
+              col = colorList
+>>>>>>> develop
             )
 
 
@@ -306,6 +390,7 @@ heatmapServer <-
             output$err <- renderText({
               ""
             })
+<<<<<<< HEAD
 
             Heatmap(
               sub.ccle,
@@ -340,6 +425,106 @@ heatmapServer <-
 
 
 
+=======
+            return(drawHeatmap(
+              inputGenesMat,
+              ha,
+              colsplit,
+              isolate(input$clusterCol),
+              isolate(input$clusterRow),
+              legendName
+            ))
+          }, error = function(e) {
+            print(e)
+            output$err <- renderText({
+              "Warning: Not enough data to cluster columns"
+            })
+            return(drawHeatmap(inputGenesMat, ha, colsplit, FALSE, FALSE, legendName))
+            
+          })
+        }  else if (isolate(input$dataset) == "CCLE") {
+          if (isolate(input$datatype) == "Protein") {
+            legendName = "Log2(Relative Abundance)"
+            dataset = ccle_protein
+            
+          } else {
+            legendName = "Log2(TPM + 1)"
+            
+            dataset = ccle_rna[rownames(ccle_rna) %in% ccle_samples$BROAD_ID, ]
+            ccle_samples_sub = ccle_samples[ccle_samples$BROAD_ID %in% rownames(ccle_rna), ]
+            ccle_samples_sub$id = rownames(ccle_samples_sub)
+            rownames(ccle_samples_sub) = ccle_samples_sub$BROAD_ID
+            ids = (ccle_samples_sub[rownames(ccle_rna), ])[, c("id", "BROAD_ID")]
+            ids = ids[rowSums(is.na(ids)) != ncol(ids), ]
+            rownames(dataset) = ids$id
+            
+            dataset = t(dataset)
+          }
+          
+          inputGenes = isolate(input$genes)
+          
+          if (!isTruthy(inputGenes)) {
+            inputGenes = genesSubset$genes[genesSubset$genes %in% rownames(dataset)]
+          }
+          
+          sub.ccle = dataset[inputGenes, ]
+          
+          
+          
+          print(isolate(input$subtype))
+          if (length(isolate(input$subtype)) != 0) {
+            sub.samples = ccle_samples[ccle_samples$Subtype %in% isolate(input$subtype), ]
+            sub.samples = sub.samples[rownames(sub.samples) %in% colnames(sub.ccle), ]
+            sub.ccle = sub.ccle[, rownames(sub.samples)]
+          }
+          
+          sub.ccle <-
+            as.matrix(sub.ccle[which(rowMeans(!is.na(sub.ccle)) > 0.5), ])
+          
+          
+          ha = HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle), ]$Cancer_subtype)
+          
+          
+          output$err <- renderText({
+            ""
+          })
+          
+          Heatmap(
+            sub.ccle,
+            top_annotation = ha,
+            column_names_gp = grid::gpar(fontsize = 3),
+            cluster_columns = isolate(input$clusterCol),
+            cluster_rows = isolate(input$clusterRow)
+          )
+          
+          
+        } else if (isolate(input$dataset) == "PRIDE") {
+          dataset = (pride_protein)
+          
+          
+          inputGenes = isolate(input$genes)
+          
+          if (!isTruthy(inputGenes)) {
+            inputGenes = genesSubset$genes[genesSubset$genes %in% rownames(dataset)]
+          }
+          
+          sub.pride = pride_protein[inputGenes, ]
+          
+          
+          Heatmap(
+            sub.pride,
+            column_names_gp = grid::gpar(fontsize = 8),
+            cluster_columns = isolate(input$clusterCol),
+            cluster_rows = isolate(input$clusterRow)
+          )
+          
+        }
+        
+      }, height = plotHeight)
+      
+      
+      
+>>>>>>> develop
       # Download buttons ----
 
       output$downloadData <- downloadHandler(
