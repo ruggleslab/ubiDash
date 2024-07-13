@@ -39,7 +39,7 @@ shinyServer(function(input, output, session) {
   )
 
   # volcano plot tab ----
-  volcanoServer("volcanoTab", cptac_protein, crl_genes)
+  volcanoServer("volcanoTab", cptac_protein, crl_genes, DE_protein)
 
   # correlation tab (----
   correlationsServer("corrTab", plot_tab, lines)

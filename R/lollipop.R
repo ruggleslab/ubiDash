@@ -1,4 +1,4 @@
-lollipopUI <- function(id, cohortSheets){
+lollipopUI <- function(id){
   ns <- NS(id)
   
   sidebarLayout(

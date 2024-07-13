@@ -40,7 +40,6 @@ getGenesMat <- function(inputGenes,cohortSubsetLabels) {
 # get cohorts selected by user
 cohortSubsetLabels <- getCohortPatients(tnlabels, cohorts)
 
-# inputGenes <- getInputGenes(c(),C(), ",")
 inputGenesMat <- getGenesMat(inputGenes,cohortSubsetLabels)
 # print(inputGenesMat)
 

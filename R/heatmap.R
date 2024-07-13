@@ -174,7 +174,6 @@ heatmapServer <-
         
         
         if (isolate(input$dataset) == "CPTAC") {
-          
           if (isolate(input$datatype) == "Protein") {
             legendName = "Log2(Relative Abundance)"
             dataset = cptac_protein
@@ -188,18 +187,16 @@ heatmapServer <-
           
           cohortSubsetLabels = instanceTnLabels
           
-          if(length(isolate(input$subtype)) != 0){
-          cohortSubsetLabels = filter(
-            instanceTnLabels,
-            Cancer_subtype %in% isolate(input$subtype))
-          
+          if (length(isolate(input$subtype)) != 0) {
+            cohortSubsetLabels = filter(instanceTnLabels,
+                                        Cancer_subtype %in% isolate(input$subtype))
+            
           }
           
           
-          if(length(isolate(input$cohorts)) != 0){
-            cohortSubsetLabels = filter(
-              instanceTnLabels,
-              cohort_code %in% isolate(input$cohort))
+          if (length(isolate(input$cohort)) != 0) {
+            cohortSubsetLabels = filter(instanceTnLabels,
+                                        cohort_code %in% isolate(input$cohort))
             
           }
           

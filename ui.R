@@ -11,9 +11,7 @@ library(openxlsx)
 
 # make plot square
 
-filepath <- "./data/DE_protein.xlsx"
 cohorts <- c("BRCA", "CCRCC", "COAD", "GBM", "HCC", "HNSCC", "LSCC", "LUAD", "OV", "PDA", "UCEC")
-cohortSheets <- excel_sheets(path = filepath)
 abstract <- paste(read.delim("./www/assets/abstract.txt"))
 
 shinyUI(
@@ -54,7 +52,7 @@ shinyUI(
         # lollipop tab ----
         tabPanel("Lollipop",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          lollipopUI("lollipopTab", cohorts)
+          lollipopUI("lollipopTab")
         )
       ),
       navbarMenu(
@@ -71,7 +69,7 @@ shinyUI(
         # volcano plot tab ----
         tabPanel("Volcano Plots",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          volcanoUI("volcanoTab", cohortSheets)
+          volcanoUI("volcanoTab", DE_protein_cohorts)
         ),
       ),
       navbarMenu(

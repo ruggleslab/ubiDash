@@ -1,68 +1,60 @@
-volcanoUI <- function(id, cohortSheets){
+volcanoUI <- function(id, cohorts){
   ns <- NS(id)
   
   sidebarLayout(
     sidebarPanel(
       
       h3("Volcano Plot"),
-      selectInput(ns("cohort"), "Cohort", cohortSheets),
+      selectInput(ns("cohort"), "Cohort", cohorts),
       
       # input options
-      selectizeInput(inputId = ns("inputVolcanoGenesTXT"),
+      selectizeInput(inputId = ns("genes"),
                      choices = NULL,
                      label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
-      # p("OR"),
-      # fileInput(ns("inputVolcanoGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c( ".tsv", "text/tsv",'.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
-      # selectInput(ns("volcanoDelims"), "Delimiter", c("tab", "comma")),               
-      
+   
       # cutoff options
       selectInput(ns("PValCutoff"), "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
       sliderInput(ns("logFCCutoff"), "Log2(Tumor/Normal) Cutoff:",
                   min = .25, max = 2, value = 1, step = 0.05),
       
-      actionButton(ns("generateVolcano"), "Generate Plot"),
+      actionButton(ns("refresh"), "Generate Plot"),
       
       p("Download this data"),
       downloadButton(outputId = ns("downloadVolcanoData"), label = "Download")
     ),
     mainPanel(
-      #select which sheet from xlsx to read & generate graph
       shinycssloaders::withSpinner(plotlyOutput(ns("distPlot")), color = "#6A2798"))
   )
 }
 
 
-volcanoServer <- function(id, cptac_protein, crl_genes) {
+volcanoServer <- function(id, cptac_protein, crl_genes, DE_protein) {
   moduleServer(id,function(input,output,session){
-    
-    filepath <- "./data/DE_protein.xlsx"
-    
-    updateSelectizeInput(session, 'inputVolcanoGenesTXT', 
+        
+    updateSelectizeInput(session, 'genes', 
                          choices = as.list(rownames(cptac_protein)), 
                          server = TRUE)
     
     output$distPlot <- renderPlotly({
-      # allow user to save plots
+
+      # trigger plot refresh when button is pressed
+      input$refresh
       
-      input$generateVolcano
-      
-      inputGenes <- getInputGenes(isolate(input$inputVolcanoGenesCSV),isolate(input$inputVolcanoGenesTXT), delim = isolate(input$volcanoDelims))
-      if(length(inputGenes) == 0){
-        inputGenes = c("")
-      }
+      genes <- isolate(input$genes)
+
       # cutoffs
       logFCCutoff <- isolate(input$logFCCutoff)
       PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
       
       # prepare dataframe
-      data <- read_excel(path = filepath, sheet = isolate(input$cohort))
+      data = as.data.frame(DE_protein[[isolate(input$cohort)]])
       data$POI <- "Other"
       data$POI[data$gene %in% crl_genes] = "CRL"
-      data$POI[toupper(data$gene) %in% inputGenes] = "Potential Substrate"
+      data$POI[toupper(data$gene) %in% genes] = "Potential Substrate"
       data$log.scal.pval <- -log10(data$sca.adj.pval)
       
       # get significant genes
-      labeledPoints <- filter(data, (gene %in% crl_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% inputGenes)
+      labeledPoints <- filter(data, (gene %in% crl_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% genes)
       
       p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = POI)) +
         ylab("-Log10(adjusted p-val)") +
