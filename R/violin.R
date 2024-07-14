@@ -1,13 +1,12 @@
 violinUI <- function(id, cohorts) {
   ns <- NS(id)
-  
+
   sidebarLayout(
     sidebarPanel(
       h3("Descriptive Statistics"),
       tabsetPanel(
         id = ns("datatype"),
         selected = "protein",
-        
         tabPanel(
           "protein",
           selectizeInput(
@@ -15,26 +14,20 @@ violinUI <- function(id, cohorts) {
             choices = NULL,
             multiple = T,
             selected = c("KBTBD11"),
-            label =  "Input genes",
+            label = "Input genes",
             options = list(`live-search` = TRUE),
           ),
-          
         ),
-        
         tabPanel(
           "mRNA",
-          
           selectizeInput(
             inputId = ns("mRNAGenes"),
             choices = NULL,
             multiple = T,
             selected = c("KBTBD11"),
-            label =  "Input genes",
+            label = "Input genes",
             options = list(`live-search` = TRUE),
-            
           ),
-          
-          
         )
       ),
       selectizeInput(
@@ -42,13 +35,11 @@ violinUI <- function(id, cohorts) {
         choices = c("CPTAC", "CCLE"),
         multiple = F,
         selected = "CPTAC",
-        label =  "Dataset",
+        label = "Dataset",
         options = list(`live-search` = TRUE),
       ),
-      
       conditionalPanel(
         condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
-        
         selectizeInput(
           inputId = ns("cohorts"),
           choices = cohorts,
@@ -60,7 +51,6 @@ violinUI <- function(id, cohorts) {
       ),
       conditionalPanel(
         condition = paste0("input['", ns("dataset"), "'] == 'CCLE'"),
-        
         selectizeInput(
           inputId = ns("subtype"),
           choices = c(),
@@ -70,15 +60,17 @@ violinUI <- function(id, cohorts) {
         ),
       ),
       actionButton(ns("generate"), label = "Generate plot")
-      
     ),
-    
     mainPanel(
       textOutput(ns("err")) %>%
-        tagAppendAttributes(class = 'error'),
-      shinycssloaders::withSpinner(plotlyOutput(ns("violin"),  height =
-                                                  "1000px"),
-                                   color = "#6A2798"),
+        tagAppendAttributes(class = "error"),
+      shinycssloaders::withSpinner(
+        plotlyOutput(ns("violin"),
+          height =
+            "1000px"
+        ),
+        color = "#6A2798"
+      ),
     )
   )
 }
@@ -93,117 +85,114 @@ violinServer <-
     moduleServer(id, function(input, output, session) {
       updateSelectizeInput(
         session,
-        'mRNAGenes',
+        "mRNAGenes",
         choices = rownames(cptac_rna),
         server = TRUE,
         selected = "KBTBD11"
       )
-      
+
       updateSelectizeInput(
         session,
-        'subtype',
+        "subtype",
         choices = unique(ccle_samples$Subtype),
         server = TRUE,
       )
-      
+
       updateSelectizeInput(
         session,
-        'proteinGenes',
+        "proteinGenes",
         choices = rownames(cptac_protein),
         server = TRUE,
         selected = "KBTBD11"
       )
-      
+
       observe({
         input$dataset
-        
+
         if (input$dataset == "CCLE") {
           updateSelectizeInput(
             session,
-            'mRNAGenes',
+            "mRNAGenes",
             choices = colnames(ccle_rna),
             server = TRUE,
             selected = "KBTBD11"
           )
-          
+
           updateSelectizeInput(
             session,
-            'proteinGenes',
+            "proteinGenes",
             choices = rownames(ccle_protein),
             server = TRUE,
             selected = "KBTBD11"
           )
-        }
-        else if (input$dataset == "CPTAC") {
+        } else if (input$dataset == "CPTAC") {
           updateSelectizeInput(
             session,
-            'mRNAGenes',
+            "mRNAGenes",
             choices = rownames(cptac_rna),
             server = TRUE,
             selected = "KBTBD11"
           )
-          
+
           updateSelectizeInput(
             session,
-            'proteinGenes',
+            "proteinGenes",
             choices = rownames(cptac_protein),
             server = TRUE,
             selected = "KBTBD11"
           )
         }
-        
       })
-      
-      
-      output$violin = renderPlotly({
+
+
+      output$violin <- renderPlotly({
         input$generate
-        
-        
-        p = NULL
-        dataset = NULL
-        samples = NULL
-        
+
+
+        p <- NULL
+        dataset <- NULL
+        samples <- NULL
+
         if (isolate(input$dataset) == "CPTAC") {
           if (isolate(input$datatype) == "protein") {
-            dataset = t(cptac_protein)
+            dataset <- t(cptac_protein)
             p <- isolate(input$proteinGenes)
-          } else{
+          } else {
             # there appear to be duplicate columns
-            dataset = t(cptac_rna[,!duplicated(colnames(cptac_rna))])
+            dataset <- t(cptac_rna[, !duplicated(colnames(cptac_rna))])
             p <- isolate(input$mRNAGenes)
           }
         } else if (isolate(input$dataset) == "CCLE") {
           if (isolate(input$datatype) == "protein") {
-            dataset = t(ccle_protein)
+            dataset <- t(ccle_protein)
             p <- isolate(input$proteinGenes)
-          } else{
+          } else {
             # there appear to be duplicate columns
-            dataset = ccle_rna
+            dataset <- ccle_rna
             p <- isolate(input$mRNAGenes)
           }
-          
         }
-        
+
         if (is.null(p)) {
-          p = "KBTBD11"
+          p <- "KBTBD11"
         }
         if (is.null(dataset)) {
-          dataset =  t(cptac_protein)
+          dataset <- t(cptac_protein)
         }
-        
-        
+
+
         POIs <- dataset[, p, drop = F]
-        POIs = as.data.frame(POIs)
+        POIs <- as.data.frame(POIs)
         POIs$sample_id <- rownames(POIs)
-        
-        
+
+
         violin.input <-
           reshape2::melt(POIs, id.vars = "sample_id")
         # %>%
         #   mutate(driver = rep("Unknown", nrow(.)))
-        
+
         if (isolate(input$dataset) == "CPTAC") {
-          violin.input = merge(
+          violin.input <- merge(
             x = violin.input,
             y = cptac_samples,
             by.x = "sample_id",
@@ -216,71 +205,79 @@ violinServer <-
             "Sample_type",
             "Cancer_subtype"
           )]
-          
-          violin.input = violin.input[!is.na(violin.input$Sample_type), ]
-          violin.input = violin.input[violin.input$cohort_code %in% isolate(input$cohorts), ]
-          
+
+          violin.input <- violin.input[!is.na(violin.input$Sample_type), ]
+          violin.input <- violin.input[violin.input$cohort_code %in% isolate(input$cohorts), ]
         } else if (isolate(input$dataset == "CCLE")) {
-          violin.input = merge(
+          violin.input <- merge(
             x = violin.input,
             y = ccle_samples,
             by.x = "sample_id",
-            by.y =  (if (isolate(input$datatype) == "protein")
+            by.y = (if (isolate(input$datatype) == "protein") {
               "row.names"
-              else
-                "parent_depmap_id")
+            } else {
+              "parent_depmap_id"
+            })
             # all.x = TRUE
-          )[c("Subtype",
-              "variable",
-              "value")]
+          )[c(
+            "Subtype",
+            "variable",
+            "value"
+          )]
           if (length(isolate(input$subtype)) != 0) {
-            violin.input = violin.input[violin.input$Subtype %in% isolate(input$subtype), ]
+            violin.input <- violin.input[violin.input$Subtype %in% isolate(input$subtype), ]
           }
-          
-          violin.input$Sample_type = "Tumor"
+
+          violin.input$Sample_type <- "Tumor"
         }
-        
-        
-        
-        ylab = NULL
-        
+
+
+
+        ylab <- NULL
+
         if (isolate(input$datatype) == "protein") {
-          ylab = paste(isolate(input$datatype),
-                       "expression, log2(Relative Intensity)")
+          ylab <- paste(
+            isolate(input$datatype),
+            "expression, log2(Relative Intensity)"
+          )
         } else {
-          ylab = paste(isolate(input$datatype), "expression, log2(TPM + 1)")
+          ylab <- paste(isolate(input$datatype), "expression, log2(TPM + 1)")
         }
-        
-        violin = NULL
-        
-        
+
+        violin <- NULL
+
+
         if (isolate(input$dataset) == "CPTAC") {
-          violin = ggplot(violin.input,
-                          aes(
-                            x = cohort_code,
-                            y = value,
-                            fill =
-                              Sample_type
-                          )) +
-            geom_boxplot(show.legend = FALSE,
-                         position = position_dodge())
-          
-        } else if (isolate(input$dataset) == "CCLE") {
-          violin = ggplot(violin.input,
-                          aes(x =  Subtype, y = value)) +
+          violin <- ggplot(
+            violin.input,
+            aes(
+              x = cohort_code,
+              y = value,
+              fill =
+                Sample_type
+            )
+          ) +
             geom_boxplot(
               show.legend = FALSE,
-              position = position_dodge() ,
-              fill =   "#FFBD42"
+              position = position_dodge()
             )
-          
+        } else if (isolate(input$dataset) == "CCLE") {
+          violin <- ggplot(
+            violin.input,
+            aes(x = Subtype, y = value)
+          ) +
+            geom_boxplot(
+              show.legend = FALSE,
+              position = position_dodge(),
+              fill = "#FFBD42"
+            )
         }
-        
-        
-        
-        
+
+
+
+
         if (isolate(input$dataset) == "CPTAC") {
-          violin = violin + geom_point(
+          violin <- violin + geom_point(
             position = (position_jitterdodge(dodge.width = 0.9)),
             alpha = .5,
             size = .75,
@@ -291,7 +288,7 @@ violinServer <-
               "Normal" = "#BA5CF4"
             ))
         } else if (isolate(input$dataset) == "CCLE") {
-          violin = violin + geom_point(
+          violin <- violin + geom_point(
             aes(text = paste0(
               "Subtype: ",
               Subtype,
@@ -306,11 +303,11 @@ violinServer <-
             stroke = .1
           )
         }
-        
-        
-        violin = violin +
+
+
+        violin <- violin +
           theme_prism() +
-          
+
           # re-naming x and y axis
           labs(
             x = NULL,
@@ -328,15 +325,14 @@ violinServer <-
             vjust = 0.5,
             hjust = 1,
             size = 5
-          )) + 
-          theme(axis.text.x = element_text(size=8)) 
-        
-        
-        
+          )) +
+          theme(axis.text.x = element_text(size = 8))
+
+
+
         ggplotly(violin, tooltip = "text") %>%
           # https://stackoverflow.com/questions/58586314/keeping-dodge-position-in-boxplot-passed-to-plotly
           layout(boxmode = "group")
       })
-      
     })
   }
