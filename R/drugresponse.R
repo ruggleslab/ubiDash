@@ -59,7 +59,6 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
                          server = TRUE,
     )
 
-    prev_gene_name <- reactiveVal(NA)
     selected_gene_drugmat <- reactiveVal()
     selected_gene_all_wilcoxon <- reactiveVal()
     selected_gene_sigdrug_wilcoxon <- reactiveVal()
@@ -76,12 +75,6 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       if (!isTruthy(selected_gene_name)) {
         selected_gene_name <- "VHL"
       }
-
-      if (!is.na(prev_gene_name()) & selected_gene_name == prev_gene_name()) {
-        return()
-      }
-      prev_gene_name(selected_gene_name)
-
 
       selected_gene_exp <- exp[exp$GENE_SYMBOLS == selected_gene_name, ]
       selected_gene_exp <- t(selected_gene_exp[, -c(1:2)]) # transpose

@@ -18,3 +18,5 @@ www/assets/NYULangoneLogo.png
 www/assets/NYULangoneLogo_1.png
 app_cache/
 .secrets/
+
+rsconnect/
