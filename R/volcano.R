@@ -28,8 +28,11 @@ volcanoUI <- function(id, cohorts){
 }
 
 
-volcanoServer <- function(id, cptac_protein, crl_genes, DE_protein) {
+volcanoServer <- function(id, crl_genes, DE_protein) {
   moduleServer(id,function(input,output,session){
+
+    cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+
         
     updateSelectizeInput(session, 'genes', 
                          choices = as.list(rownames(cptac_protein)), 

@@ -44,9 +44,10 @@ correlationsUI <- function(id){
   )
 }
 
-correlationsServer <- function(id, plot_tab, lines) {
+correlationsServer <- function(id, lines) {
   moduleServer(id,function(input,output,session){
     
+    plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
 
     warning = reactiveVal("")
     

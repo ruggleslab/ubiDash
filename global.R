@@ -43,38 +43,40 @@ get_from_drive <- function(filename){
 
 mem_get_from_drive <- memoise(get_from_drive)
 
+mem_readRDS <- memoise(readRDS)
+
 # Datasets ----
 
 # ccle dataset
-ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
-ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
-ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+# ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
+# ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
+# ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
 
 # cptac dataset
-cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
-cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+# cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+# cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
 cptac_samples <- mem_get_from_drive("ubidash/cptac_sample_info_with_subtypes.rds")
 
 
 
 #pride dataset
-pride_protein <- mem_get_from_drive("ubidash/pride_lfq_protein_expression.rds")
+# pride_protein <- mem_get_from_drive("ubidash/pride_lfq_protein_expression.rds")
 
 
 # for correlations tab
-plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
+# plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
 
 
 currentTime =  as.numeric(Sys.time())
 print(glue("read datasets in {(currentTime- time) * 1000} ms"))
 time = currentTime
 
-# maf for lollipop and oncoplot tabs 
-maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+# # maf for lollipop and oncoplot tabs 
+# maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
 
-currentTime =  as.numeric(Sys.time())
-print(glue("read maf in {(currentTime- time) * 1000} ms"))
-time = currentTime
+# currentTime =  as.numeric(Sys.time())
+# print(glue("read maf in {(currentTime- time) * 1000} ms"))
+# time = currentTime
 
 
 # Information used by various modules ----
@@ -133,14 +135,7 @@ time = currentTime
 # Heatmap ----
 load("./data/defaults.RData")
 
-filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
-# remove rows with over 50% NA
-filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
 
-filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
-filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
-# remove rows with over 50% NA
-filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
 
 
 colorsTbl = read.csv("./data/colors.csv")
@@ -185,7 +180,7 @@ time = currentTime
 
 source("./data/simplifiedheatmap/tgr_misc.R")
 
-prt.global.AI <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+prt.global.AI <- mem_get_from_drive("ubidash/cptac_tmt-log2-AI_protein_expression.rds")
 prt.global.AI <- data_norm(prt.global.AI, col_center = T)
 
 
@@ -203,9 +198,9 @@ tertiles <- function(x) {
 }
 
 
-# Apply function to each column of the matrix
-# mTert <- apply(prt.n, 2, tertiles)
-# row.names(mTert) <- row.names(prt.n)
+currentTime =  as.numeric(Sys.time())
+print(glue("Prepared simplified heatmap data in {(currentTime- time) * 1000} ms"))
+time = currentTime
 
 
 my.colors <-
@@ -221,7 +216,7 @@ names(DE_protein) <- DE_protein_cohorts
 
 
 currentTime =  as.numeric(Sys.time())
-print(glue("Prepared simplified heatmap data in {(currentTime- time) * 1000} ms"))
+print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
 time = currentTime
 
 

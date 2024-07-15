@@ -48,8 +48,12 @@ oncoplotUI <- function(id, cohorts){
 }
 
 
-oncoplotServer <- function(id,cptac_protein,cptac_samples,maf,crl_genes, top_crls, cohorts) {
+oncoplotServer <- function(id,cptac_samples,crl_genes, top_crls, cohorts) {
   moduleServer(id,function(input,output,session){
+
+    cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+    maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+
     
     downloadableMaf = reactiveVal(maf)
      

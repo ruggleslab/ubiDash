@@ -251,12 +251,18 @@ corrAnalysisUI <- function(id, cohorts) {
 }
 
 
-corrAnalysisServer <- function(id, cohorts, cptac_protein, cptac_rna, cptac_samples) {
+corrAnalysisServer <- function(id, cohorts, cptac_rna, cptac_samples) {
+
+
+
   moduleServer(id, function(input, output, session) {
     # protein specific correlation ----
     source(file = "./scripts/corrAnalysis.R")
 
+    cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+    cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
 
+    
 
     # Gene vs Gene correlation RNA
     updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = "Type gene name"))

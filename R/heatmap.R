@@ -91,19 +91,38 @@ heatmapUI <- function(id, cohorts) {
 heatmapServer <-
   function(id,
            cohorts,
-           cptac_protein,
-           cptac_rna,
-           ccle_protein,
-           ccle_rna,
-           pride_protein,
+          #  cptac_protein,
+          #  cptac_rna,
+          #  ccle_protein,
+          #  ccle_rna,
+          #  pride_protein,
            tnlabels,
            colorsList,
            filteredProteinMat,
            filteredMRNAMat,
-           filteredTnlabels,
+          #  filteredTnlabels,
            defaultHeatmap,
            genesSubset) {
     moduleServer(id, function(input, output, session) {
+
+
+      ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
+      ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
+      ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+
+      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+      
+
+      filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
+      # remove rows with over 50% NA
+      filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
+
+      filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
+      filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
+      # remove rows with over 50% NA
+      filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
+
       updateSelectizeInput(session,
                            'genes',
                            choices = as.list(rownames(cptac_protein)),
@@ -188,14 +207,14 @@ heatmapServer <-
           cohortSubsetLabels = instanceTnLabels
           
           if (length(isolate(input$subtype)) != 0) {
-            cohortSubsetLabels = filter(instanceTnLabels,
+            cohortSubsetLabels = filter(cohortSubsetLabels,
                                         Cancer_subtype %in% isolate(input$subtype))
             
           }
           
           
           if (length(isolate(input$cohort)) != 0) {
-            cohortSubsetLabels = filter(instanceTnLabels,
+            cohortSubsetLabels = filter(cohortSubsetLabels,
                                         cohort_code %in% isolate(input$cohort))
             
           }

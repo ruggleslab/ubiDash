@@ -23,8 +23,11 @@ lollipopUI <- function(id){
   )
 }
 
-lollipopServer <- function(id,maf) {
+lollipopServer <- function(id) {
   moduleServer(id,function(input,output,session){
+
+    maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+
     
     updateSelectizeInput(session, 'inputGene', 
                          choices = as.list(maf@gene.summary$Hugo_Symbol), 

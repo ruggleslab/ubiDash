@@ -87,10 +87,19 @@ violinUI <- function(id, cohorts) {
 violinServer <-
   function(id,
            cptac_rna,
-           cptac_protein,
+          #  cptac_protein,
            cptac_samples,
            cohort_colors) {
     moduleServer(id, function(input, output, session) {
+      
+      
+     ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
+      ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
+      ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+
+      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+
       updateSelectizeInput(
         session,
         'mRNAGenes',
