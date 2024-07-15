@@ -8,9 +8,9 @@ library("memoise")
 source("./scripts/load.packages.R")
 pks_lst <- readLines("./www/packages.txt")
 load.packages(pks_lst)
-
 skip_load_data = exists("skip_load_data") && get("skip_load_data")
 
+if(!skip_load_data){
 time = as.numeric(Sys.time())
 startTime = time
 
@@ -26,10 +26,10 @@ options(
 
 ## List all of the files that you have available to download
 # drive_find()
+options(shiny.autoreload = TRUE)
 
 
 get_from_drive <- function(filename){
-  print(filename)
   ## download the file in current wd and save the object so you know the location of the download
   ## This function can fail so wrap it in an error object to rerun it if it fails
   file_data <- drive_download(filename, overwrite = TRUE)
@@ -47,6 +47,8 @@ get_from_drive <- function(filename){
 }
 
 mem_get_from_drive <- memoise(get_from_drive)
+
+
 
 mem_readRDS <- memoise(readRDS)
 
@@ -227,3 +229,6 @@ time = currentTime
 
 print(glue("Total startup time was {(time-startTime) * 1000} ms"))
 rm(time, currentTime, startTime)
+
+skip_load_data = T
+}

@@ -8,6 +8,8 @@ load("./data/defaults.RData")
 source("./scripts/SplitInputGenes.R")
 
 
+source('./R/corranalysis.R')
+
 # server ----
 
 shinyServer(function(input, output, session) {

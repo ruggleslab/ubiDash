@@ -223,7 +223,6 @@ multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac
 
 
   # corrPlot
-
   res <- list(result = result, corrPlot = corrPlot, usedCohorts = paste0(unique(cptac_samples_filt$cohort_code), collapse = "_"))
   return(res)
 }
