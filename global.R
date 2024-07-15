@@ -4,10 +4,15 @@ library("tidyverse")
 library("googledrive")
 library("memoise")
 
-time = as.numeric(Sys.time())
-startTime = time
+# loading R packages
+source("./scripts/load.packages.R")
+pks_lst <- readLines("./www/packages.txt")
+load.packages(pks_lst)
 
 skip_load_data = exists("skip_load_data") && get("skip_load_data")
+
+time = as.numeric(Sys.time())
+startTime = time
 
 # drive config ----
 
@@ -221,6 +226,4 @@ time = currentTime
 
 
 print(glue("Total startup time was {(time-startTime) * 1000} ms"))
-rm(time,currentTime,startTime)
-
-
+rm(time, currentTime, startTime)

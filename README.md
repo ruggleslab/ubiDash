@@ -110,3 +110,25 @@ Before starting your work, make sure to setup the remote repo appropriately. The
     -   [x] would it be possible to create a ssh key? (Yes) see documentation on [how to create ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
 **Notes:** To generate a QR code for the final app version use [this](https://myqrcode.com) as reference.
+
+## Keep tidy code with lintr and styler
+
+-   [lintr](https://www.tidyverse.org/blog/2022/07/lintr-3-0-0/) create markers of out of style code without making changes
+
+-   [styler](https://www.tidyverse.org/blog/2017/12/styler-1.0.0/) identifies and corrects out of style code
+
+## Shinyapp.io app deployment
+
+Known issues as of 2024-03-12 with latest R versions:
+
+-   App deployment errors out due to unresolved bugs from posit's end.
+
+-   Temporary solution: downgrade to R 4.2.3 and retry
+
+    -   use `rig` package ([ref](https://github.com/r-lib/rig?tab=readme-ov-file#id-macos-installer)) to facilitate R version management.
+
+-   See [post](https://community.rstudio.com/t/app-deployment-fails-due-to-problems-in-building-biocgenerics/182879/2) on issue.
+
+## Optimizing and scaling performance
+
+-   Check out [here](https://support.posit.co/hc/en-us/articles/231874748-Scaling-and-Performance-Tuning-in-Posit-RStudio-Connect).

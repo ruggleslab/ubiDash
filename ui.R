@@ -1,14 +1,3 @@
-library(shiny)
-library(shinycssloaders)
-library(plotly)
-library(readxl)
-library(bslib)
-library(DT)
-library(corrplot)
-library(openxlsx)
-
-
-
 # make plot square
 
 cohorts <- c("BRCA", "CCRCC", "COAD", "GBM", "HCC", "HNSCC", "LSCC", "LUAD", "OV", "PDA", "UCEC")
@@ -84,7 +73,7 @@ shinyUI(
         # need to let users input genes of interest
         tabPanel("Descriptive Statistics",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          violinUI("violinTab",cohorts)
+          violinUI("violinTab", cohorts)
         ),
         tabPanel("Drug Sensitivity",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
@@ -102,9 +91,21 @@ shinyUI(
           strong("Contact:"), "Ruggleslab@gmail.com"
         ),
         p(
-          strong("Kindly cite:"),
+          strong("Citation:"),
           tags$a(
             href = "citation-link-here", "González-Robles et al. (coming soon)",
+            style = "color: white"
+          )
+        ),
+        p(
+          tags$a(
+            href = "https://www.paganolab.org", "The Pagano Lab",
+            style = "color: white"
+          )
+        ),
+        p(
+          tags$a(
+            href = "https://www.ruggleslab.org", "The Ruggles Lab",
             style = "color: white"
           )
         )

@@ -1,24 +1,23 @@
 lollipopUI <- function(id){
   ns <- NS(id)
-  
+
   sidebarLayout(
-    
     sidebarPanel(
       h3("Lollipop Plot"),
-      
-      selectizeInput(inputId = ns("inputGene"),
-                     choices = NULL,
-                     multiple = FALSE,
-                     label =  "Input gene",
-                     options = list(`live-search` = TRUE),
-                     ),
+      selectizeInput(
+        inputId = ns("inputGene"),
+        choices = NULL,
+        multiple = FALSE,
+        label = "Input gene",
+        options = list(`live-search` = TRUE),
+      ),
     ),
-    
     mainPanel(
-      textOutput(ns("err")) %>% 
-        tagAppendAttributes(class = 'error'),
-      shinycssloaders::withSpinner(plotOutput(ns("lollipop")), 
-                                   color = "#6A2798"),
+      textOutput(ns("err")) %>%
+        tagAppendAttributes(class = "error"),
+      shinycssloaders::withSpinner(plotOutput(ns("lollipop")),
+        color = "#6A2798"
+      ),
     )
   )
 }
@@ -39,7 +38,7 @@ lollipopServer <- function(id) {
       return (lollipopPlot(
         maf = maf,
         gene = inputGene,
-        AACol = 'Protein_Change',
+        AACol = "Protein_Change",
         showMutationRate = TRUE,
         roundedRect = FALSE,
         # labelPos = 882

@@ -1,4 +1,5 @@
 corrAnalysisUI <- function(id, cohorts) {
+
   ns <- NS(id)
 
   navbarMenu(
@@ -265,8 +266,8 @@ corrAnalysisServer <- function(id, cohorts, cptac_rna, cptac_samples) {
     
 
     # Gene vs Gene correlation RNA
-    updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = "Type gene name"))
-    updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "A2M", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
 
     resGvgCorrRna <- eventReactive(input$generateGvgCorrRna, {
       singleCorr(
@@ -293,8 +294,8 @@ corrAnalysisServer <- function(id, cohorts, cptac_rna, cptac_samples) {
 
 
     # Protein vs Protein correlation RNA
-    updateSelectizeInput(session, "inputGvgCorrProteinNameA", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = "Type gene name"))
-    updateSelectizeInput(session, "inputGvgCorrProteinNameB", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "A2M", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrProteinNameA", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrProteinNameB", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
 
     resGvgCorrProtein <- eventReactive(input$generateGvgCorrProtein, {
       singleCorr(
@@ -322,8 +323,8 @@ corrAnalysisServer <- function(id, cohorts, cptac_rna, cptac_samples) {
     )
 
     # Protein vs Gene correlation
-    updateSelectizeInput(session, "inputGvgCorrBothNameA", choices = as.list(intersect(rownames(cptac_protein), rownames(cptac_rna))), server = TRUE, selected = "TNNC1", options = list(placeholder = "Type Protein name"))
-    updateSelectizeInput(session, "inputGvgCorrBothNameB", choices = as.list(intersect(rownames(cptac_protein), rownames(cptac_rna))), server = TRUE, selected = "A2M", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrBothNameA", choices = as.list(intersect(rownames(cptac_protein), rownames(cptac_rna))), server = TRUE, selected = "VHL", options = list(placeholder = "Type Protein name"))
+    updateSelectizeInput(session, "inputGvgCorrBothNameB", choices = as.list(intersect(rownames(cptac_protein), rownames(cptac_rna))), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
 
     resGvgCorrBoth <- eventReactive(input$generateGvgCorrBoth, {
       singleCorr(
@@ -349,7 +350,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_rna, cptac_samples) {
     )
 
     # Gene vs All correlation for proteins
-    updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "TNNC1", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
     resGvACorrProtein <- eventReactive(input$generateGvACorrProtein, {
       multiCorr(
         geneName = input$inputGvACorrProteinGeneName,
@@ -387,7 +388,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_rna, cptac_samples) {
     })
 
     # Gene vs All correlation for RNA
-    updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "TNNC1", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
     resGvACorrRna <- eventReactive(input$generateGvACorrRna, {
       multiCorr(
         geneName = input$inputGvACorrRnaGeneName,

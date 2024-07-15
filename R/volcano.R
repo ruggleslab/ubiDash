@@ -1,9 +1,8 @@
 volcanoUI <- function(id, cohorts){
   ns <- NS(id)
-  
+
   sidebarLayout(
     sidebarPanel(
-      
       h3("Volcano Plot"),
       selectInput(ns("cohort"), "Cohort", cohorts),
       
@@ -48,14 +47,14 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
       # cutoffs
       logFCCutoff <- isolate(input$logFCCutoff)
       PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
-      
+
       # prepare dataframe
       data = as.data.frame(DE_protein[[isolate(input$cohort)]])
       data$POI <- "Other"
       data$POI[data$gene %in% crl_genes] = "CRL"
       data$POI[toupper(data$gene) %in% genes] = "Potential Substrate"
       data$log.scal.pval <- -log10(data$sca.adj.pval)
-      
+
       # get significant genes
       labeledPoints <- filter(data, (gene %in% crl_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% genes)
       
@@ -70,11 +69,11 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
           "P Value: ", log.scal.pval, "\n",
           sep = ""
         ))) +
-        scale_color_manual(breaks = c("CRL", "Potential Substrate", "Other"), values = c("#FF0000","#0000FF","#888888")) +
+        scale_color_manual(breaks = c("CRL", "Potential Substrate", "Other"), values = c("#FF0000", "#0000FF", "#888888")) +
         geom_vline(xintercept = logFCCutoff, linetype = "solid", color = "red") +
         geom_vline(xintercept = -logFCCutoff, linetype = "solid", color = "red") +
         geom_hline(yintercept = PValCutoff, linetype = "solid", color = "red")
-      
+
       if (nrow(labeledPoints) > 0) {
         p <- p + geom_text(
           hjust = 1, vjust = 1, data = labeledPoints,
@@ -82,10 +81,10 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
           color = "#000000"
         )
       }
-      
+
       ggplotly(p, tooltip = "text") %>% layout(dragmode = FALSE)
     })
-    
+
     output$downloadVolcanoData <- downloadHandler(
       filename = function() {
         paste("data-", Sys.Date(), ".csv", sep = "")
@@ -94,6 +93,5 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
         write.csv(read_excel(path = filepath, sheet = input$cohort), file)
       }
     )
-    
   })
 }
