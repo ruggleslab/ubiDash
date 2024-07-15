@@ -85,8 +85,13 @@ shinyUI(
     tags$div() %>%
       tagAppendAttributes(class = "spacer"),
     tags$footer(
-      img(src = "assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png", width = "200"),
+      class="d-flex flex-column flex-lg-row gap-4 gap-lg-2",
+      img(src = "assets/NYU-G-SoM_logo-final_White_RGB_300ppi.png", width = "200",style = "height: auto"),
       tags$div(
+          class = "d-flex flex-column flex-sm-row justify-content-center text-align-center gap-2",
+          style ="white-space: nowrap",
+      tags$div(
+        class = "d-flex flex-column align-items-center align-items-lg-end",
         p(
           strong("Contact:"), "Ruggleslab@gmail.com"
         ),
@@ -97,6 +102,15 @@ shinyUI(
             style = "color: white"
           )
         ),
+      ),
+      tags$div(
+        class = "flex-column justify-content-center align-items-center d-none d-sm-flex",
+      p(
+        "|"
+      ),
+      ),
+      tags$div(
+        class = "d-flex flex-column align-items-center align-items-lg-start",
         p(
           tags$a(
             href = "https://www.paganolab.org", "The Pagano Lab",
@@ -110,7 +124,8 @@ shinyUI(
           )
         )
       ),
-      img(src = "assets/HHMI-Gilliam-Logo-cropped.png", width = "256"),
+      ),
+      img(src = "assets/HHMI-Gilliam-Logo-cropped.png", width = "256",style = "height: auto"),
     ),
     tags$script(src = "navbar.js"),
   )
