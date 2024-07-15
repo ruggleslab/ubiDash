@@ -7,9 +7,18 @@ drugResponseUI <- function(id) {
         inputId = ns("inputGene"),
         choices = NULL,
         multiple = FALSE,
-        label = "Input gene",
+        label = "Gene",
         options = list(`live-search` = TRUE),
       ),
+      selectizeInput(
+        inputId = ns("inputDrugs"),
+        choices = NULL,
+        multiple = TRUE,
+        label = "Drugs (Optional)",
+        options = list(`live-search` = TRUE),
+      ),
+      actionButton(ns("refresh"), "Generate Plot"),
+      
       p("Download this data"),
       downloadButton(outputId = ns("selected_gene_drugmat"), label = "selected_gene_drugmat"),
       downloadButton(outputId = ns("selected_gene_all_wilcoxon"), label = "selected_gene_all_wilcoxon"),
@@ -45,6 +54,10 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       server = TRUE, selected = "VHL"
     )
 
+    updateSelectizeInput(session, "inputDrugs",
+                         choices = unique(drug$DRUG_NAME),
+                         server = TRUE,
+    )
 
     prev_gene_name <- reactiveVal(NA)
     selected_gene_drugmat <- reactiveVal()
@@ -56,8 +69,10 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
 
 
     observe({
+      
+      input$refresh
       # generate data for selected gene ----
-      selected_gene_name <- input$inputGene
+      selected_gene_name <- isolate(input$inputGene)
       if (!isTruthy(selected_gene_name)) {
         selected_gene_name <- "VHL"
       }
@@ -374,7 +389,11 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         # dev.off()
       })
       # 3. volcano plots of spearman correlation among all drugs and cell lines ----
+      
+      
+      
       output$plot3 <- renderPlotly({
+
         # spearman correlation
         drugall <- drug[, c(1, 2, 5)] # keep cell line, ic50 and drugname
         # wider df
@@ -489,6 +508,18 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
             parse = T,
             size = 5
           )
+        
+        labeledPoints <- filter(testdf, (DRUG_NAME %in% isolate(input$inputDrugs)))
+        print(labeledPoints)
+        print("DRUGS")
+        
+        if (nrow(labeledPoints) > 0) {
+          plt <- plt + geom_text(
+            hjust = 1, vjust = 1, data = labeledPoints,
+            mapping = aes(label = DRUG_NAME, fontface = "bold"),
+            color = "#000000"
+          )
+        }
 
         # print(vln)
         # dev.off()

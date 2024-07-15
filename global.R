@@ -26,7 +26,7 @@ options(
 
 ## List all of the files that you have available to download
 # drive_find()
-options(shiny.autoreload = TRUE)
+# options(shiny.autoreload = TRUE)
 
 
 get_from_drive <- function(filename){
