@@ -5,10 +5,10 @@ lollipopUI <- function(id){
     sidebarPanel(
       h3("Lollipop Plot"),
       selectizeInput(
-        inputId = ns("inputGene"),
+        inputId = ns("gene"),
         choices = NULL,
         multiple = FALSE,
-        label = "Input gene",
+        label = "Gene",
         options = list(`live-search` = TRUE),
       ),
     ),
@@ -28,16 +28,16 @@ lollipopServer <- function(id) {
     maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
 
     
-    updateSelectizeInput(session, 'inputGene', 
+    updateSelectizeInput(session, 'gene', 
                          choices = as.list(maf@gene.summary$Hugo_Symbol), 
                          server = TRUE, selected = "VHL")
       
     output$lollipop = renderPlot({
-      inputGene = input$inputGene
+      gene = input$gene
       
       return (lollipopPlot(
         maf = maf,
-        gene = inputGene,
+        gene = gene,
         AACol = "Protein_Change",
         showMutationRate = TRUE,
         roundedRect = FALSE,

@@ -38,6 +38,7 @@ drugResponseUI <- function(id) {
       shinycssloaders::withSpinner(plotlyOutput(ns("plot3")),
         color = "#6A2798"
       ),
+      DTOutput(ns("plot3data")),
     )
   )
 }
@@ -450,6 +451,11 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           "corr coeff: ", testdf$corr.coef, "\n",
           "log10 padj: ", testdf$log10.padj, "\n"
         )
+        
+        output$plot3data <- renderDT({
+          testdf
+        })
+        
         plt <-
           ggplot(testdf, aes(x = corr.coef, y = log10.padj)) +
           geom_point(aes(color = label, text = text), size = 3) +

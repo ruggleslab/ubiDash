@@ -144,29 +144,14 @@ corrAnalysisUI <- function(id, cohorts) {
         mainPanel(
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'Protein\'"),
-            fluidRow(
-              column(
-                width = 4,
-                DTOutput(ns("outputTabGvACorrProtein"))
-              ),
-              column(
-                width = 8,
+                DTOutput(ns("outputTabGvACorrProtein")),
                 withSpinner(plotOutput(outputId = ns("outputPlotGvACorrProtein")), color = "#6A2798")
-              )
-            )
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'mRNA\'"),
-            fluidRow(
-              column(
-                width = 4,
-                DT::dataTableOutput(outputId = ns("outputTabGvACorrRna"))
-              ),
-              column(
-                width = 8,
+                DT::dataTableOutput(outputId = ns("outputTabGvACorrRna")),
                 withSpinner(plotOutput(outputId = ns("outputPlotGvACorrRna")), color = "#6A2798")
-              )
-            )
+          
           )
         )
       )

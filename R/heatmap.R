@@ -125,14 +125,13 @@ heatmapServer <-
       # remove rows with over 50% NA
       filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
 
+
+
       updateSelectizeInput(session,
         "genes",
         choices = as.list(rownames(cptac_protein)),
         server = TRUE
       )
-
-
-
       updateSelectizeInput(
         session,
         "subtype",
@@ -151,18 +150,6 @@ heatmapServer <-
             choices = as.list(rownames(cptac_protein)),
             server = TRUE
           )
-        } else {
-          updateSelectizeInput(session,
-            "genes",
-            choices = as.list(rownames(ccle_protein)),
-            server = TRUE
-          )
-        }
-      })
-      observe({
-        input$dataset
-
-        if (input$dataset == "CPTAC") {
           updateSelectizeInput(
             session,
             "subtype",
@@ -171,6 +158,11 @@ heatmapServer <-
             server = TRUE
           )
         } else {
+          updateSelectizeInput(session,
+            "genes",
+            choices = as.list(rownames(ccle_protein)),
+            server = TRUE
+          )
           updateSelectizeInput(
             session,
             "subtype",
@@ -180,8 +172,9 @@ heatmapServer <-
           )
         }
       })
+   
 
-      # default plot height: maybe automate this
+      # default plot height
       plotHeight <- reactiveVal(956)
 
 
@@ -212,16 +205,11 @@ heatmapServer <-
           if (length(isolate(input$subtype)) != 0) {
             cohortSubsetLabels = filter(cohortSubsetLabels,
                                         Cancer_subtype %in% isolate(input$subtype))
-            
           }
-          
-          
           if (length(isolate(input$cohort)) != 0) {
             cohortSubsetLabels = filter(cohortSubsetLabels,
                                         cohort_code %in% isolate(input$cohort))
-            
           }
-
 
           inputGenes <- isolate(input$genes)
           if (!isTruthy(inputGenes)) {
@@ -230,14 +218,17 @@ heatmapServer <-
 
           inputGenesMat <-
             dataset[inputGenes, rownames(cohortSubsetLabels)]
-          inputGenesMat <-
-            as.matrix(inputGenesMat[which(rowMeans(!is.na(inputGenesMat)) > 0.5), ])
+
+            if(isolate(input$clusterCol)){
+              inputGenesMat <-
+                as.matrix(inputGenesMat[which(rowMeans(!is.na(inputGenesMat)) > 0.5), ])
+            }
 
           plotHeight(nrow(inputGenesMat) * 12 + 200)
 
           if (nrow(inputGenesMat) < length(isolate(input$genes))) {
             output$rowscut = renderText({
-              "Some genes removed for NA rows."
+              "Unable to include some rows."
             })
           }
 
@@ -250,40 +241,12 @@ heatmapServer <-
               col = colorList
             )
 
-
-            inputGenes <- isolate(input$genes)
-            if (!isTruthy(inputGenes)) {
-              inputGenes <- genesSubset$genes
-            }
-
-            inputGenesMat <-
-              dataset[inputGenes, rownames(cohortSubsetLabels)]
-            inputGenesMat <-
-              as.matrix(inputGenesMat[which(rowMeans(!is.na(inputGenesMat)) > 0.5), ])
-
-            plotHeight(nrow(inputGenesMat) * 12 + 200)
-
-            if (nrow(inputGenesMat) < length(isolate(input$genes))) {
-              output$rowscut <- renderText({
-                "Some genes removed for NA rows."
-              })
-            }
-
-
-            ha <-
-              HeatmapAnnotation(
-                Type = cohortSubsetLabels$sample_type,
-                Cohort = cohortSubsetLabels$cohort_code,
-                Subtype = cohortSubsetLabels$Cancer_subtype,
-                col = colorList
-              )
             hm <- NULL
 
             colsplit <- NULL
             if (isolate(input$separateNandT)) {
               colsplit <- cohortSubsetLabels$sample_type
             }
-
 
             tryCatch(
               {
@@ -307,6 +270,7 @@ heatmapServer <-
                 return(drawHeatmap(inputGenesMat, ha, colsplit, FALSE, FALSE, legendName))
               }
             )
+
           } else if (isolate(input$dataset) == "CCLE") {
             if (isolate(input$datatype) == "Protein") {
               legendName <- "Log2(Relative Abundance)"
@@ -326,35 +290,31 @@ heatmapServer <-
             }
 
             inputGenes <- isolate(input$genes)
-
             if (!isTruthy(inputGenes)) {
               inputGenes <- genesSubset$genes[genesSubset$genes %in% rownames(dataset)]
             }
 
             sub.ccle <- dataset[inputGenes, ]
 
+          if (nrow(sub.ccle) < length(isolate(input$genes))) {
+                    output$rowscut = renderText({
+                      "Unable to include some rows."
+                    })
+                  }
 
-
-            print(isolate(input$subtype))
             if (length(isolate(input$subtype)) != 0) {
               sub.samples <- ccle_samples[ccle_samples$Subtype %in% isolate(input$subtype), ]
               sub.samples <- sub.samples[rownames(sub.samples) %in% colnames(sub.ccle), ]
               sub.ccle <- sub.ccle[, rownames(sub.samples)]
             }
 
-            sub.ccle <-
-              as.matrix(sub.ccle[which(rowMeans(!is.na(sub.ccle)) > 0.5), ])
-
-            print(ncol(sub.ccle))
-            print(nrow(sub.ccle))
-
+            if(isolate(input$clusterCol)){
+              sub.ccle <-
+                as.matrix(sub.ccle[which(rowMeans(!is.na(sub.ccle)) > 0.5), ])
+            }
 
             ha <- HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle), ]$Cancer_subtype)
 
-
-            output$err <- renderText({
-              ""
-            })
 
             Heatmap(
               sub.ccle,
@@ -363,6 +323,9 @@ heatmapServer <-
               cluster_columns = isolate(input$clusterCol),
               cluster_rows = isolate(input$clusterRow)
             )
+
+            
+
           } else if (isolate(input$dataset) == "PRIDE") {
             dataset <- (pride_protein)
 
@@ -386,7 +349,6 @@ heatmapServer <-
         },
         height = plotHeight
       )
-
 
 
       # Download buttons ----
