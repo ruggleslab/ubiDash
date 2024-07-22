@@ -6,9 +6,9 @@ heatmapUI <- function(id, cohorts) {
       h3("Heatmap"),
       tabsetPanel(
         id = ns("datatype"),
-        selected = "Protein",
-        tabPanel("Protein", ),
+        selected = "mRNA",
         tabPanel("mRNA", ),
+        tabPanel("Protein", ),
       ),
       div(
         br(),
@@ -16,16 +16,11 @@ heatmapUI <- function(id, cohorts) {
         selectizeInput(
           inputId = ns("genes"),
           choices = NULL,
-          label = "Input genes",
+          label = "Genes",
           options = list(`live-search` = TRUE),
           multiple = TRUE
         ),
-        # p("OR"),
-        # fileInput(ns("inputGenesCSV"), "Upload tab delimited CSV or TSV", multiple = FALSE, accept = c('.csv','text/csv','text/comma-separated-values,text/plain'), width = NULL),
-        # # actionButton("resetHeatmapGenesCSV","clear"),
-        # selectInput(ns("heatmapDelims"), "Delimiter", c("tab", "comma")),
-        #
-        # cohort seleciton checkboxes
+     
         selectizeInput(
           inputId = ns("dataset"),
           choices = c("CPTAC", "CCLE", "PRIDE"),
@@ -105,51 +100,24 @@ heatmapServer <-
            genesSubset) {
     moduleServer(id, function(input, output, session) {
 
-
-      ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
-      ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
-      ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
-
-      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
-      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-      pride_protein <- mem_get_from_drive("ubidash/pride_lfq_protein_expression.rds")
-      
-      
-
-      filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
-      # remove rows with over 50% NA
-      filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
-
-      filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
-      filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
-      # remove rows with over 50% NA
-      filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
-
-
-
-      updateSelectizeInput(session,
-        "genes",
-        choices = as.list(rownames(cptac_protein)),
-        server = TRUE
-      )
-      updateSelectizeInput(
-        session,
-        "subtype",
-        choices = tnlabels$Cancer_subtype,
-        selected = tnlabels$Cancer_subtype,
-        server = TRUE
-      )
-
-
       observe({
         input$dataset
 
         if (input$dataset == "CPTAC") {
-          updateSelectizeInput(session,
-            "genes",
-            choices = as.list(rownames(cptac_protein)),
-            server = TRUE
-          )
+            if (input$datatype == "Protein") {
+              updateSelectizeInput(session,
+                "genes",
+                choices = cptac_protein_genes,
+                server = TRUE
+              )
+            } else{
+              updateSelectizeInput(session,
+                "genes",
+                choices = cptac_rna_genes,
+                server = TRUE
+              )
+            }
+        
           updateSelectizeInput(
             session,
             "subtype",
@@ -158,15 +126,23 @@ heatmapServer <-
             server = TRUE
           )
         } else {
-          updateSelectizeInput(session,
-            "genes",
-            choices = as.list(rownames(ccle_protein)),
-            server = TRUE
-          )
+          if (input$datatype == "Protein") {
+              updateSelectizeInput(session,
+                "genes",
+                choices = ccle_protein_genes,
+                server = TRUE
+              )
+            } else{
+              updateSelectizeInput(session,
+                "genes",
+                choices = ccle_rna_genes,
+                server = TRUE
+              )
+            }
           updateSelectizeInput(
             session,
             "subtype",
-            choices = unique(ccle_samples$Subtype),
+            choices = ccle_samples_subtypes,
             selected = c(),
             server = TRUE
           )
@@ -180,6 +156,26 @@ heatmapServer <-
 
       output$heatmap <- renderPlot({
         input$generateHeatmap
+
+        ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
+        ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
+        ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+
+        cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+        cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+        pride_protein <- mem_get_from_drive("ubidash/pride_lfq_protein_expression.rds")
+        
+        
+
+        filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
+        # remove rows with over 50% NA
+        filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
+
+        filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
+        filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
+        # remove rows with over 50% NA
+        filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
+
 
         instanceTnLabels = NULL
         dataset = NULL

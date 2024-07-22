@@ -6,18 +6,7 @@ violinUI <- function(id, cohorts) {
       h3("Descriptive Statistics"),
       tabsetPanel(
         id = ns("datatype"),
-        selected = "protein",
-        tabPanel(
-          "protein",
-          selectizeInput(
-            inputId = ns("proteinGenes"),
-            choices = NULL,
-            multiple = T,
-            selected = c("KBTBD11"),
-            label = "Input genes",
-            options = list(`live-search` = TRUE),
-          ),
-        ),
+        selected = "mRNA",
         tabPanel(
           "mRNA",
           selectizeInput(
@@ -25,11 +14,23 @@ violinUI <- function(id, cohorts) {
             choices = NULL,
             multiple = T,
             selected = c("KBTBD11"),
-            label = "Input genes",
+            label = "Genes",
             options = list(`live-search` = TRUE),
           ),
         )
       ),
+        tabPanel(
+          "protein",
+          selectizeInput(
+            inputId = ns("proteinGenes"),
+            choices = NULL,
+            multiple = T,
+            selected = c("KBTBD11"),
+            label = "Genes",
+            options = list(`live-search` = TRUE),
+          ),
+        ),
+       
       selectizeInput(
         inputId = ns("dataset"),
         choices = c("CPTAC", "CCLE"),
@@ -84,18 +85,11 @@ violinServer <-
            cohort_colors) {
     moduleServer(id, function(input, output, session) {
       
-      
-      ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
-      ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
-      ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
-
-      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
-      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
 
       updateSelectizeInput(
         session,
         "mRNAGenes",
-        choices = rownames(cptac_rna),
+        choices = cptac_rna_genes,
         server = TRUE,
         selected = "KBTBD11"
       )
@@ -103,14 +97,14 @@ violinServer <-
       updateSelectizeInput(
         session,
         "subtype",
-        choices = unique(ccle_samples$Subtype),
+        choices = ccle_samples_subtypes,
         server = TRUE,
       )
 
       updateSelectizeInput(
         session,
         "proteinGenes",
-        choices = rownames(cptac_protein),
+        choices = cptac_protein_genes,
         server = TRUE,
         selected = "KBTBD11"
       )
@@ -122,7 +116,7 @@ violinServer <-
           updateSelectizeInput(
             session,
             "mRNAGenes",
-            choices = colnames(ccle_rna),
+            choices = ccle_rna_genes,
             server = TRUE,
             selected = "KBTBD11"
           )
@@ -130,7 +124,7 @@ violinServer <-
           updateSelectizeInput(
             session,
             "proteinGenes",
-            choices = rownames(ccle_protein),
+            choices = ccle_protein_genes,
             server = TRUE,
             selected = "KBTBD11"
           )
@@ -138,7 +132,7 @@ violinServer <-
           updateSelectizeInput(
             session,
             "mRNAGenes",
-            choices = rownames(cptac_rna),
+            choices = cptac_rna_genes,
             server = TRUE,
             selected = "KBTBD11"
           )
@@ -146,7 +140,7 @@ violinServer <-
           updateSelectizeInput(
             session,
             "proteinGenes",
-            choices = rownames(cptac_protein),
+            choices = cptac_protein_genes,
             server = TRUE,
             selected = "KBTBD11"
           )
@@ -157,26 +151,32 @@ violinServer <-
       output$violin <- renderPlotly({
         input$generate
 
-
         p <- NULL
         dataset <- NULL
         samples <- NULL
 
         if (isolate(input$dataset) == "CPTAC") {
           if (isolate(input$datatype) == "protein") {
-            dataset <- t(cptac_protein)
-            p <- isolate(input$proteinGenes)
+           
+             cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+             dataset <- t(cptac_protein)
+           
+             p <- isolate(input$proteinGenes)
           } else {
             # there appear to be duplicate columns
-            dataset <- t(cptac_rna[, !duplicated(colnames(cptac_rna))])
+            cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+            dataset <- t(cptac_rna)
+            # dataset <- t(cptac_rna[, !duplicated(colnames(cptac_rna))])
             p <- isolate(input$mRNAGenes)
           }
         } else if (isolate(input$dataset) == "CCLE") {
           if (isolate(input$datatype) == "protein") {
+            ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
             dataset <- t(ccle_protein)
             p <- isolate(input$proteinGenes)
           } else {
             # there appear to be duplicate columns
+            ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
             dataset <- ccle_rna
             p <- isolate(input$mRNAGenes)
           }
@@ -186,6 +186,7 @@ violinServer <-
           p <- "KBTBD11"
         }
         if (is.null(dataset)) {
+          cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
           dataset <- t(cptac_protein)
         }
 
@@ -218,6 +219,9 @@ violinServer <-
           violin.input <- violin.input[!is.na(violin.input$Sample_type), ]
           violin.input <- violin.input[violin.input$cohort_code %in% isolate(input$cohorts), ]
         } else if (isolate(input$dataset == "CCLE")) {
+            
+          ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+
           violin.input <- merge(
             x = violin.input,
             y = ccle_samples,

@@ -52,7 +52,7 @@ simplifiedHeatmapUI <- function(id, cohorts) {
 simplifiedHeatmapServer <-
   function(id,
            tertiles,
-           prt.global.AI,
+           # prt.global.AI,
            labels,
            my.colors) {
     moduleServer(id, function(input, output, session) {
@@ -63,9 +63,11 @@ simplifiedHeatmapServer <-
       prt.n_reactive <- reactiveVal(NULL)
 
 
-      output$heatmap <- renderPlot(
-        {
+      output$heatmap <- renderPlot({
+          
           input$generate
+        
+          prt.global.AI <- mem_prt.global.AI()
 
 
           selected_geneset <- isolate(input$inputGeneset)
@@ -116,10 +118,7 @@ simplifiedHeatmapServer <-
           column_title <-
             glue("Human {isolate(input$tissueType)} Tissues-{geneset}")
 
-          prt <- NULL
-
-
-
+       
           prt <- prt.global.AI
 
 

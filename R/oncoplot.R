@@ -10,7 +10,7 @@ oncoplotUI <- function(id, cohorts) {
       selectizeInput(
         inputId = ns("inputOncoGenesTXT"),
         choices = NULL,
-        label = "Input genes",
+        label = "Genes",
         options = list(`live-search` = TRUE),
         multiple = TRUE
       ),
@@ -49,23 +49,20 @@ oncoplotUI <- function(id, cohorts) {
 }
 
 
-oncoplotServer <- function(id,cptac_samples,crl_genes, top_crls, cohorts) {
+oncoplotServer <- function(id,cptac_samples, top_crls, cohorts) {
   moduleServer(id,function(input,output,session){
 
-    cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-    maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-
-    
-    downloadableMaf = reactiveVal(maf)
-     
     
     updateSelectizeInput(session, 'inputOncoGenesTXT', 
-                         choices = as.list(rownames(cptac_protein)), 
+                         choices = cptac_protein_genes, 
                          server = TRUE)
     
     # mutations oncoplot
     output$mutationOncoplot <- renderPlot({
       input$generateOnco
+      
+      maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+
 
       inputGenes <- isolate(input$inputOncoGenesTXT)
       # print(inputGenes)
@@ -80,7 +77,7 @@ oncoplotServer <- function(id,cptac_samples,crl_genes, top_crls, cohorts) {
         filteredMaf <- subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode)
       }
 
-      downloadableMaf(filteredMaf)
+      # downloadableMaf(filteredMaf)
 
 
       return(oncoplot(
@@ -96,11 +93,13 @@ oncoplotServer <- function(id,cptac_samples,crl_genes, top_crls, cohorts) {
     })
 
     output$downloadOncoMutations <- downloadHandler(
+
       filename = function() {
         paste("data-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(downloadableMaf()@data, file)
+        maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+        write.csv(maf@data, file)
       }
     )
   })

@@ -40,7 +40,7 @@ shinyServer(function(input, output, session) {
   violinServer("violinTab", cohort_colors) # cptac_protein, cptac_rna, cptac_samples
 
   # oncoplot tab ----
-  oncoplotServer("oncoTab", cptac_samples, crl_genes, top_crls, cohorts) # cptac_protein, maf
+  oncoplotServer("oncoTab", cptac_samples, top_crls, cohorts) # cptac_protein, maf
 
   # lollipop tab
   lollipopServer("lollipopTab") # maf
@@ -56,7 +56,7 @@ shinyServer(function(input, output, session) {
 
   simplifiedHeatmapServer("simplifiedHeatmapTab",
                           tertiles,
-                          prt.global.AI,
+                          # prt.global.AI,
                           labels,
                           my.colors)
 })

@@ -25,14 +25,16 @@ lollipopUI <- function(id){
 lollipopServer <- function(id) {
   moduleServer(id,function(input,output,session){
 
-    maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
 
     
     updateSelectizeInput(session, 'gene', 
-                         choices = as.list(maf@gene.summary$Hugo_Symbol), 
+                         choices = maf_genes, 
                          server = TRUE, selected = "VHL")
       
     output$lollipop = renderPlot({
+      
+      maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+      
       gene = input$gene
       
       return (lollipopPlot(

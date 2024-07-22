@@ -108,7 +108,7 @@ corrAnalysisUI <- function(id, cohorts) {
               ),
               selectizeInput(
                 inputId = ns("inputGvACorrRnaCohort"),
-                choices = cohorts,
+                choices = cohorts, selected = "BRCA",
                 label = "Select cohort", options = list(`live-search` = TRUE), multiple = TRUE
               ),
               radioButtons(inputId = ns("inputGvACorrRnaType"), label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Tumor"),
@@ -128,7 +128,7 @@ corrAnalysisUI <- function(id, cohorts) {
               ),
               selectizeInput(
                 inputId = ns("inputGvACorrProteinCohort"),
-                choices = cohorts,
+                choices = cohorts, selected = "BRCA",
                 label = "Select cohort", options = list(`live-search` = TRUE), multiple = TRUE
               ),
               radioButtons(inputId = ns("inputGvACorrProteinType"), label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Tumor"),
@@ -171,7 +171,7 @@ corrAnalysisUI <- function(id, cohorts) {
               ),
               selectizeInput(
                 inputId = ns("inputGvpCorrRnaCohort"),
-                choices = cohorts,
+                choices = cohorts, selected = "BRCA",
                 label = "Select cohort", options = list(`live-search` = TRUE), multiple = TRUE
               ),
               radioButtons(inputId = ns("inputGvpCorrRnaStype"), label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Tumor"),
@@ -186,7 +186,7 @@ corrAnalysisUI <- function(id, cohorts) {
               ),
               selectizeInput(
                 inputId = ns("inputGvpCorrProteinCohort"),
-                choices = cohorts,
+                choices = cohorts, selected = "BRCA",
                 label = "Select cohort", options = list(`live-search` = TRUE), multiple = TRUE
               ),
               radioButtons(inputId = ns("inputGvpCorrProteinStype"), label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Tumor"),
@@ -206,7 +206,7 @@ corrAnalysisUI <- function(id, cohorts) {
               ),
               selectizeInput(
                 inputId = ns("inputGvpCorrBothCohort"),
-                choices = cohorts,
+                choices = cohorts,  selected = "BRCA",
                 label = "Select cohort", options = list(`live-search` = TRUE), multiple = TRUE
               ),
               radioButtons(inputId = ns("inputGvpCorrBothStype"), label = "Choose sample type", choices = c("Normal", "Tumor"), selected = "Tumor"),
@@ -245,17 +245,18 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     # protein specific correlation ----
     source(file = "./scripts/corrAnalysis.R")
 
-    cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-    cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+    # cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+    # cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
 
 
     
 
     # Gene vs Gene correlation RNA
-    updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
-    updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = cptac_rna_genes, server = TRUE, selected = "A1BG", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = cptac_rna_genes, server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
 
     resGvgCorrRna <- eventReactive(input$generateGvgCorrRna, {
+      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
       singleCorr(
         geneNameA = input$inputGvgCorrRnaNameA,
         geneNameB = input$inputGvgCorrRnaNameB,
@@ -280,10 +281,11 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
 
 
     # Protein vs Protein correlation RNA
-    updateSelectizeInput(session, "inputGvgCorrProteinNameA", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
-    updateSelectizeInput(session, "inputGvgCorrProteinNameB", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrProteinNameA", choices = cptac_protein_genes, server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrProteinNameB", choices = cptac_protein_genes, server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
 
     resGvgCorrProtein <- eventReactive(input$generateGvgCorrProtein, {
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
       singleCorr(
         geneNameA = input$inputGvgCorrProteinNameA,
         geneNameB = input$inputGvgCorrProteinNameB,
@@ -309,10 +311,12 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     )
 
     # Protein vs Gene correlation
-    updateSelectizeInput(session, "inputGvgCorrBothNameA", choices = as.list(intersect(rownames(cptac_protein), rownames(cptac_rna))), server = TRUE, selected = "VHL", options = list(placeholder = "Type Protein name"))
-    updateSelectizeInput(session, "inputGvgCorrBothNameB", choices = as.list(intersect(rownames(cptac_protein), rownames(cptac_rna))), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrBothNameA", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "A1BG", options = list(placeholder = "Type Protein name"))
+    updateSelectizeInput(session, "inputGvgCorrBothNameB", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
 
     resGvgCorrBoth <- eventReactive(input$generateGvgCorrBoth, {
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
       singleCorr(
         geneNameA = input$inputGvgCorrBothNameA,
         geneNameB = input$inputGvgCorrBothNameB,
@@ -336,8 +340,9 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     )
 
     # Gene vs All correlation for proteins
-    updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = as.list(rownames(cptac_protein)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = cptac_protein_genes, server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
     resGvACorrProtein <- eventReactive(input$generateGvACorrProtein, {
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
       multiCorr(
         geneName = input$inputGvACorrProteinGeneName,
         cutOff = input$inputGvACorrProteinR,
@@ -355,19 +360,19 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         resGvACorrProtein()
         resGvACorrProtein()$result
       },
-      # rownames = F,
-      # extensions = "Buttons",
-      # options = list(
-      #   dom = "frtBip", # Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
-      #   buttons = list(
-      #     list(
-      #       extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrProteinGeneName, "_ProteinCorrelations"),
-      #       exportOptions = list(
-      #         modifier = list(page = "all")
-      #       )
-      #     )
-      #   )
-      # )
+      rownames = F,
+      extensions = "Buttons",
+      options = list(
+        dom = "frtBip", # Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
+        buttons = list(
+          list(
+            extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrProteinGeneName, "_ProteinCorrelations"),
+            exportOptions = list(
+              modifier = list(page = "all")
+            )
+          )
+        )
+      )
     )
 
     output$outputPlotGvACorrProtein <- renderPlot({
@@ -375,8 +380,9 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     })
 
     # Gene vs All correlation for RNA
-    updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = as.list(rownames(cptac_rna)), server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = cptac_rna_genes, server = TRUE, selected = "A1BG", options = list(placeholder = "Type gene name"))
     resGvACorrRna <- eventReactive(input$generateGvACorrRna, {
+      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
       multiCorr(
         geneName = input$inputGvACorrRnaGeneName,
         cutOff = input$inputGvACorrRnaR,
@@ -413,9 +419,10 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     })
 
     # Gene panel correlation for RNA
-    updateSelectizeInput(session, "inputGvpCorrRnaGeneName", choices = as.list(rownames(cptac_rna)), server = TRUE, options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvpCorrRnaGeneName", selected=c("A1BG","A1CF","A2M","A2ML1","A3GALT2"), choices = cptac_rna_genes, server = TRUE, options = list(placeholder = "Type gene name"))
 
     resGvpCorrRna <- eventReactive(input$generateGvpCorrRna, {
+      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
       panelCorr(
         geneNamesRNA = input$inputGvpCorrRnaGeneName,
         geneNamesProtein = NULL,
@@ -447,9 +454,10 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
 
 
     # Gene panel correlation for Protein
-    updateSelectizeInput(session, "inputGvpCorrProteinGeneName", choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvpCorrProteinGeneName", selected=c("VHL","A1BG","A2M","A2ML1","A4GALT"), choices = cptac_protein_genes, server = TRUE, options = list(placeholder = "Type gene name"))
 
     resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein, {
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
       panelCorr(
         geneNamesProtein = input$inputGvpCorrProteinGeneName,
         geneNamesRNA = NULL,
@@ -480,11 +488,14 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     )
 
     # Gene panel correlation for Protein/RNA
-    updateSelectizeInput(session, "inputGvpCorrBothGeneNameA", choices = as.list(rownames(cptac_rna)), server = TRUE, options = list(placeholder = "Type gene name"))
-    updateSelectizeInput(session, "inputGvpCorrBothGeneNameB", choices = as.list(rownames(cptac_protein)), server = TRUE, options = list(placeholder = "Type protein name"))
+    updateSelectizeInput(session, "inputGvpCorrBothGeneNameA", selected=c("A1BG","A1CF","A2M","A2ML1","A3GALT2"), choices = cptac_rna_genes, server = TRUE, options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvpCorrBothGeneNameB", selected=c("VHL","A1BG","A2M","A2ML1","A4GALT"), choices = cptac_protein_genes, server = TRUE, options = list(placeholder = "Type protein name"))
 
 
     resGvpCorrBoth <- eventReactive(input$generateGvpCorrBoth, {
+      cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+
       panelCorr(
         geneNamesRNA = input$inputGvpCorrBothGeneNameA,
         geneNamesProtein = input$inputGvpCorrBothGeneNameB,

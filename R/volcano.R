@@ -9,7 +9,7 @@ volcanoUI <- function(id, cohorts){
       # input options
       selectizeInput(inputId = ns("genes"),
                      choices = NULL,
-                     label =  "Input genes",options = list(`live-search` = TRUE),  multiple = TRUE),
+                     label =  "Genes",options = list(`live-search` = TRUE),  multiple = TRUE),
    
       # cutoff options
       selectInput(ns("PValCutoff"), "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
@@ -30,17 +30,19 @@ volcanoUI <- function(id, cohorts){
 volcanoServer <- function(id, crl_genes, DE_protein) {
   moduleServer(id,function(input,output,session){
 
-    cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
 
         
     updateSelectizeInput(session, 'genes', 
-                         choices = as.list(rownames(cptac_protein)), 
+                         choices = cptac_protein_genes, 
                          server = TRUE)
     
     output$distPlot <- renderPlotly({
+      
 
       # trigger plot refresh when button is pressed
       input$refresh
+      
+      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
       
       genes <- isolate(input$genes)
 

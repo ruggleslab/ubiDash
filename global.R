@@ -64,6 +64,7 @@ mem_readRDS <- memoise(readRDS)
 # cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
 cptac_samples <- mem_get_from_drive("ubidash/cptac_sample_info_with_subtypes.rds")
 
+load("./data/searchlists.RData")
 
 
 #pride dataset
@@ -187,11 +188,17 @@ time = currentTime
 
 source("./data/simplifiedheatmap/tgr_misc.R")
 
-prt.global.AI <- mem_get_from_drive("ubidash/cptac_tmt-log2-AI_protein_expression.rds")
-prt.global.AI <- data_norm(prt.global.AI, col_center = T)
+
+get_prt.global.AI <- function(){
+  data = get_from_drive("ubidash/cptac_tmt-log2-AI_protein_expression.rds")
+  data = data_norm(data, col_center = T)
+  return(data)
+}
+
+mem_prt.global.AI <- memoise(get_prt.global.AI)
 
 
-labels <- read.csv("./data/simplifiedheatmap//sub_types.csv")
+labels <- read.csv("./data/simplifiedheatmap/sub_types.csv")
 
 
 tertiles <- function(x) {

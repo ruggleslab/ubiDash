@@ -47,10 +47,15 @@ correlationsUI <- function(id) {
 correlationsServer <- function(id, lines) {
   moduleServer(id,function(input,output,session){
     
-    plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
     warning <- reactiveVal("")
     # proteome tumor - proteome normal
     output$pt_pn <- renderPlotly({
+    
+      
+      # accessed separately three times  
+      plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
+      
+      
       input$generateCorrelation
       output$corrErr1 <- renderText({
         warning()
@@ -74,6 +79,10 @@ correlationsServer <- function(id, lines) {
     })
     # proteome tunor - transcriptome tunor
     output$pt_rt <- renderPlotly({
+      
+      plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
+      
+      
       input$generateCorrelation
       output$corrErr2 <- renderText({
         warning()
@@ -97,6 +106,9 @@ correlationsServer <- function(id, lines) {
 
     # transcriptome tumor - transcriptome normal
     output$rt_rn <- renderPlotly({
+      
+      plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
+      
       input$generateCorrelation
       output$corrErr3 <- renderText({
         warning()
