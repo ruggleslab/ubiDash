@@ -26,7 +26,7 @@ shinyServer(function(input, output, session) {
     filteredProteinMat,
     filteredMRNAMat,
     # filteredTnlabels,
-    defaultHeatmap,
+    # defaultHeatmap,
     genesSubset
   )
 

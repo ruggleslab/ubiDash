@@ -96,7 +96,7 @@ heatmapServer <-
            filteredProteinMat,
            filteredMRNAMat,
           #  filteredTnlabels,
-           defaultHeatmap,
+           # defaultHeatmap,
            genesSubset) {
     moduleServer(id, function(input, output, session) {
 
@@ -249,21 +249,21 @@ heatmapServer <-
                 output$err <- renderText({
                   ""
                 })
-                return(drawHeatmap(
+                drawHeatmap(
                   inputGenesMat,
                   ha,
                   colsplit,
                   isolate(input$clusterCol),
                   isolate(input$clusterRow),
                   legendName
-                ))
+                )
               },
               error = function(e) {
                 print(e)
                 output$err <- renderText({
                   "Warning: Not enough data to cluster columns"
                 })
-                return(drawHeatmap(inputGenesMat, ha, colsplit, FALSE, FALSE, legendName))
+                drawHeatmap(inputGenesMat, ha, colsplit, FALSE, FALSE, legendName)
               }
             )
 
@@ -311,16 +311,36 @@ heatmapServer <-
 
             ha <- HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle), ]$Cancer_subtype)
 
-
-            Heatmap(
-              sub.ccle,
-              top_annotation = ha,
-              column_names_gp = grid::gpar(fontsize = 3),
-              cluster_columns = isolate(input$clusterCol),
-              cluster_rows = isolate(input$clusterRow)
-            )
-
             
+            tryCatch(
+              {
+                output$err <- renderText({
+                  ""
+                })
+                Heatmap(
+                  sub.ccle,
+                  top_annotation = ha,
+                  column_names_gp = grid::gpar(fontsize = 3),
+                  show_column_names = FALSE, show_row_names = TRUE,
+                  cluster_columns = isolate(input$clusterCol),
+                  cluster_rows = isolate(input$clusterRow)
+                )
+              },
+              error = function(e) {
+                print(e)
+                output$err <- renderText({
+                  "Warning: Not enough data to cluster columns"
+                })
+                Heatmap(
+                  sub.ccle,
+                  top_annotation = ha,
+                  column_names_gp = grid::gpar(fontsize = 3),
+                  show_column_names = FALSE, show_row_names = TRUE,
+                  cluster_columns = FALSE,
+                  cluster_rows = FALSE
+                )
+              }
+            )
 
           } else if (isolate(input$dataset) == "PRIDE") {
             dataset <- (pride_protein)
@@ -334,13 +354,35 @@ heatmapServer <-
 
             sub.pride <- pride_protein[inputGenes, ]
 
-
-            Heatmap(
-              sub.pride,
-              column_names_gp = grid::gpar(fontsize = 8),
-              cluster_columns = isolate(input$clusterCol),
-              cluster_rows = isolate(input$clusterRow)
+            tryCatch(
+              {
+                output$err <- renderText({
+                  ""
+                })
+                Heatmap(
+                  sub.pride,
+                  column_names_gp = grid::gpar(fontsize = 8),
+                  show_column_names = FALSE, show_row_names = TRUE,
+                  cluster_columns = isolate(input$clusterCol),
+                  cluster_rows = isolate(input$clusterRow)
+                )
+              },
+              error = function(e) {
+                print(e)
+                output$err <- renderText({
+                  "Warning: Not enough data to cluster columns"
+                })
+                Heatmap(
+                  sub.pride,
+                  column_names_gp = grid::gpar(fontsize = 8),
+                  show_column_names = FALSE, show_row_names = TRUE,
+                  cluster_columns = FALSE,
+                  cluster_rows = FALSE
+                )
+              }
             )
+            
+           
           }
         },
         height = plotHeight

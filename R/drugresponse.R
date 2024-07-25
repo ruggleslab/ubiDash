@@ -29,12 +29,15 @@ drugResponseUI <- function(id) {
     mainPanel(
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
+      p("Data from TCGA"),
       shinycssloaders::withSpinner(plotOutput(ns("plot1")),
         color = "#6A2798"
       ),
+      p("Data from CCLE"),
       shinycssloaders::withSpinner(plotOutput(ns("plot2")),
         color = "#6A2798"
       ),
+      p("Data from CCLE"),
       shinycssloaders::withSpinner(plotlyOutput(ns("plot3")),
         color = "#6A2798"
       ),
@@ -65,17 +68,17 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
     selected_gene_sigdrug_wilcoxon <- reactiveVal()
     selected_gene_subdrugmat <- reactiveVal()
     selected_gene_corr <- reactiveVal()
-
-
-
-    observe({
-      
-      input$refresh
+    
+    selected_gene = eventReactive(input$refresh, {
       # generate data for selected gene ----
       selected_gene_name <- isolate(input$inputGene)
+
       if (!isTruthy(selected_gene_name)) {
         selected_gene_name <- "VHL"
       }
+
+      print(selected_gene_name)
+      print(selected_gene)
 
       selected_gene_exp <- exp[exp$GENE_SYMBOLS == selected_gene_name, ]
       selected_gene_exp <- t(selected_gene_exp[, -c(1:2)]) # transpose
@@ -90,13 +93,13 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
 
       # match sample annotations with expression table
 
-      selected_gene <- merge(selected_gene_exp, cell, by = "Data")
+      selected_gene = merge(selected_gene_exp, cell, by = "Data")
       # take average of duplicated cell lines
       dupcl <-
         selected_gene$CELL_LINE_NAME[which(duplicated(selected_gene$CELL_LINE_NAME))] # duplicated cell line names
       dup <-
         selected_gene[which(selected_gene$CELL_LINE_NAME %in% dupcl), ] # duplicated df
-      selected_gene <-
+      selected_gene =
         selected_gene[-c(which(selected_gene$CELL_LINE_NAME %in% dupcl)), ] # remove duplicated
       dup <-
         dup[order(dup$CELL_LINE_NAME), ] # order by cell line names
@@ -108,16 +111,28 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         dup_$Exp[i] <- m
       }
       # add duplicated cell lines back to df
-      selected_gene <- rbind(selected_gene, dup_)
-      selected_gene <-
+      selected_gene = rbind(selected_gene, dup_)
+      selected_gene =
         selected_gene[order(selected_gene$Exp, decreasing = T), ] # reorder expression
+      
+      return(selected_gene)
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
       # 1. expression by type ----
       output$plot1 <- renderPlot({
+        selected_gene()
+        
+        
+        if(!isTruthy(selected_gene())){
+          return(NULL)
+        }
+        
+        print("plot1")
+
         ### generate expression by type
 
         typedf <-
-          selected_gene[, c(2, 4)] # keep expression and tcga annotation
+          selected_gene()[, c(2, 4)] # keep expression and tcga annotation
         return(
           ggplot(typedf, aes(x = reorder(TCGA_DESC, -Exp, median), y = Exp)) +
             geom_boxplot() +
@@ -127,21 +142,30 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
               vjust = 1,
               hjust = 1
             )) +
-            xlab(paste0(selected_gene_name, "expression ordered by median"))
+            xlab(paste0(isolate(input$gene), "expression ordered by median"))
           # ggsave("selected_gene/selected_gene_by_tcga.pdf", width = 20, height = 15, units = "cm")
         )
       })
 
       # 2. z-score heatmap for top/bot ----
       output$plot2 <- renderPlot({
+        
+        if(!isTruthy(selected_gene())){
+          return(NULL)
+        }
+        
+        print("plot2")
+        
+        selected_gene_copy = selected_gene()
+        
         # top 10% and bottom 10% selected_gene
-        selected_gene$type <- "-"
+        selected_gene_copy$type <- "-"
         # subset selected_gene top/bot
-        selected_gene$type[c(1:100)] <- "Top"
-        selected_gene$type[c((nrow(selected_gene) - 99):nrow(selected_gene))] <-
+        selected_gene_copy$type[c(1:100)] <- "Top"
+        selected_gene_copy$type[c((nrow(selected_gene_copy) - 99):nrow(selected_gene_copy))] <-
           "Bot"
-        top <- selected_gene[selected_gene$type == "Top", ]
-        bot <- selected_gene[selected_gene$type == "Bot", ]
+        top <- selected_gene_copy[selected_gene_copy$type == "Top", ]
+        bot <- selected_gene_copy[selected_gene_copy$type == "Bot", ]
         # get top/bot cell line names
         topCL <- top$CELL_LINE_NAME
         botCL <- bot$CELL_LINE_NAME
@@ -338,7 +362,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
             annotation_legend_param = list(
               title_position = "lefttop-rot",
               title =
-                paste0(selected_gene_name, "exp")
+                paste0(isolate(input$gene), "exp")
             ),
             col = list(selected_gene = col_selected_gene),
             annotation_name_rot = 0,
@@ -387,7 +411,12 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
       
       
       output$plot3 <- renderPlotly({
-
+        
+        if(!isTruthy(selected_gene())){
+          return(NULL)
+        }
+        
+        print("plot3")
         # spearman correlation
         drugall <- drug[, c(1, 2, 5)] # keep cell line, ic50 and drugname
         # wider df
@@ -397,7 +426,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           values_fn = list(LN_IC50 = mean)
         )
         drugall <- as.data.frame(drugall)
-        selected_gene_all <- selected_gene[, c(2, 3)]
+        selected_gene_all <- selected_gene()[, c(2, 3)]
         colnames(selected_gene_all)[2] <- "CELL_LINE_NAME"
         corrdf <-
           merge(selected_gene_all, drugall, by = "CELL_LINE_NAME") # merge expression data and ic50data
@@ -524,7 +553,9 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         # dev.off()
         return(ggplotly(plt, tooltip = "text"))
       })
-    })
+     
+    
+    
     # downloads ----
     output$selected_gene_drugmat <- downloadHandler(
       filename = function() {

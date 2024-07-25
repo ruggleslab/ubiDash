@@ -141,7 +141,7 @@ print(glue("Prepared correlations data in {(currentTime- time) * 1000} ms"))
 time = currentTime
 
 # Heatmap ----
-load("./data/defaults.RData")
+# load("./data/defaults.RData")
 
 
 
