@@ -266,7 +266,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = cptac_rna,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
     output$outputPlotGvgCorrRna <- renderPlot({
       resGvgCorrRna()$singCorrPlot
@@ -295,7 +295,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = NULL,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
 
 
@@ -326,7 +326,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = cptac_rna,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
     output$outputPlotGvgCorrBoth <- renderPlot({
       resGvgCorrBoth()$singCorrPlot
@@ -352,7 +352,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = NULL,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
     output$outputTabGvACorrProtein <- renderDT(
       server = FALSE,
@@ -392,7 +392,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = cptac_rna,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
     output$outputTabGvACorrRna <- DT::renderDataTable(
       server = FALSE,
@@ -432,7 +432,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = cptac_rna,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
     output$outputPlotGvpCorrRna <- renderPlot({
       resGvpCorrRna()$corrPlot
@@ -467,7 +467,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = NULL,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
     output$outputPlotGvpCorrProtein <- renderPlot({
       resGvpCorrProtein()$corrPlot
@@ -505,7 +505,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_rna = cptac_rna,
         cptac_samples = cptac_samples
       )
-    })
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
 
     output$outputPlotGvpCorrBoth <- renderPlot({
       resGvpCorrBoth()$corrPlot
