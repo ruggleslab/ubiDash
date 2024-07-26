@@ -60,6 +60,10 @@ shinyUI(
           theme = bs_theme(version = 5, bootswatch = "pulse"),
           volcanoUI("volcanoTab", DE_protein_cohorts)
         ),
+        tabPanel("Density Plots",
+          theme = bs_theme(version = 5, bootswatch = "pulse"),
+          densityUI("densityTab")
+        ),
       ),
       navbarMenu(
         "Functional Analysis",

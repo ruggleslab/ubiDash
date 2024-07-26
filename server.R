@@ -44,6 +44,8 @@ shinyServer(function(input, output, session) {
 
   # lollipop tab
   lollipopServer("lollipopTab") # maf
+  
+  densityServer("densityTab") # maf
 
   corrAnalysisServer("corrAnalysisTab", cohorts, cptac_samples) # cptac_protein, cptac_rna
 
