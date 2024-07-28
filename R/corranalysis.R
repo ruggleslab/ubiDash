@@ -256,6 +256,9 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = cptac_rna_genes, server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
 
     resGvgCorrRna <- eventReactive(input$generateGvgCorrRna, {
+      validate(
+        need(length(isolate(input$inputGvgCorrRnaCohort)) >= 1, 'Please select at least one cohort.'),
+      )
       cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
       singleCorr(
         geneNameA = input$inputGvgCorrRnaNameA,
@@ -286,6 +289,9 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
 
     resGvgCorrProtein <- eventReactive(input$generateGvgCorrProtein, {
       cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+      validate(
+        need(length(isolate(input$inputGvgCorrProteinCohort)) >= 1, 'Please select at least one cohort.'),
+      )
       singleCorr(
         geneNameA = input$inputGvgCorrProteinNameA,
         geneNameB = input$inputGvgCorrProteinNameB,
@@ -317,6 +323,9 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     resGvgCorrBoth <- eventReactive(input$generateGvgCorrBoth, {
       cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
       cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+      validate(
+        need(length(isolate(input$inputGvgCorrBothCohort)) >= 1, 'Please select at least one cohort.'),
+      )
       singleCorr(
         geneNameA = input$inputGvgCorrBothNameA,
         geneNameB = input$inputGvgCorrBothNameB,
@@ -343,6 +352,9 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = cptac_protein_genes, server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
     resGvACorrProtein <- eventReactive(input$generateGvACorrProtein, {
       cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+      validate(
+        need(length(isolate(input$inputGvACorrProteinCohort)) >= 1, 'Please select at least one cohort.'),
+      )
       multiCorr(
         geneName = input$inputGvACorrProteinGeneName,
         cutOff = input$inputGvACorrProteinR,
@@ -383,6 +395,9 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = cptac_rna_genes, server = TRUE, selected = "A1BG", options = list(placeholder = "Type gene name"))
     resGvACorrRna <- eventReactive(input$generateGvACorrRna, {
       cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+      validate(
+        need(length(isolate(input$inputGvACorrRnaCohort)) >= 1, 'Please select at least one cohort.'),
+      )
       multiCorr(
         geneName = input$inputGvACorrRnaGeneName,
         cutOff = input$inputGvACorrRnaR,
@@ -423,6 +438,10 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
 
     resGvpCorrRna <- eventReactive(input$generateGvpCorrRna, {
       cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+      validate(
+        need(length(isolate(input$inputGvpCorrRnaCohort)) >= 1, 'Please select at least one cohort.'),
+        need(length(isolate(input$inputGvpCorrRnaGeneName)) >= 1, 'Please select at least one gene'),
+      )
       panelCorr(
         geneNamesRNA = input$inputGvpCorrRnaGeneName,
         geneNamesProtein = NULL,
@@ -458,6 +477,10 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
 
     resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein, {
       cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+      validate(
+        need(length(isolate(input$inputGvpCorrProteinCohort)) >= 1, 'Please select at least one cohort.'),
+        need(length(isolate(input$inputGvpCorrProteinGeneName)) >= 1, 'Please select at least one gene'),
+      )
       panelCorr(
         geneNamesProtein = input$inputGvpCorrProteinGeneName,
         geneNamesRNA = NULL,
@@ -495,7 +518,10 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     resGvpCorrBoth <- eventReactive(input$generateGvpCorrBoth, {
       cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
       cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-
+      validate(
+        need(length(isolate(input$inputGvpCorrBothCohort)) >= 1, 'Please select at least one cohort.'),
+        need(length(isolate(input$inputGvpCorrBothGeneNameA)) >= 1 & length(isolate(input$inputGvpCorrBothGeneNameB)) >= 1, 'Please select at least one for each feild'),
+      )
       panelCorr(
         geneNamesRNA = input$inputGvpCorrBothGeneNameA,
         geneNamesProtein = input$inputGvpCorrBothGeneNameB,

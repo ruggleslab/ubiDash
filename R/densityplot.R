@@ -23,7 +23,7 @@ densityUI <- function(id) {
     mainPanel(
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
-      shinycssloaders::withSpinner(plotOutput(ns("lollipop")), color = "#6A2798"),
+      shinycssloaders::withSpinner(plotOutput(ns("plot"), ), color = "#6A2798"),
     )
   )
 }
@@ -39,7 +39,7 @@ densityServer <- function(id) {
       selected = "KBTBD11"
     )
     
-    output$lollipop = renderPlot({
+    output$plot = renderPlot({
       # NOTES on data source
       # sample_v1.1 <- openxlsx::read.xlsx(xlsxFile = "../EXP169/output/cptac_samples_info_across_datatypes_v1.1.xlsx")
       # saveRDS(sample_v1.1, file = "../../ubiDash/data/cptac_samples_info_across_datatypes_v1.1.rds")
@@ -99,7 +99,7 @@ densityServer <- function(id) {
       
       
       # visualization
-      g <- ggplot(sample) +
+      ggplot(sample) +
         geom_density_ridges(
           aes(
             x = !!sym(ups_gn),
@@ -135,9 +135,9 @@ densityServer <- function(id) {
         theme_prism(border = T) +
         scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
         scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"),
-                           guide = F)
+                           guide = F) 
+        
       
-      return(g)
-    })
+    }, height=600)
   })
 }

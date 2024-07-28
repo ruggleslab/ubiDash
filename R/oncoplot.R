@@ -8,7 +8,7 @@ oncoplotUI <- function(id, cohorts) {
       # gene inputs
 
       selectizeInput(
-        inputId = ns("inputOncoGenesTXT"),
+        inputId = ns("genes"),
         choices = NULL,
         label = "Genes",
         options = list(`live-search` = TRUE),
@@ -26,7 +26,7 @@ oncoplotUI <- function(id, cohorts) {
       checkboxInput(ns("sortByCohort"), "Sort by Cohort", value = FALSE),
       h3("Cohorts"),
       selectizeInput(
-        inputId = ns("oncoCohortSelect"),
+        inputId = ns("cohorts"),
         choices = cohorts,
         selected = cohorts,
         label = "Select cohorts",
@@ -41,7 +41,7 @@ oncoplotUI <- function(id, cohorts) {
       # downloadButton(outputId = ns("downloadOncoCohorts"), label = "Download Cohort Data"),
     ),
     mainPanel(
-      textOutput(ns("oncoError")) %>%
+      textOutput(ns("error")) %>%
         tagAppendAttributes(class = "error"),
       shinycssloaders::withSpinner(plotOutput(ns("mutationOncoplot")), color = "#6A2798")
     )
@@ -53,31 +53,32 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts) {
   moduleServer(id,function(input,output,session){
 
     
-    updateSelectizeInput(session, 'inputOncoGenesTXT', 
+    updateSelectizeInput(session, 'genes', 
                          choices = cptac_protein_genes, 
                          server = TRUE)
     
-    # mutations oncoplot
     output$mutationOncoplot <- renderPlot({
       input$generateOnco
+      
+      validate(
+        need(length(isolate(input$genes)) == 0 || length(isolate(input$genes)) > 1, 'Two genes are needed to generate plot.'),
+      )
       
       maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
 
 
-      inputGenes <- isolate(input$inputOncoGenesTXT)
-      # print(inputGenes)
+      inputGenes <- isolate(input$genes)
 
       if (!isTruthy(inputGenes)) {
         inputGenes <- top_crls[1:isolate(input$maxOncoGenes)]
       }
 
       filteredMaf <- maf
-      if (length(isolate(input$oncoCohortSelect)) != length(cohorts)) {
-        inputCohorts <- maf@clinical.data[cohort_code %in% isolate(input$oncoCohortSelect)]
+      if (length(isolate(input$cohorts)) != 0 && length(isolate(input$cohorts)) != length(cohorts)) {
+        inputCohorts <- maf@clinical.data[cohort_code %in% isolate(input$cohorts)]
         filteredMaf <- subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode)
       }
 
-      # downloadableMaf(filteredMaf)
 
 
       return(oncoplot(

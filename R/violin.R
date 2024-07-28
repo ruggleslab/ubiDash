@@ -17,8 +17,7 @@ violinUI <- function(id, cohorts) {
             label = "Genes",
             options = list(`live-search` = TRUE),
           ),
-        )
-      ),
+        ),
         tabPanel(
           "protein",
           selectizeInput(
@@ -30,6 +29,7 @@ violinUI <- function(id, cohorts) {
             options = list(`live-search` = TRUE),
           ),
         ),
+      ),
        
       selectizeInput(
         inputId = ns("dataset"),
@@ -150,6 +150,12 @@ violinServer <-
 
       output$violin <- renderPlotly({
         input$generate
+        
+        validate(
+          need(isolate(input$datatype) != "protein" || length(isolate(input$proteinGenes)) >= 1, 'Please select at least one gene.'),
+          need(isolate(input$datatype) != "mRNA" || length(isolate(input$mRNAGenes)) >= 1, 'Please select at least one gene.'),
+        )
+       
 
         p <- NULL
         dataset <- NULL
@@ -160,7 +166,8 @@ violinServer <-
            
              cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
              dataset <- t(cptac_protein)
-           
+             
+             
              p <- isolate(input$proteinGenes)
           } else {
             # there appear to be duplicate columns
@@ -182,9 +189,7 @@ violinServer <-
           }
         }
 
-        if (is.null(p)) {
-          p <- "KBTBD11"
-        }
+       
         if (is.null(dataset)) {
           cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
           dataset <- t(cptac_protein)
@@ -217,7 +222,9 @@ violinServer <-
           )]
 
           violin.input <- violin.input[!is.na(violin.input$Sample_type), ]
-          violin.input <- violin.input[violin.input$cohort_code %in% isolate(input$cohorts), ]
+          if(length(isolate(input$cohorts)) > 0){
+            violin.input <- violin.input[violin.input$cohort_code %in% isolate(input$cohorts), ]
+          }
         } else if (isolate(input$dataset == "CCLE")) {
             
           ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
