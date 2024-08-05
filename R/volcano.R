@@ -42,7 +42,7 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
       # trigger plot refresh when button is pressed
       input$refresh
       
-      cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
       
       genes <- isolate(input$genes)
 

@@ -55,9 +55,9 @@ densityServer <- function(id) {
       
       dataset = NULL
       if (data_type == 'rna') {
-        dataset <- as.matrix(mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds"))
+        dataset <- as.matrix(mem_get_from_drive("duplicates_averaged_cptac_rna.rds"))
       } else{
-        dataset <- mem_get_from_drive("ubidash/cptac_tmt-log2-AI_protein_expression.rds")
+        dataset <- mem_get_from_drive("cptac_tmt-log2-AI_protein_expression.rds")
       }
       
       sample <- readRDS("./data/cptac_samples_info_across_datatypes_v1.1.rds")

@@ -164,26 +164,26 @@ violinServer <-
         if (isolate(input$dataset) == "CPTAC") {
           if (isolate(input$datatype) == "protein") {
            
-             cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+             cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
              dataset <- t(cptac_protein)
              
              
              p <- isolate(input$proteinGenes)
           } else {
             # there appear to be duplicate columns
-            cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
+            cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
             dataset <- t(cptac_rna)
             # dataset <- t(cptac_rna[, !duplicated(colnames(cptac_rna))])
             p <- isolate(input$mRNAGenes)
           }
         } else if (isolate(input$dataset) == "CCLE") {
           if (isolate(input$datatype) == "protein") {
-            ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
+            ccle_protein <- mem_get_from_drive("ccle_tmt_protein_expression.rds")
             dataset <- t(ccle_protein)
             p <- isolate(input$proteinGenes)
           } else {
             # there appear to be duplicate columns
-            ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
+            ccle_rna <- mem_get_from_drive("ccle_tpm_rna_expression.rds")
             dataset <- ccle_rna
             p <- isolate(input$mRNAGenes)
           }
@@ -191,7 +191,7 @@ violinServer <-
 
        
         if (is.null(dataset)) {
-          cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
+          cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
           dataset <- t(cptac_protein)
         }
 
@@ -227,7 +227,7 @@ violinServer <-
           }
         } else if (isolate(input$dataset == "CCLE")) {
             
-          ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+          ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
 
           violin.input <- merge(
             x = violin.input,

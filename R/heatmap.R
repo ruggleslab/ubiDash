@@ -157,13 +157,13 @@ heatmapServer <-
       output$heatmap <- renderPlot({
         input$generateHeatmap
 
-        ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
-        ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
-        ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+        ccle_rna <- mem_get_from_drive("ccle_tpm_rna_expression.rds")
+        ccle_protein <- mem_get_from_drive("ccle_tmt_protein_expression.rds")
+        ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
 
-        cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
-        cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-        pride_protein <- mem_get_from_drive("ubidash/pride_lfq_protein_expression.rds")
+        cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+        cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+        pride_protein <- mem_get_from_drive("pride_lfq_protein_expression.rds")
         
         
 

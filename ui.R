@@ -42,6 +42,10 @@ shinyUI(
         tabPanel("Lollipop",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
           lollipopUI("lollipopTab")
+        ),
+        tabPanel("Manhattan Plots",
+          theme = bs_theme(version = 5, bootswatch = "pulse"),
+          manhattanUI("manhattanTab")
         )
       ),
       navbarMenu(

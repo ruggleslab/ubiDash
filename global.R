@@ -46,7 +46,25 @@ get_from_drive <- function(filename){
   return(data)
 }
 
+rdata_from_drive <- function(filename){
+  ## download the file in current wd and save the object so you know the location of the download
+  ## This function can fail so wrap it in an error object to rerun it if it fails
+  file_data <- drive_download(filename, overwrite = TRUE)
+  
+  ## Loading the Rds object based on the local path that it's stored in
+  data <- load(file_data$local_path)
+  
+  ## Deleting the file once it's loaded in to save on storage space
+  if (file.exists(file_data$local_path)) {
+    #Delete file if it exists
+    file.remove(file_data$local_path)
+  }
+  
+  return(data)
+}
+
 mem_get_from_drive <- memoise(get_from_drive)
+mem_rdata_from_drive <- memoise(rdata_from_drive)
 
 
 
@@ -55,24 +73,24 @@ mem_readRDS <- memoise(readRDS)
 # Datasets ----
 
 # ccle dataset
-# ccle_rna <- mem_get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
-# ccle_protein <- mem_get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
-# ccle_samples <- mem_get_from_drive("ubidash/ccle_sample_info.rds")
+# ccle_rna <- mem_get_from_drive("ccle_tpm_rna_expression.rds")
+# ccle_protein <- mem_get_from_drive("ccle_tmt_protein_expression.rds")
+# ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
 
 # cptac dataset
-# cptac_rna <- mem_get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
-# cptac_protein <- mem_get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-cptac_samples <- mem_get_from_drive("ubidash/cptac_sample_info_with_subtypes.rds")
+# cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+# cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+cptac_samples <- mem_get_from_drive("cptac_sample_info_with_subtypes.rds")
 
 load("./data/searchlists.RData")
 
 
 #pride dataset
-# pride_protein <- mem_get_from_drive("ubidash/pride_lfq_protein_expression.rds")
+# pride_protein <- mem_get_from_drive("pride_lfq_protein_expression.rds")
 
 
 # for correlations tab
-# plot_tab <- mem_get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
+# plot_tab <- mem_get_from_drive("cptac_multi_omic_correlations.rds")
 
 
 currentTime =  as.numeric(Sys.time())
@@ -190,7 +208,7 @@ source("./data/simplifiedheatmap/tgr_misc.R")
 
 
 get_prt.global.AI <- function(){
-  data = get_from_drive("ubidash/cptac_tmt-log2-AI_protein_expression.rds")
+  data = get_from_drive("cptac_tmt-log2-AI_protein_expression.rds")
   data = data_norm(data, col_center = T)
   return(data)
 }
