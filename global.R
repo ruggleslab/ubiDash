@@ -30,6 +30,7 @@ options(
 
 
 get_from_drive <- function(filename){
+  print(filename)
   ## download the file in current wd and save the object so you know the location of the download
   ## This function can fail so wrap it in an error object to rerun it if it fails
   file_data <- drive_download(filename, overwrite = TRUE)
@@ -46,25 +47,25 @@ get_from_drive <- function(filename){
   return(data)
 }
 
-rdata_from_drive <- function(filename){
-  ## download the file in current wd and save the object so you know the location of the download
-  ## This function can fail so wrap it in an error object to rerun it if it fails
-  file_data <- drive_download(filename, overwrite = TRUE)
-  
-  ## Loading the Rds object based on the local path that it's stored in
-  data <- load(file_data$local_path)
-  
-  ## Deleting the file once it's loaded in to save on storage space
-  if (file.exists(file_data$local_path)) {
-    #Delete file if it exists
-    file.remove(file_data$local_path)
-  }
-  
-  return(data)
-}
+# rdata_from_drive <- function(filename){
+#   ## download the file in current wd and save the object so you know the location of the download
+#   ## This function can fail so wrap it in an error object to rerun it if it fails
+#   file_data <- drive_download(filename, overwrite = TRUE)
+# 
+#   ## Loading the Rds object based on the local path that it's stored in
+#   load(file_data$local_path)
+# 
+#   ## Deleting the file once it's loaded in to save on storage space
+#   if (file.exists(file_data$local_path)) {
+#     #Delete file if it exists
+#     file.remove(file_data$local_path)
+#   }
+# 
+# }
+
 
 mem_get_from_drive <- memoise(get_from_drive)
-mem_rdata_from_drive <- memoise(rdata_from_drive)
+# mem_rdata_from_drive <- memoise(rdata_from_drive)
 
 
 
@@ -250,7 +251,8 @@ names(DE_protein) <- DE_protein_cohorts
 currentTime =  as.numeric(Sys.time())
 print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
 time = currentTime
-
+# dat <- list(rna = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_eQTLs.rds"),
+#             pro = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_pQTLs.rds"))
 
 print(glue("Total startup time was {(time-startTime) * 1000} ms"))
 rm(time, currentTime, startTime)

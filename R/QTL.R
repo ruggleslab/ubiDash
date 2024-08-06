@@ -1,9 +1,9 @@
-manhattanUI <- function(id){
+QTLUI <- function(id){
   ns <- NS(id)
   
   sidebarLayout(
     sidebarPanel(
-      h3("Manhattan Plot"),
+      h3("Quantitative Trait Locus (QTL) Analysis"),
       selectizeInput(
         inputId = ns("mutgene"),
         choices = NULL,
@@ -32,47 +32,60 @@ manhattanUI <- function(id){
     mainPanel(
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
-      shinycssloaders::withSpinner(plotOutput(ns("manhattan")),
-                                   color = "#6A2798"
-      ),
-      shinycssloaders::withSpinner(plotOutput(ns("boxplot")),
+      # shinycssloaders::withSpinner(plotOutput(ns("manhattan")),
+      #                              color = "#6A2798"
+      # ),
+      shinycssloaders::withSpinner(plotlyOutput(ns("boxplot")),
                                    color = "#6A2798"
       ),
     )
   )
 }
 
-manhattanServer <- function(id, dat) {
+QTLServer <- function(id) {
   moduleServer(id,function(input,output,session){
     
-    mem_rdata_from_drive("dat~cptac_v1.1_list_object_mut_cnv_rna_pro.RData")
+    mut = mem_get_from_drive("cptac_v1.1_mut.rds")
+    
     
     observe({
       input$datatype
       
+      if(input$datatype == "pro"){
       updateSelectizeInput(session, 'gene', 
-                           choices = colnames(dat[[input$datatype]]), 
-                           server = TRUE, selected = "ABL1.rna")
+                           choices = cptac_protein_genes, 
+                           server = TRUE, selected = "ABL1")
+      }
+      else{
+      updateSelectizeInput(session, 'gene', 
+                           choices = cptac_rna_genes, 
+                           server = TRUE, selected = "ABL1")
+      }
     })
     
     updateSelectizeInput(session, 'gene', 
-                         choices = colnames(dat[["rna"]]), 
-                         server = TRUE, selected = "ABL1.rna")
+                         choices = cptac_rna_genes, 
+                         server = TRUE, selected = "ABL1")
     
     
     updateSelectizeInput(session, 'mutgene', 
-                         choices = colnames(dat[["mut"]]), 
+                         choices = colnames(mut), 
                          server = TRUE, selected = "VHL.mut")
     
-    output$boxplot = renderPlot({
+    output$boxplot = renderPlotly({
       ### Pancan boxplots ###
       
       input$refresh
       
-      # "dat" object listing: samples, mut, cnv, rna, pro
-      
       # Retrieve command-line arguments
-      args <- commandArgs(trailingOnly = TRUE)
+      cptac_samples <- as.data.frame(mem_get_from_drive("cptac_sample_info_with_subtypes.rds"))
+      cptac_samples = cptac_samples[cptac_samples$sample_type == "T",]
+      
+      cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+      mut <- mem_get_from_drive("cptac_v1.1_mut.rds")
+      
+      load("./data/dat~cptac_v1.1_list_object_mut_cnv_rna_pro.RData")
       
       # Assign command-line arguments to variables
       datatype <- isolate(input$datatype)
@@ -83,20 +96,52 @@ manhattanServer <- function(id, dat) {
       colors <- setNames(object = colors$color, # colors
                          nm = colors$id) # names
       
-      samples <- dat[["samples"]] %>% 
-        select(c(harmonized_data_id, cohort))
+      # samples <- dat[["samples"]] %>% 
+      samples <- cptac_samples %>% 
+        select(c(harmonized_data_id, cohort_code))
       
-      cohorts <- levels(as.factor(dat$samples$cohort))
+      cohorts <- levels(as.factor(cptac_samples$cohort))
+      
+      if(input$datatype == "pro"){
+        E3 <- t(cptac_protein)
+      } else{
+        E3 <- t(cptac_rna)
+      }
+      
+      
       sampls <- samples %>% rownames()
+      sampls = sampls[sampls %in% rownames(E3) & sampls %in% rownames(mut)]
+      
+      # print(rownames(samples))
+      # print(E3)
+      # 
+      # print(rownames(samples) %in% colnames(E3))
+      # 
+      # E3[rownames(samples),]
+      # sampls
+      # E3[sampls, gn]
+      # 
+      # rownames(E3)
       
       
-      E3 <- dat[[datatype]]
-      mut <- dat[["mut"]]
+      # print(E3[gn, row.names(samples), drop=F])
+      # 
+      # rownames(samples) %in% E3
+      # 
+      # print(E3[row.names(samples),gn])
       
+      # mut[sampls, m, drop=F]
       
-      df <- as.data.frame(E3[row.names(samples), gn, drop=F]) %>%
+      # 
+      # gn = "A1BG"
+      # m = "VHL.mut"
+      
+      print(gn)
+      print(m)
+      
+      df <- as.data.frame(E3[sampls, gn, drop=F]) %>%
         mutate(harmonized_data_id = rownames(.),
-               cohort = samples[row.names(.), "cohort"]) %>%
+               cohort = samples[row.names(.), "cohort_code"]) %>%
         left_join(.,
                   data.frame(harmonized_data_id = rownames(mut[sampls, m, drop=F]),
                              mut[sampls, m, drop=F]),
@@ -119,7 +164,7 @@ manhattanServer <- function(id, dat) {
       
     })
     
-    output$manhattan = renderPlot({
+    # output$manhattan = renderPlot({
       # 
       # dat <- list(rna = mem_get_from_drive("./data/CPTAC_Pancan_UPS_genome-wide_eQTLs.rds"),
       #             pro = mem_get_from_drive("./data/CPTAC_Pancan_UPS_genome-wide_pQTLs.rds"))
@@ -169,7 +214,7 @@ manhattanServer <- function(id, dat) {
       # print("4")
       
       # return(p)
-    })
+    # })
     
     
   

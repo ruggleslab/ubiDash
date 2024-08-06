@@ -43,9 +43,9 @@ shinyUI(
           theme = bs_theme(version = 5, bootswatch = "pulse"),
           lollipopUI("lollipopTab")
         ),
-        tabPanel("Manhattan Plots",
+        tabPanel("QTL Analysis",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          manhattanUI("manhattanTab")
+          QTLUI("QTLTab")
         )
       ),
       navbarMenu(

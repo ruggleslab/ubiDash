@@ -45,7 +45,7 @@ shinyServer(function(input, output, session) {
   # lollipop tab
   lollipopServer("lollipopTab") # maf
   
-  manhattanServer("manhattanTab", dat) # maf
+  QTLServer("QTLTab") # maf
   
   
     densityServer("densityTab") # maf
