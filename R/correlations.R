@@ -9,7 +9,13 @@ correlationsUI <- function(id) {
                    So, input text should specify a CRL of interest to produce a
                    scatterplot of all other proteins correlated to the specified
                    CRL."),
-      textInput(ns("inputCorrGenesTXT"), "Input text (separate genes with comma)", value = "", width = NULL, placeholder = NULL),
+      selectizeInput(
+        inputId = ns("genes"),
+        choices = NULL,
+        multiple = TRUE,
+        label = "Genes (leave blank to include all)",
+        options = list(`live-search` = TRUE),
+      ),
       sliderInput(ns("CorrelationCutoff"), "Correlation Cutoff:",
         min = .5, max = 1,
         value = .5, step = 0.05
@@ -44,11 +50,17 @@ correlationsUI <- function(id) {
   )
 }
 
-correlationsServer <- function(id, lines) {
+correlationsServer <- function(id, lines, E3_genes) {
   moduleServer(id,function(input,output,session){
     
     warning <- reactiveVal("")
     # proteome tumor - proteome normal
+    
+    updateSelectizeInput(session, 'genes', 
+                         choices = as.list(E3_genes), 
+                         server = TRUE, selected = "")
+    print(E3_genes)
+    
     output$pt_pn <- renderPlotly({
     
       
@@ -64,7 +76,7 @@ correlationsServer <- function(id, lines) {
         {
           p <- generateCorrPlot(
             isolate(input$CorrelationCutoff), plot_tab, "pr_tumor.cor", "pr_normal.cor",
-            isolate(input$inputCorrGenesTXT), warning
+            isolate(input$genes), warning
           )
           ggplotly(p, tooltip = "text")
         },
@@ -91,7 +103,7 @@ correlationsServer <- function(id, lines) {
         {
           p <- generateCorrPlot(
             isolate(input$CorrelationCutoff), plot_tab, "pr_tumor.cor", "rn_tumor.cor",
-            isolate(input$inputCorrGenesTXT), warning
+            isolate(input$genes), warning
           )
           ggplotly(p, tooltip = "text")
         },
@@ -117,7 +129,7 @@ correlationsServer <- function(id, lines) {
         {
           p <- generateCorrPlot(
             isolate(input$CorrelationCutoff), plot_tab, "rn_tumor.cor", "rn_normal.cor",
-            isolate(input$inputCorrGenesTXT), warning
+            isolate(input$genes), warning
           )
           ggplotly(p, tooltip = "text")
         },

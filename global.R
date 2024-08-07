@@ -251,6 +251,16 @@ names(DE_protein) <- DE_protein_cohorts
 currentTime =  as.numeric(Sys.time())
 print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
 time = currentTime
+
+# correlations ----
+
+E3_genes <-
+  read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx",
+             sheet = 4)
+
+currentTime =  as.numeric(Sys.time())
+print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
+time = currentTime
 # dat <- list(rna = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_eQTLs.rds"),
 #             pro = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_pQTLs.rds"))
 

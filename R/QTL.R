@@ -92,6 +92,13 @@ QTLServer <- function(id) {
       gn <- isolate(input$gene)
       m = isolate(input$mutgene)
       
+      if(!isTruthy(gn)){
+        gn = "ABL1"
+      }
+      if(!isTruthy(m)){
+        m = "VHL.mut"
+      }
+      
       colors <- read.csv("./data/colors.csv")
       colors <- setNames(object = colors$color, # colors
                          nm = colors$id) # names
@@ -136,9 +143,9 @@ QTLServer <- function(id) {
       # gn = "A1BG"
       # m = "VHL.mut"
       
-      print(gn)
-      print(m)
-      
+      # print(gn)
+      # print(m)
+      # 
       df <- as.data.frame(E3[sampls, gn, drop=F]) %>%
         mutate(harmonized_data_id = rownames(.),
                cohort = samples[row.names(.), "cohort_code"]) %>%
