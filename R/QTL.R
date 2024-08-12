@@ -11,11 +11,12 @@ QTLUI <- function(id){
         label = "Mutant Gene",
         options = list(`live-search` = TRUE),
       ),
+  
       selectizeInput(
         inputId = ns("gene"),
         choices = NULL,
         multiple = FALSE,
-        label = "Gene",
+        label = "UPS Gene",
         options = list(`live-search` = TRUE),
       ),
       selectizeInput(
@@ -25,24 +26,49 @@ QTLUI <- function(id){
         label = "Data Type",
         options = list(`live-search` = TRUE),
       ),
-      actionButton(ns('refresh'), "Generate Plot")
+      h5("Volcano Plot"),
+      selectizeInput(
+        inputId = ns("plottype"),
+        choices = c("Mutation Centric", "UPS Centric"),
+        selected = "UPS Centric", 
+        multiple = FALSE,
+        label = "Plot Type",
+        options = list(`live-search` = TRUE),
+      ),
+      selectizeInput(
+        inputId = ns("genelist"),
+        choices = NULL,
+        selected = "Mutation Centric", 
+        multiple = FALSE,
+        label = "Gene List",
+        options = list(`live-search` = TRUE),
+      ),
+      textInput(ns("pvalcutoff"), "P value Cutoff:",
+                  placeholder = "5e-8"),
+      sliderInput(ns("n_genes"), "Minimum Number of Mutations",
+                  min = 0, max = 1000, value = 1, step = 1),
+      
+      actionButton(ns('refresh'), "Generate Plot"),
+      p("Download this data"),
+      downloadButton(outputId = ns("downloadDat"), label = "Download Data Table"),
+      downloadButton(outputId = ns("downloadMut"), label = "Download Mutations Table")
       
     ),
     
     mainPanel(
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
-      # shinycssloaders::withSpinner(plotOutput(ns("manhattan")),
-      #                              color = "#6A2798"
-      # ),
       shinycssloaders::withSpinner(plotlyOutput(ns("boxplot")),
+                                   color = "#6A2798"
+      ),
+      shinycssloaders::withSpinner(plotlyOutput(ns("volcano")),
                                    color = "#6A2798"
       ),
     )
   )
 }
 
-QTLServer <- function(id) {
+QTLServer <- function(id, genelists) {
   moduleServer(id,function(input,output,session){
     
     mut = mem_get_from_drive("cptac_v1.1_mut.rds")
@@ -67,6 +93,10 @@ QTLServer <- function(id) {
                          choices = cptac_rna_genes, 
                          server = TRUE, selected = "ABL1")
     
+    updateSelectizeInput(session, 'genelist', 
+                         choices = names(genelists), 
+                         server = TRUE, selected = "hCD")
+    
     
     updateSelectizeInput(session, 'mutgene', 
                          choices = colnames(mut), 
@@ -83,7 +113,7 @@ QTLServer <- function(id) {
       
       cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
       cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
-      mut <- mem_get_from_drive("cptac_v1.1_mut.rds")
+      # mut <- mem_get_from_drive("cptac_v1.1_mut.rds")
       
       load("./data/dat~cptac_v1.1_list_object_mut_cnv_rna_pro.RData")
       
@@ -171,59 +201,168 @@ QTLServer <- function(id) {
       
     })
     
-    # output$manhattan = renderPlot({
-      # 
-      # dat <- list(rna = mem_get_from_drive("./data/CPTAC_Pancan_UPS_genome-wide_eQTLs.rds"),
-      #             pro = mem_get_from_drive("./data/CPTAC_Pancan_UPS_genome-wide_pQTLs.rds"))
-      # 
-      # # filter table for n_mut > n
-      # n = 1
+    output$volcano = renderPlotly({
+      
+      input$refresh
+      
+      colors_tbl <- read.csv("./data/colors.csv")
+      
+      # dat <- list(rna = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_eQTLs.rds"),
+      # pro = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_pQTLs.rds"))
+      dat = mem_get_from_drive("CPTAC_Pancan_UPS_hCD_hTF_hChR_e_pQTLs.rds")
+      
+      n <- isolate(input$n_genes)
       # p_adj = 5e-8
-      # 
-      # # for (i in names(dat)) { # 2 datatypes
-      # 
-      # # Manhattan plot: All cohorts together
-      # 
-      # type = "rna"
-      # print("1")
-      # # input data type
-      # df <- dat[[type]] %>% 
-      #   filter(n_mut > n & 
-      #            is.numeric(LFC_median) & 
-      #            !is.nan(LFC_median) & 
-      #            !is.infinite(LFC_median)) %>% 
-      #   mutate(Class = as.factor(Class)) %>% 
-      #   mutate(Class_ups_gene = paste(Class, ups_gene, sep = "_"))
-      # 
-      # colors <- setNames(object = brewer.pal(length(levels(df$Class)), "Set1"), # colors
-      #                    nm = levels(df$Class)) # names
-      # print("2")  
-      # sig_vals <- df %>% 
-      #   mutate(Label = paste(ups_gene, mutation, sep = "-")) %>% 
-      #   # arrange(fdr) %>% # ordered min to max
-      #   filter(fdr < p_adj)
-      # print("3")  
-      # p = ggplot(df, aes(x = Class_ups_gene, y = log10fdr, color = Class)) +
-      #   geom_point(alpha = 0.5, size = 1.2) +
+      p_adj = as.numeric(gsub('\\*10\\^', 'e', isolate(input$pvalcutoff)))
+      if(!isTruthy(p_adj)){
+        p_adj = 5e-8
+      }
+      
+      
+      # mutation centric----
+      # gns <- c("KRAS", "TP53", "VHL", "RB1")
+      # for (i in names(dat)) {
+      #   for (gn in gns) {
+      # mutation centric
+      i = isolate(input$datatype)
+      gn = gsub(".mut", "", isolate(input$mutgene))
+      if(!isTruthy(gn)){
+        gn = "VHL"
+      }
+      
+      
+      if(isolate(input$plottype) == "Mutation Centric"){
+      
+      # n=0
+      
+      df <- dat[[i]] %>% 
+        filter(n_mut > n &
+                 is.numeric(LFC_median) & 
+                 !is.nan(LFC_median) & 
+                 !is.infinite(LFC_median) &
+                 mutation == gn) %>% 
+        mutate(Label = paste(ups_gene, mutation, sep = "-")) %>%
+        mutate(Class = as.factor(Class)) 
+      
+      
+      colors <- setNames(object = colors_tbl[colors_tbl$id %in% levels(df$Class),]$color, # colors
+                         nm = levels(df$Class)) # names
+      
+      
+      print(colors_tbl)
+      # volcano plot no labels
+      p = ggplot(df, aes(x = LFC_median, y = -log10(fdr), label = ups_gene, color = Class)) +
+        geom_point(alpha = 0.5, size = 2.5) +
+        theme_prism(border = TRUE) +
+        scale_color_manual(values = colors, name = "UPS Class") +
+        labs(x = glue("log2({gn}-mut/wt)"), y = "-log10(p-adj)", 
+             title = glue("QTL-{i}: 10 CPTAC Cohorts"),
+             # subtitle = glue("Integration of adjusted p-values"),
+             caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
+        geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
+        geom_vline(xintercept = 0, linetype = "dashed", color = "black") # +
+      ggrepel::geom_text_repel(aes(label = ups_gene),
+                               # vjust = -1,
+                               max.overlaps = 30,
+                               size = 3, color = "black")
+      
+      # # volcano plot with labels
+      # ggplot(df, aes(x = LFC_median, y =  -log10(fdr), color = Class)) +
+      #   geom_point(alpha = 0.5, size = 2.5) +
       #   theme_prism(border = TRUE) +
       #   scale_color_manual(values = colors, name = "UPS Class") +
-      #   labs(x = "UPS genes", y = "-log10(p-adj)", 
-      #        title = glue("Manhattan Plot: Quantitative Trait Locus"),
-      #        subtitle = glue("10 CPTAC Cohorts: {type} "),
-      #        caption = glue("Filtered samples with n_mut > {n}. Dashed line: p.adj = {p_adj}.")) +
+      #   labs(x = glue("log2({gn}-mut/wt)"), y = "-log10(p-adj)", 
+      #        title = glue("QTL-{i}: 10 CPTAC Cohorts"),
+      #        # subtitle = glue("Integration of adjusted p-values"),
+      #        caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
       #   geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
-      #   ggrepel::geom_text_repel(data = sig_vals, aes(label = Label),
-      #                            vjust = -1, size = 3, color = "black") +
-      #   theme(axis.text.x = element_blank(),
-      #         axis.ticks.x = element_blank())
+      #   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+      #   ggrepel::geom_text_repel(aes(label = ups_gene),
+      #                            # vjust = -1,
+      #                            max.overlaps = 30,
+      #                            size = 3, color = "black")
       # 
-      # 
-      # print("4")
       
-      # return(p)
-    # })
+      return(p)
+      } else {
+        
+        selected_genelist = genelists[[isolate(input$genelist)]]
+        if(!isTruthy(selected_genelist)){
+          selected_genelist = "hCD"
+        }
+        
+        gn = gsub(".mut", "", isolate(input$gene))
+        if(!isTruthy(gn)){
+          gn = "ABL1"
+        }
+        
+        df <- 
+          filter(dat[[i]],
+            # n_mut > n &
+            # is.numeric(LFC_median) & 
+            # !is.nan(LFC_median) & 
+            # !is.infinite(LFC_median) &
+            ups_gene == gn) %>% 
+          mutate(Label = paste(ups_gene, mutation, sep = "-")) %>%
+          mutate(Class = as.factor(Class)) 
+        
+        # colors <- setNames(object = colors_tbl[colors_tbl$id %in% levels(df$Class),]$color, # colors
+        #                    nm = levels(df$Class)) # names
+        
+        
+        # volcano plot no labels
+        
+      print(p_adj)
+      p= ggplot(df, aes(x = LFC_median, y = -log10(fdr), label = mutation, color = mutation %in% selected_genelist)) + #, color = Class)) +
+          geom_point(alpha = 0.5, size = 1.2) +
+        scale_color_manual(name=glue("{isolate(input$genelist)} Gene"),  values = c("TRUE" = "#44BBFF", "FALSE" = "#55555555"))+
+          theme_prism(border = TRUE) +
+          # scale_color_manual(values = colors, name = "UPS Class") +
+          labs(x = glue("log2(mut/wt)\n{gn}-LFC"), y = "-log10(p-adj)", 
+               title = glue("QTL-{i}: 10 CPTAC Cohorts"),
+               # subtitle = glue("Integration of adjusted p-values"),
+               caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
+          geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
+          geom_vline(xintercept = 0, linetype = "dashed", color = "black") # +
+      
+       
+         # ggrepel::geom_text_repel(aes(label = mutation),
+        #                          # vjust = -1,
+        #                          max.overlaps = 30,
+        #                          size = 3, color = "black")
+        
+        # ggsave(glue("./output/CPTAC_Pancan_QTL-{i}_{gn}_n-{n}_padj-{p_adj}_ups-centric_volcanoplot_no-labels.png"),
+        #        width = 9,
+        #        height = 6,
+        #        units = "in",
+        #        device = "png")
+        
+        ggplotly(p)
+     
+       return(p)
+      }
+      
+    })
     
-    
+    output$downloadDat <- downloadHandler(
+      filename = function() {
+        paste("data-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        dat = mem_get_from_drive("CPTAC_Pancan_UPS_hCD_hTF_hChR_e_pQTLs.rds")
+        write.csv(dat, file)
+      }
+    )
+    output$downloadMut <- downloadHandler(
+      
+      filename = function() {
+        paste("data-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+       mut = mem_get_from_drive("cptac_v1.1_mut.rds")
+        write.csv(mut, file)
+      }
+    )
   
   })
 }

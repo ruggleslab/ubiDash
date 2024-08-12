@@ -120,6 +120,8 @@ currentTime =  as.numeric(Sys.time())
 print(glue("Initialized global functions in {(currentTime- time) * 1000} ms"))
 time = currentTime
 
+genelists = readRDS("./data/combined_genelists.rds")
+
 
 # Tab-specific variables ----
 

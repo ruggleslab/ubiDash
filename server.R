@@ -5,7 +5,7 @@ load("./data/defaults.RData")
 # cohortsOnco
 # mutationsOnco
 
-source("./scripts/SplitInputGenes.R")
+# source("./scripts/SplitInputGenes.R")
 
 
 source('./R/corranalysis.R')
@@ -45,8 +45,7 @@ shinyServer(function(input, output, session) {
   # lollipop tab
   lollipopServer("lollipopTab") # maf
   
-  QTLServer("QTLTab") # maf
-  
+  QTLServer("QTLTab", genelists)
   
     densityServer("densityTab") # maf
 
