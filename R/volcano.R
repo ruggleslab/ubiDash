@@ -36,31 +36,36 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
                          choices = cptac_protein_genes, 
                          server = TRUE)
     
-    output$distPlot <- renderPlotly({
-      
-
-      # trigger plot refresh when button is pressed
-      input$refresh
-      
+    data = eventReactive(input$refresh, {
       cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
       
       genes <- isolate(input$genes)
-
-      # cutoffs
-      logFCCutoff <- isolate(input$logFCCutoff)
-      PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
-
+      
       # prepare dataframe
       data = as.data.frame(DE_protein[[isolate(input$cohort)]])
       data$POI <- "Other"
       data$POI[data$gene %in% crl_genes] = "CRL"
       data$POI[toupper(data$gene) %in% genes] = "Potential Substrate"
       data$log.scal.pval <- -log10(data$sca.adj.pval)
-
-      # get significant genes
-      labeledPoints <- filter(data, (gene %in% crl_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% genes)
       
-      p <- ggplot(data, aes(x = logFC, y = log.scal.pval, color = POI)) +
+     return(data)
+    
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
+    
+    
+    output$distPlot <- renderPlotly({      
+
+      genes <- isolate(input$genes)
+
+      logFCCutoff <- isolate(input$logFCCutoff)
+      PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
+      
+      # get significant genes
+      labeledPoints <- filter(data(), (gene %in% crl_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% genes)
+      
+
+   
+      p <- ggplot(data(), aes(x = logFC, y = log.scal.pval, color = POI)) +
         ylab("-Log10(adjusted p-val)") +
         xlab("Log2(Tumor/Normal)") +
         labs(title = isolate(input$cohort)) +
@@ -92,7 +97,8 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
         paste("data-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(read_excel(path = filepath, sheet = input$cohort), file)
+        req(data())
+        write.csv(data(), file)
       }
     )
   })

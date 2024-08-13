@@ -33,7 +33,7 @@ oncoplotUI <- function(id, cohorts) {
         options = list(`live-search` = TRUE),
         multiple = TRUE
       ),
-      actionButton(ns("generateOnco"), "Generate Plot"),
+      actionButton(ns("refresh"), "Generate Plot"),
 
       # download options
       p("Download this data"),
@@ -57,32 +57,34 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts) {
                          choices = cptac_protein_genes, 
                          server = TRUE)
     
-    output$mutationOncoplot <- renderPlot({
-      input$generateOnco
+    filteredMaf = eventReactive(input$refresh, {
       
       validate(
         need(length(isolate(input$genes)) == 0 || length(isolate(input$genes)) > 1, 'Two genes are needed to generate plot.'),
       )
       
       maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-
+    
+      filteredMaf = maf
+      if (length(isolate(input$cohorts)) != 0 && length(isolate(input$cohorts)) != length(cohorts)) {
+        inputCohorts <- maf@clinical.data[cohort_code %in% isolate(input$cohorts)]
+        filteredMaf = subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode)
+      }
+      
+      return(filteredMaf)
+      
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
+    
+    output$mutationOncoplot <- renderPlot({
 
       inputGenes <- isolate(input$genes)
-
+      
       if (!isTruthy(inputGenes)) {
         inputGenes <- top_crls[1:isolate(input$maxOncoGenes)]
       }
-
-      filteredMaf <- maf
-      if (length(isolate(input$cohorts)) != 0 && length(isolate(input$cohorts)) != length(cohorts)) {
-        inputCohorts <- maf@clinical.data[cohort_code %in% isolate(input$cohorts)]
-        filteredMaf <- subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode)
-      }
-
-
-
+      
       return(oncoplot(
-        maf = filteredMaf,
+        maf = filteredMaf(),
         # top = isolate(input$maxOncoGenes),
         genes = inputGenes,
         annotationColor = cohort_colors,
@@ -99,8 +101,7 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts) {
         paste("data-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
-        maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-        write.csv(maf@data, file)
+        write.csv(filteredMaf()@data, file)
       }
     )
   })

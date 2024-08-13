@@ -34,7 +34,7 @@ shinyServer(function(input, output, session) {
   volcanoServer("volcanoTab", crl_genes, DE_protein) # cptac_protein
 
   # correlation tab ----
-  correlationsServer("corrTab", lines, E3_genes) # plot_tab
+  # correlationsServer("corrTab", lines, E3_genes) # plot_tab
 
   # boxplot tab ----
   violinServer("violinTab", cohort_colors) # cptac_protein, cptac_rna, cptac_samples
@@ -63,4 +63,7 @@ shinyServer(function(input, output, session) {
                           # prt.global.AI,
                           labels,
                           my.colors)
+  
+  dataDownloadServer("downloadTab")
+  
 })

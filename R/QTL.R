@@ -11,7 +11,7 @@ QTLUI <- function(id){
         label = "Mutant Gene",
         options = list(`live-search` = TRUE),
       ),
-  
+      
       selectizeInput(
         inputId = ns("gene"),
         choices = NULL,
@@ -44,14 +44,13 @@ QTLUI <- function(id){
         options = list(`live-search` = TRUE),
       ),
       textInput(ns("pvalcutoff"), "P value Cutoff:",
-                  placeholder = "5e-8"),
-      sliderInput(ns("n_genes"), "Minimum Number of Mutations",
+                placeholder = "5e-8"),
+      sliderInput(ns("n_genes"), "Minimum Number of Samples per Mutation Group",
                   min = 0, max = 1000, value = 1, step = 1),
       
       actionButton(ns('refresh'), "Generate Plot"),
       p("Download this data"),
       downloadButton(outputId = ns("downloadDat"), label = "Download Data Table"),
-      downloadButton(outputId = ns("downloadMut"), label = "Download Mutations Table")
       
     ),
     
@@ -78,14 +77,14 @@ QTLServer <- function(id, genelists) {
       input$datatype
       
       if(input$datatype == "pro"){
-      updateSelectizeInput(session, 'gene', 
-                           choices = cptac_protein_genes, 
-                           server = TRUE, selected = "ABL1")
+        updateSelectizeInput(session, 'gene', 
+                             choices = cptac_protein_genes, 
+                             server = TRUE, selected = "ABL1")
       }
       else{
-      updateSelectizeInput(session, 'gene', 
-                           choices = cptac_rna_genes, 
-                           server = TRUE, selected = "ABL1")
+        updateSelectizeInput(session, 'gene', 
+                             choices = cptac_rna_genes, 
+                             server = TRUE, selected = "ABL1")
       }
     })
     
@@ -149,32 +148,7 @@ QTLServer <- function(id, genelists) {
       sampls <- samples %>% rownames()
       sampls = sampls[sampls %in% rownames(E3) & sampls %in% rownames(mut)]
       
-      # print(rownames(samples))
-      # print(E3)
-      # 
-      # print(rownames(samples) %in% colnames(E3))
-      # 
-      # E3[rownames(samples),]
-      # sampls
-      # E3[sampls, gn]
-      # 
-      # rownames(E3)
       
-      
-      # print(E3[gn, row.names(samples), drop=F])
-      # 
-      # rownames(samples) %in% E3
-      # 
-      # print(E3[row.names(samples),gn])
-      
-      # mut[sampls, m, drop=F]
-      
-      # 
-      # gn = "A1BG"
-      # m = "VHL.mut"
-      
-      # print(gn)
-      # print(m)
       # 
       df <- as.data.frame(E3[sampls, gn, drop=F]) %>%
         mutate(harmonized_data_id = rownames(.),
@@ -201,95 +175,32 @@ QTLServer <- function(id, genelists) {
       
     })
     
-    output$volcano = renderPlotly({
+    df = eventReactive(input$refresh, {
       
-      input$refresh
+      dat = get_from_drive("CPTAC_Pancan_UPS_hCD_hTF_hChR_e_pQTLs.rds")
       
-      colors_tbl <- read.csv("./data/colors.csv")
-      
-      # dat <- list(rna = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_eQTLs.rds"),
-      # pro = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_pQTLs.rds"))
-      dat = mem_get_from_drive("CPTAC_Pancan_UPS_hCD_hTF_hChR_e_pQTLs.rds")
-      
-      n <- isolate(input$n_genes)
-      # p_adj = 5e-8
-      p_adj = as.numeric(gsub('\\*10\\^', 'e', isolate(input$pvalcutoff)))
-      if(!isTruthy(p_adj)){
-        p_adj = 5e-8
-      }
-      
-      
-      # mutation centric----
-      # gns <- c("KRAS", "TP53", "VHL", "RB1")
-      # for (i in names(dat)) {
-      #   for (gn in gns) {
-      # mutation centric
       i = isolate(input$datatype)
-      gn = gsub(".mut", "", isolate(input$mutgene))
-      if(!isTruthy(gn)){
-        gn = "VHL"
-      }
-      
       
       if(isolate(input$plottype) == "Mutation Centric"){
-      
-      # n=0
-      
-      df <- dat[[i]] %>% 
-        filter(n_mut > n &
-                 is.numeric(LFC_median) & 
-                 !is.nan(LFC_median) & 
-                 !is.infinite(LFC_median) &
-                 mutation == gn) %>% 
-        mutate(Label = paste(ups_gene, mutation, sep = "-")) %>%
-        mutate(Class = as.factor(Class)) 
-      
-      
-      colors <- setNames(object = colors_tbl[colors_tbl$id %in% levels(df$Class),]$color, # colors
-                         nm = levels(df$Class)) # names
-      
-      
-      print(colors_tbl)
-      # volcano plot no labels
-      p = ggplot(df, aes(x = LFC_median, y = -log10(fdr), label = ups_gene, color = Class)) +
-        geom_point(alpha = 0.5, size = 2.5) +
-        theme_prism(border = TRUE) +
-        scale_color_manual(values = colors, name = "UPS Class") +
-        labs(x = glue("log2({gn}-mut/wt)"), y = "-log10(p-adj)", 
-             title = glue("QTL-{i}: 10 CPTAC Cohorts"),
-             # subtitle = glue("Integration of adjusted p-values"),
-             caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
-        geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
-        geom_vline(xintercept = 0, linetype = "dashed", color = "black") # +
-      ggrepel::geom_text_repel(aes(label = ups_gene),
-                               # vjust = -1,
-                               max.overlaps = 30,
-                               size = 3, color = "black")
-      
-      # # volcano plot with labels
-      # ggplot(df, aes(x = LFC_median, y =  -log10(fdr), color = Class)) +
-      #   geom_point(alpha = 0.5, size = 2.5) +
-      #   theme_prism(border = TRUE) +
-      #   scale_color_manual(values = colors, name = "UPS Class") +
-      #   labs(x = glue("log2({gn}-mut/wt)"), y = "-log10(p-adj)", 
-      #        title = glue("QTL-{i}: 10 CPTAC Cohorts"),
-      #        # subtitle = glue("Integration of adjusted p-values"),
-      #        caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
-      #   geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
-      #   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
-      #   ggrepel::geom_text_repel(aes(label = ups_gene),
-      #                            # vjust = -1,
-      #                            max.overlaps = 30,
-      #                            size = 3, color = "black")
-      # 
-      
-      return(p)
+        
+        gn = gsub(".mut", "", isolate(input$mutgene))
+        if(!isTruthy(gn)){
+          gn = "VHL"
+        }
+        
+        df <- dat[[i]] %>% 
+          filter(n_mut > n &
+                   is.numeric(LFC_median) & 
+                   !is.nan(LFC_median) & 
+                   !is.infinite(LFC_median) &
+                   mutation == gn) %>% 
+          mutate(Label = paste(ups_gene, mutation, sep = "-")) %>%
+          mutate(Class = as.factor(Class)) 
+        
+        return(df)
+        
       } else {
         
-        selected_genelist = genelists[[isolate(input$genelist)]]
-        if(!isTruthy(selected_genelist)){
-          selected_genelist = "hCD"
-        }
         
         gn = gsub(".mut", "", isolate(input$gene))
         if(!isTruthy(gn)){
@@ -298,24 +209,70 @@ QTLServer <- function(id, genelists) {
         
         df <- 
           filter(dat[[i]],
-            # n_mut > n &
-            # is.numeric(LFC_median) & 
-            # !is.nan(LFC_median) & 
-            # !is.infinite(LFC_median) &
-            ups_gene == gn) %>% 
+                 ups_gene == gn) %>% 
           mutate(Label = paste(ups_gene, mutation, sep = "-")) %>%
           mutate(Class = as.factor(Class)) 
         
-        # colors <- setNames(object = colors_tbl[colors_tbl$id %in% levels(df$Class),]$color, # colors
-        #                    nm = levels(df$Class)) # names
+        return(df)
+        
+      }
+      
+      
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
+    
+    
+    output$volcano = renderPlotly({
+      
+      colors_tbl <- read.csv("./data/colors.csv")
+      
+      n <- isolate(input$n_genes)
+      i = isolate(input$datatype)
+      # p_adj = 5e-8
+      p_adj = as.numeric(gsub('\\*10\\^', 'e', isolate(input$pvalcutoff)))
+      if(!isTruthy(p_adj)){
+        p_adj = 5e-8
+      }
+      
+      if(isolate(input$plottype) == "Mutation Centric"){
+        
+        colors <- setNames(object = colors_tbl[colors_tbl$id %in% levels(df$Class),]$color, # colors
+                           nm = levels(df$Class)) # names
         
         
-        # volcano plot no labels
+        gn = gsub(".mut", "", isolate(input$mutgene))
+        if(!isTruthy(gn)){
+          gn = "VHL"
+        }
+ 
+        p = ggplot(df(), aes(x = LFC_median, y = -log10(fdr), label = ups_gene, color = Class)) +
+          geom_point(alpha = 0.5, size = 2.5) +
+          theme_prism(border = TRUE) +
+          scale_color_manual(values = colors, name = "UPS Class") +
+          labs(x = glue("log2({gn}-mut/wt)"), y = "-log10(p-adj)", 
+               title = glue("QTL-{i}: 10 CPTAC Cohorts"),
+               # subtitle = glue("Integration of adjusted p-values"),
+               caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
+          geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
+          geom_vline(xintercept = 0, linetype = "dashed", color = "black") # +
+       
+        return(p)
         
-      print(p_adj)
-      p= ggplot(df, aes(x = LFC_median, y = -log10(fdr), label = mutation, color = mutation %in% selected_genelist)) + #, color = Class)) +
+      } else {
+        
+        selected_genelist = genelists[[isolate(input$genelist)]]
+        if(!isTruthy(selected_genelist)){
+          selected_genelist = genelists[["hCD"]]
+        }
+        
+        gn = gsub(".mut", "", isolate(input$gene))
+        if(!isTruthy(gn)){
+          gn = "ABL1"
+        }
+        
+ 
+        p= ggplot(df(), aes(x = LFC_median, y = -log10(fdr), label = mutation, color = mutation %in% selected_genelist)) + #, color = Class)) +
           geom_point(alpha = 0.5, size = 1.2) +
-        scale_color_manual(name=glue("{isolate(input$genelist)} Gene"),  values = c("TRUE" = "#44BBFF", "FALSE" = "#55555555"))+
+          scale_color_manual(name=glue("{isolate(input$genelist)} Gene"),  values = c("TRUE" = "#44BBFF", "FALSE" = "#55555555"))+
           theme_prism(border = TRUE) +
           # scale_color_manual(values = colors, name = "UPS Class") +
           labs(x = glue("log2(mut/wt)\n{gn}-LFC"), y = "-log10(p-adj)", 
@@ -324,22 +281,8 @@ QTLServer <- function(id, genelists) {
                caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
           geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
           geom_vline(xintercept = 0, linetype = "dashed", color = "black") # +
-      
-       
-         # ggrepel::geom_text_repel(aes(label = mutation),
-        #                          # vjust = -1,
-        #                          max.overlaps = 30,
-        #                          size = 3, color = "black")
         
-        # ggsave(glue("./output/CPTAC_Pancan_QTL-{i}_{gn}_n-{n}_padj-{p_adj}_ups-centric_volcanoplot_no-labels.png"),
-        #        width = 9,
-        #        height = 6,
-        #        units = "in",
-        #        device = "png")
-        
-        ggplotly(p)
-     
-       return(p)
+        return(p)
       }
       
     })
@@ -349,20 +292,10 @@ QTLServer <- function(id, genelists) {
         paste("data-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
-        dat = mem_get_from_drive("CPTAC_Pancan_UPS_hCD_hTF_hChR_e_pQTLs.rds")
-        write.csv(dat, file)
+        
+        write.csv(df(), file)
       }
     )
-    output$downloadMut <- downloadHandler(
-      
-      filename = function() {
-        paste("data-", Sys.Date(), ".csv", sep = "")
-      },
-      content = function(file) {
-       mut = mem_get_from_drive("cptac_v1.1_mut.rds")
-        write.csv(mut, file)
-      }
-    )
-  
+    
   })
 }

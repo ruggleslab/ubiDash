@@ -73,10 +73,10 @@ shinyUI(
         "Functional Analysis",
 
         # correlation tab ----
-        tabPanel("Correlations",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
-          correlationsUI("corrTab")
-        ),
+        # tabPanel("Correlations",
+        #   theme = bs_theme(version = 5, bootswatch = "pulse"),
+        #   correlationsUI("corrTab")
+        # ),
         # violin plot tap ----
         # need to let users input genes of interest
         tabPanel("Descriptive Statistics",
@@ -89,6 +89,10 @@ shinyUI(
         ),
       ),
       corrAnalysisUI("corrAnalysisTab", cohorts),
+      tabPanel("Download Data",
+               theme = bs_theme(version = 5, bootswatch = "pulse"),
+      dataDownloadUI("downloadTab"),
+      ),
     ),
     tags$div() %>%
       tagAppendAttributes(class = "spacer"),

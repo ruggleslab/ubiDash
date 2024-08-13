@@ -147,14 +147,14 @@ time = currentTime
 
 
 # Correlations ----
-source("./scripts/GenerateCorrPlot.R")
-
-lines = list(geom_hline(yintercept=.5, color = "red") ,
-             geom_hline(yintercept=-.5,  color = "red") ,
-             geom_vline(xintercept=-.5,color = "red") ,
-             geom_vline(xintercept=--.5, color = "red") ,
-             geom_hline(yintercept=0, size = 1, color = "black") ,
-             geom_vline(xintercept=-0, size = 1, color = "black"))
+# source("./scripts/GenerateCorrPlot.R")
+# 
+# lines = list(geom_hline(yintercept=.5, color = "red") ,
+#              geom_hline(yintercept=-.5,  color = "red") ,
+#              geom_vline(xintercept=-.5,color = "red") ,
+#              geom_vline(xintercept=--.5, color = "red") ,
+#              geom_hline(yintercept=0, size = 1, color = "black") ,
+#              geom_vline(xintercept=-0, size = 1, color = "black"))
 
 
 currentTime =  as.numeric(Sys.time())
@@ -256,9 +256,9 @@ time = currentTime
 
 # correlations ----
 
-E3_genes <-
-  read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx",
-             sheet = 4)
+# E3_genes <-
+#   read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx",
+#              sheet = 4)
 
 currentTime =  as.numeric(Sys.time())
 print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
