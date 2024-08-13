@@ -5,7 +5,7 @@ dataDownloadUI <- function(id){
     card_header("Download Data"),
     tags$table(
       tags$tr(
-        tags$th(a(icon("download"),"PanCan_Union_Maf_Broad_WashU_v1.1_TGR.maf",href="https://drive.google.com/uc?export=download&id=1RBPKXfEKPW5bR8pY5jT_EWTzpnJ1IkqZ")),
+        tags$th(a(icon("download"),"PanCan_Union_Maf_Broad_WashU_v1.1.maf",href="https://drive.google.com/uc?export=download&id=1RBPKXfEKPW5bR8pY5jT_EWTzpnJ1IkqZ")),
       ),
       tags$tr(
         tags$th(a(icon("download"),"CPTAC_Pancan_UPS_hCD_hTF_hChR_eQTLs.csv",href="https://drive.google.com/uc?export=download&id=1zkWxDRWMyp9UVYIVpZ3qMCHZTQRq5mXb")),

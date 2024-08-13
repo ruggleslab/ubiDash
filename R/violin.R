@@ -60,7 +60,10 @@ violinUI <- function(id, cohorts) {
           multiple = TRUE
         ),
       ),
-      actionButton(ns("generate"), label = "Generate plot")
+      actionButton(ns("generate"), label = "Generate plot"),
+      p("Download this data"),
+      downloadButton(outputId = ns("download"), label = "Download")
+
     ),
     mainPanel(
       textOutput(ns("err")) %>%
@@ -146,29 +149,22 @@ violinServer <-
           )
         }
       })
-
-
-      output$violin <- renderPlotly({
-        input$generate
-        
-        validate(
-          need(isolate(input$datatype) != "protein" || length(isolate(input$proteinGenes)) >= 1, 'Please select at least one gene.'),
-          need(isolate(input$datatype) != "mRNA" || length(isolate(input$mRNAGenes)) >= 1, 'Please select at least one gene.'),
-        )
-       
-
+      
+      POIs_reactive = reactiveVal(NULL)
+      
+      violin.input = eventReactive(input$generate, {
         p <- NULL
         dataset <- NULL
         samples <- NULL
-
+        
         if (isolate(input$dataset) == "CPTAC") {
           if (isolate(input$datatype) == "protein") {
-           
-             cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
-             dataset <- t(cptac_protein)
-             
-             
-             p <- isolate(input$proteinGenes)
+            
+            cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+            dataset <- t(cptac_protein)
+            
+            
+            p <- isolate(input$proteinGenes)
           } else {
             # there appear to be duplicate columns
             cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
@@ -188,24 +184,26 @@ violinServer <-
             p <- isolate(input$mRNAGenes)
           }
         }
-
-       
+        
+        
         if (is.null(dataset)) {
           cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
           dataset <- t(cptac_protein)
         }
-
-
+        
+        
         POIs <- dataset[, p, drop = F]
         POIs <- as.data.frame(POIs)
         POIs$sample_id <- rownames(POIs)
-
-
+        
+        POIs_reactive(POIs)
+        
+        
         violin.input <-
           reshape2::melt(POIs, id.vars = "sample_id")
         # %>%
         #   mutate(driver = rep("Unknown", nrow(.)))
-
+        
         if (isolate(input$dataset) == "CPTAC") {
           violin.input <- merge(
             x = violin.input,
@@ -220,15 +218,15 @@ violinServer <-
             "Sample_type",
             "Cancer_subtype"
           )]
-
+          
           violin.input <- violin.input[!is.na(violin.input$Sample_type), ]
           if(length(isolate(input$cohorts)) > 0){
             violin.input <- violin.input[violin.input$cohort_code %in% isolate(input$cohorts), ]
           }
         } else if (isolate(input$dataset == "CCLE")) {
-            
+          
           ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
-
+          
           violin.input <- merge(
             x = violin.input,
             y = ccle_samples,
@@ -247,12 +245,22 @@ violinServer <-
           if (length(isolate(input$subtype)) != 0) {
             violin.input <- violin.input[violin.input$Subtype %in% isolate(input$subtype), ]
           }
-
+          
           violin.input$Sample_type <- "Tumor"
         }
+        return(violin.input)
+        
+      },ignoreNULL = FALSE, ignoreInit=FALSE)
 
 
-
+      output$violin <- renderPlotly({
+        # input$generate
+        
+        validate(
+          need(isolate(input$datatype) != "protein" || length(isolate(input$proteinGenes)) >= 1, 'Please select at least one gene.'),
+          need(isolate(input$datatype) != "mRNA" || length(isolate(input$mRNAGenes)) >= 1, 'Please select at least one gene.'),
+        )
+       
         ylab <- NULL
 
         if (isolate(input$datatype) == "protein") {
@@ -269,7 +277,7 @@ violinServer <-
 
         if (isolate(input$dataset) == "CPTAC") {
           violin <- ggplot(
-            violin.input,
+            violin.input(),
             aes(
               x = cohort_code,
               y = value,
@@ -283,7 +291,7 @@ violinServer <-
             )
         } else if (isolate(input$dataset) == "CCLE") {
           violin <- ggplot(
-            violin.input,
+            violin.input(),
             aes(x = Subtype, y = value)
           ) +
             geom_boxplot(
@@ -292,10 +300,7 @@ violinServer <-
               fill = "#FFBD42"
             )
         }
-
-
-
-
+        
         if (isolate(input$dataset) == "CPTAC") {
           violin <- violin + geom_point(
             position = (position_jitterdodge(dodge.width = 0.9)),
@@ -336,10 +341,10 @@ violinServer <-
               isolate(input$dataset),
               isolate(input$datatype),
               ", n =",
-              nrow(POIs)
+              nrow(POIs_reactive())
             )
           ) +
-          facet_grid(rows = vars(violin.input$variable)) +
+          facet_grid(rows = vars(violin.input()$variable)) +
           theme(axis.text.x = element_text(
             angle = 60,
             vjust = 0.5,
@@ -354,5 +359,17 @@ violinServer <-
           # https://stackoverflow.com/questions/58586314/keeping-dodge-position-in-boxplot-passed-to-plotly
           layout(boxmode = "group")
       })
+      
+      output$download <- downloadHandler(
+        filename = function() {
+          paste("data-", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          req(violin.input())
+          write.csv(violin.input(), file)
+        }
+      )
+      
+      
     })
   }

@@ -18,7 +18,9 @@ densityUI <- function(id) {
         label = "Data Type",
         options = list(`live-search` = TRUE),
       ),
-      actionButton(ns('refresh'), "Generate Plot")
+      actionButton(ns('refresh'), "Generate Plot"),
+      p("Download this data"),
+      downloadButton(outputId = ns("download"), label = "Download")
     ),
     mainPanel(
       textOutput(ns("err")) %>%
@@ -39,12 +41,7 @@ densityServer <- function(id) {
       selected = "KBTBD11"
     )
     
-    output$plot = renderPlot({
-      # NOTES on data source
-      # sample_v1.1 <- openxlsx::read.xlsx(xlsxFile = "../EXP169/output/cptac_samples_info_across_datatypes_v1.1.xlsx")
-      # saveRDS(sample_v1.1, file = "../../ubiDash/data/cptac_samples_info_across_datatypes_v1.1.rds")
-      input$refresh
-      # variables
+    sample = eventReactive(input$refresh, {
       ups_gn <- isolate(input$gene)
       data_type <- isolate(input$datatype)
       xlab <- ifelse(data_type == "rna", "Log2(TPM+1)", "Log2(Intensity)")
@@ -82,8 +79,22 @@ densityServer <- function(id) {
           .na_rm = TRUE
         ))
       
+      return(sample)
+      
+    },ignoreNULL = FALSE, ignoreInit=FALSE)
+    
+    output$plot = renderPlot({
+      # NOTES on data source
+      # sample_v1.1 <- openxlsx::read.xlsx(xlsxFile = "../EXP169/output/cptac_samples_info_across_datatypes_v1.1.xlsx")
+      # saveRDS(sample_v1.1, file = "../../ubiDash/data/cptac_samples_info_across_datatypes_v1.1.rds")
+      # input$refresh
+      # variables
+      ups_gn <- isolate(input$gene)
+      data_type <- isolate(input$datatype)
+      xlab <- ifelse(data_type == "rna", "Log2(TPM+1)", "Log2(Intensity)")
+      
       # calculating  sample sizes and making plot annotations
-      annotations <- sample %>%
+      annotations <- sample() %>%
         group_by(cohort, type) %>%
         summarise(n = n(), # calculating sample sizes
                   label_x = median(!!sym(ups_gn), na.rm = TRUE)) %>% # calculating medians
@@ -91,7 +102,7 @@ densityServer <- function(id) {
         mutate(label = paste0("N = ", n))
       
       # Define the x-axis range for the plot
-      x_range <- range(sample[[ups_gn]], na.rm = TRUE)
+      x_range <- range(sample()[[ups_gn]], na.rm = TRUE)
       
       # Ensure label positions are within the x-axis range
       annotations <- annotations %>%
@@ -99,7 +110,7 @@ densityServer <- function(id) {
       
       
       # visualization
-      ggplot(sample) +
+      ggplot(sample()) +
         geom_density_ridges(
           aes(
             x = !!sym(ups_gn),
@@ -135,9 +146,18 @@ densityServer <- function(id) {
         theme_prism(border = T) +
         scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
         scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"),
-                           guide = F) 
-        
-      
+                           guide = F)
     }, height=600)
+    
+    output$download <- downloadHandler(
+      filename = function() {
+        paste("data-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        req(sample())
+        write.csv(sample(), file)
+      }
+    )
+    
   })
 }
