@@ -163,7 +163,7 @@ heatmapServer <-
 
         cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
         cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
-        pride_protein <- mem_get_from_drive("pride_lfq_protein_expression.rds")
+        pride_protein <- mem_get_from_drive("pride_log2ibaq_protein_expression.rds")
         
         
 
