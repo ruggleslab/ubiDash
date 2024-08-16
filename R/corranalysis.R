@@ -148,12 +148,12 @@ corrAnalysisUI <- function(id, cohorts) {
         mainPanel(
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'Protein\'"),
-                DTOutput(ns("outputTabGvACorrProtein")),
+                # DTOutput(ns("outputTabGvACorrProtein")),
                 withSpinner(plotOutput(outputId = ns("outputPlotGvACorrProtein")), color = "#6A2798")
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'mRNA\'"),
-                DT::dataTableOutput(outputId = ns("outputTabGvACorrRna")),
+                # DT::dataTableOutput(outputId = ns("outputTabGvACorrRna")),
                 withSpinner(plotOutput(outputId = ns("outputPlotGvACorrRna")), color = "#6A2798")
           
           )
@@ -372,26 +372,26 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
 
-    output$outputTabGvACorrProtein <- renderDT(
-      server = FALSE,
-      {
-        resGvACorrProtein()
-        resGvACorrProtein()$result
-      },
-      rownames = F,
-      extensions = "Buttons",
-      options = list(
-        dom = "frtBip", # Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
-        buttons = list(
-          list(
-            extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrProteinGeneName, "_ProteinCorrelations"),
-            exportOptions = list(
-              modifier = list(page = "all")
-            )
-          )
-        )
-      )
-    )
+    # output$outputTabGvACorrProtein <- renderDT(
+    #   server = FALSE,
+    #   {
+    #     resGvACorrProtein()
+    #     resGvACorrProtein()$result
+    #   },
+    #   rownames = F,
+    #   extensions = "Buttons",
+    #   options = list(
+    #     dom = "frtBip", # Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
+    #     buttons = list(
+    #       list(
+    #         extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrProteinGeneName, "_ProteinCorrelations"),
+    #         exportOptions = list(
+    #           modifier = list(page = "all")
+    #         )
+    #       )
+    #     )
+    #   )
+    # )
 
     output$outputPlotGvACorrProtein <- renderPlot({
       resGvACorrProtein()$corrPlot
@@ -415,25 +415,25 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
 
-    output$outputTabGvACorrRna <- DT::renderDataTable(
-      server = FALSE,
-      {
-        resGvACorrRna()$result
-      },
-      rownames = F,
-      extensions = "Buttons",
-      options = list(
-        dom = "frtBip", # Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
-        buttons = list(
-          list(
-            extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrRnaGeneName, "_RNAcorrelations"),
-            exportOptions = list(
-              modifier = list(page = "all")
-            )
-          )
-        )
-      )
-    )
+    # output$outputTabGvACorrRna <- DT::renderDataTable(
+    #   server = FALSE,
+    #   {
+    #     resGvACorrRna()$result
+    #   },
+    #   rownames = F,
+    #   extensions = "Buttons",
+    #   options = list(
+    #     dom = "frtBip", # Bfrtip '<<t>B>' B - buttons, f - search panel r - processing display element t - the table itself i - number of items p - paging
+    #     buttons = list(
+    #       list(
+    #         extend = "excel", text = "Download results", filename = paste0(input$inputGvACorrRnaGeneName, "_RNAcorrelations"),
+    #         exportOptions = list(
+    #           modifier = list(page = "all")
+    #         )
+    #       )
+    #     )
+    #   )
+    # )
 
     output$outputPlotGvACorrRna <- renderPlot({
       resGvACorrRna()$corrPlot
