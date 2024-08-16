@@ -83,11 +83,11 @@ violinUI <- function(id, cohorts) {
 
 
 violinServer <-
-  function(id,
+  function(id
            # cptac_rna,
           #  cptac_protein,
            # cptac_samples,
-           cohort_colors) {
+           ) {
     moduleServer(id, function(input, output, session) {
       
 

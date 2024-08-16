@@ -22,7 +22,7 @@ shinyServer(function(input, output, session) {
     # ccle_rna,
     # pride_protein,
     tnlabels,
-    colorsList,
+    colorsTbl,
     filteredProteinMat,
     filteredMRNAMat,
     # filteredTnlabels,
@@ -37,10 +37,10 @@ shinyServer(function(input, output, session) {
   # correlationsServer("corrTab", lines, E3_genes) # plot_tab
 
   # boxplot tab ----
-  violinServer("violinTab", cohort_colors) # cptac_protein, cptac_rna, cptac_samples
+  violinServer("violinTab") # cptac_protein, cptac_rna, cptac_samples
 
   # oncoplot tab ----
-  oncoplotServer("oncoTab", cptac_samples, top_crls, cohorts) # cptac_protein, maf
+  oncoplotServer("oncoTab", cptac_samples, top_crls, cohorts, colorsTbl) # cptac_protein, maf
 
   # lollipop tab
   lollipopServer("lollipopTab") # maf

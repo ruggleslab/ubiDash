@@ -49,13 +49,15 @@ oncoplotUI <- function(id, cohorts) {
 }
 
 
-oncoplotServer <- function(id,cptac_samples, top_crls, cohorts) {
+oncoplotServer <- function(id,cptac_samples, top_crls, cohorts, colorsTbl) {
   moduleServer(id,function(input,output,session){
 
     
     updateSelectizeInput(session, 'genes', 
                          choices = cptac_protein_genes, 
                          server = TRUE)
+
+    inputCohorts = reactiveVal()
     
     filteredMaf = eventReactive(input$refresh, {
       
@@ -64,11 +66,13 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts) {
       )
       
       maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-    
+
+      inputCohorts(cohorts)
+       
       filteredMaf = maf
       if (length(isolate(input$cohorts)) != 0 && length(isolate(input$cohorts)) != length(cohorts)) {
-        inputCohorts <- maf@clinical.data[cohort_code %in% isolate(input$cohorts)]
-        filteredMaf = subsetMaf(maf, tsb = inputCohorts$Tumor_Sample_Barcode)
+        inputCohorts(maf@clinical.data[cohort_code %in% isolate(input$cohorts)])
+        filteredMaf = subsetMaf(maf, tsb = inputCohorts()$Tumor_Sample_Barcode)
       }
       
       return(filteredMaf)
@@ -82,12 +86,18 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts) {
       if (!isTruthy(inputGenes)) {
         inputGenes <- top_crls[1:isolate(input$maxOncoGenes)]
       }
-      
+
+      colors = colorsTbl$color
+      names(colors) =  colorsTbl$id
+      print(colors)
+      print(inputCohorts)
+      colors = colors[names(colors) %in% inputCohorts()]
+
       return(oncoplot(
         maf = filteredMaf(),
         # top = isolate(input$maxOncoGenes),
         genes = inputGenes,
-        annotationColor = cohort_colors,
+        annotationColor = list(cohort_code = colors),
         sortByAnnotation = isolate(input$sortByCohort),
         # drawColBar = F,
         # cBioPortal = T,

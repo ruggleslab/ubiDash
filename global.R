@@ -127,17 +127,17 @@ if(!skip_load_data){
   
   # Oncoplot ----
   
-  cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
-                                       CCRCC = "maroon4",
-                                       COAD = "goldenrod1",
-                                       GBM = "aquamarine",
-                                       HCC = "pink3",
-                                       HNSCC = "coral4",
-                                       LSCC = "slategray3",
-                                       LUAD = "mediumpurple",
-                                       OV = "seagreen",
-                                       PDA = "lightgoldenrod2",
-                                       UCEC = "orangered3"))
+  # cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
+  #                                      CCRCC = "maroon4",
+  #                                      COAD = "goldenrod1",
+  #                                      GBM = "aquamarine",
+  #                                      HCC = "pink3",
+  #                                      HNSCC = "coral4",
+  #                                      LSCC = "slategray3",
+  #                                      LUAD = "mediumpurple",
+  #                                      OV = "seagreen",
+  #                                      PDA = "lightgoldenrod2",
+  #                                      UCEC = "orangered3"))
   
   top_crls = readRDS("./data/topcrls.rds")
   
@@ -168,11 +168,11 @@ if(!skip_load_data){
   
   
   colorsTbl = read.csv("./data/colors.csv")
-  colors = colorsTbl$color[1:11]
-  colorList <- list(
-    Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
-    Cohort = setNames(colors, nm = cohorts)
-  )
+  # colors = colorsTbl$color[1:11]
+  # colorList <- list(
+  #   Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
+  #   Cohort = setNames(colors, nm = cohorts)
+  # )
   
   
   drawHeatmap <- function(inputGenesMat, annotation,colsplit, clusterCol, clusterRow, legendName){

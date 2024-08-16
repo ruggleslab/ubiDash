@@ -84,7 +84,10 @@ heatmapUI <- function(id, cohorts) {
       ),
       p("Download this data"),
       downloadButton(outputId = ns("download"), label = "Download Data"),
-      # downloadButton(outputId = ns("downloadAnno"), label = "Download Annotation")
+      conditionalPanel(
+        condition = paste0("input['", ns("dataset"), "'] != 'PRIDE'"),
+        downloadButton(outputId = ns("downloadSampleInfo"), label = "Download Sample Info")
+      )
     ),
     
     # Show a plot of the generated distribution
@@ -107,7 +110,7 @@ heatmapServer <-
            #  ccle_rna,
            #  pride_protein,
            tnlabels,
-           colorsList,
+           colorsTbl,
            filteredProteinMat,
            filteredMRNAMat,
            #  filteredTnlabels,
@@ -168,6 +171,7 @@ heatmapServer <-
       # default plot height
       plotHeight <- reactiveVal(956)
       data <- reactiveVal()
+      sample_info <- reactiveVal()
       
       
       output$heatmap <- renderPlot({
@@ -243,13 +247,19 @@ heatmapServer <-
             })
           }
           
+          colors = colorsTbl$color
+          names(colors) = colorsTbl$id
           
           ha <-
             HeatmapAnnotation(
               Type = cohortSubsetLabels$sample_type,
               Cohort = cohortSubsetLabels$cohort_code,
               Subtype = cohortSubsetLabels$Cancer_subtype,
-              col = colorList
+              col = list(
+                Type = colors,
+                Subtype = colors,
+                Cohort = colors
+                )
             )
           
           hm <- NULL
@@ -260,6 +270,8 @@ heatmapServer <-
           }
           
           data(inputGenesMat)
+          sample_info(cohortSubsetLabels)
+          
           
           tryCatch(
             {
@@ -317,9 +329,13 @@ heatmapServer <-
             })
           }
           
+          sample_info(ccle_samples)
+          
+          
           if (length(isolate(input$subtype)) != 0) {
             sub.samples <- ccle_samples[ccle_samples$Subtype %in% isolate(input$subtype), ]
             sub.samples <- sub.samples[rownames(sub.samples) %in% colnames(sub.ccle), ]
+            sample_info(sub.samples)
             sub.ccle <- sub.ccle[, rownames(sub.samples)]
           }
           
@@ -331,6 +347,7 @@ heatmapServer <-
           ha <- HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle), ]$Cancer_subtype)
           
           data(sub.ccle)
+          
           
           tryCatch(
             {
@@ -426,14 +443,14 @@ heatmapServer <-
       
       # Download buttons ----
       
-      # output$downloadData <- downloadHandler(
-      #   filename = function() {
-      #     paste("data-", Sys.Date(), ".csv", sep = "")
-      #   },
-      #   content = function(file) {
-      #     write.csv(cptac_protein, file)
-      #   }
-      # )
+      output$downloadSampleInfo <- downloadHandler(
+        filename = function() {
+          paste("sample-info-", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(sample_info(), file)
+        }
+      )
       output$download <- downloadHandler(
         filename = function() {
           paste("data-", Sys.Date(), ".csv", sep = "")

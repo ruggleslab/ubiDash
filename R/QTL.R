@@ -68,7 +68,7 @@ QTLUI <- function(id){
   )
 }
 
-QTLServer <- function(id, genelists) {
+QTLServer <- function(id, genelists, colorsTbl) {
   moduleServer(id,function(input,output,session){
     
     mut = mem_get_from_drive("cptac_v1.1_mut.rds")
@@ -129,7 +129,7 @@ QTLServer <- function(id, genelists) {
         m = "VHL.mut"
       }
       
-      colors <- read.csv("./data/colors.csv")
+      colors <- colorsTbl
       colors <- setNames(object = colors$color, # colors
                          nm = colors$id) # names
       
@@ -224,7 +224,7 @@ QTLServer <- function(id, genelists) {
     
     output$volcano = renderPlotly({
       
-      colors_tbl <- read.csv("./data/colors.csv")
+      #  colorsTbl <- read.csv("./data/colors.csv")
       
       n <- isolate(input$n_genes)
       i = isolate(input$datatype)
@@ -236,7 +236,7 @@ QTLServer <- function(id, genelists) {
       
       if(isolate(input$plottype) == "Mutation Centric"){
         
-        colors <- setNames(object = colors_tbl[colors_tbl$id %in% levels(df$Class),]$color, # colors
+        colors <- setNames(object =  colorsTbl[ colorsTbl$id %in% levels(df$Class),]$color, # colors
                            nm = levels(df$Class)) # names
         
         
