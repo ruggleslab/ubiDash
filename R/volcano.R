@@ -14,7 +14,9 @@ volcanoUI <- function(id, cohorts){
                      label =  "Genes of Interest",options = list(`live-search` = TRUE),  multiple = TRUE),
    
       # cutoff options
-      selectInput(ns("PValCutoff"), "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
+      textInput(ns("PValCutoff"), "Adjusted P Value Cutoff:",
+                placeholder = "5e-8", value = "0.001"),
+      
       sliderInput(ns("logFCCutoff"), "Log2(Tumor/Normal) Cutoff:",
                   min = .25, max = 2, value = 1, step = 0.05),
       
@@ -60,7 +62,14 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
       genes <- isolate(input$genes)
 
       logFCCutoff <- isolate(input$logFCCutoff)
-      PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
+      
+      PValCutoff = -log10(as.numeric(gsub('\\*10\\^', 'e', isolate(input$PValCutoff))))
+      print(PValCutoff)
+      if(!isTruthy(PValCutoff)){
+        PValCutoff = 0.0001
+      }
+      # print(PValCutoff)
+      # PValCutoff <- -log10(as.double(isolate(input$PValCutoff)))
       
       # get significant genes
       labeledPoints <- filter(data(), (gene %in% crl_genes & (abs(logFC) > logFCCutoff & abs(log.scal.pval) > PValCutoff)) | toupper(gene) %in% genes)

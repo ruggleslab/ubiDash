@@ -45,7 +45,7 @@ QTLUI <- function(id){
         options = list(`live-search` = TRUE),
       ),
       textInput(ns("pvalcutoff"), "P value Cutoff:",
-                placeholder = "5e-8"),
+                placeholder = "5e-8",value = "5e-8"),
       sliderInput(ns("n_genes"), "Minimum Number of Samples per Mutation Group",
                   min = 0, max = 1000, value = 1, step = 1),
       
