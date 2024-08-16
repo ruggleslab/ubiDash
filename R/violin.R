@@ -63,8 +63,7 @@ violinUI <- function(id, cohorts) {
         ),
       ),
       actionButton(ns("generate"), label = "Generate plot"),
-      p("Download this data"),
-      downloadButton(outputId = ns("download"), label = "Download")
+     
 
     ),
     mainPanel(
@@ -77,6 +76,8 @@ violinUI <- function(id, cohorts) {
         ),
         color = "#6A2798"
       ),
+       p("Download this data"),
+      downloadButton(outputId = ns("download"), label = "Download")
     )
   )
 }

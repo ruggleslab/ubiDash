@@ -22,11 +22,13 @@ volcanoUI <- function(id, cohorts){
       
       actionButton(ns("refresh"), "Generate Plot"),
       
-      p("Download this data"),
-      downloadButton(outputId = ns("downloadVolcanoData"), label = "Download")
+    
     ),
     mainPanel(
-      shinycssloaders::withSpinner(plotlyOutput(ns("distPlot")), color = "#6A2798"))
+      shinycssloaders::withSpinner(plotlyOutput(ns("distPlot")), color = "#6A2798"),
+      p("Download this data"),
+      downloadButton(outputId = ns("downloadVolcanoData"), label = "Download")
+      ),
   )
 }
 

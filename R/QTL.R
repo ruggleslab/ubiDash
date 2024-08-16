@@ -50,9 +50,7 @@ QTLUI <- function(id){
                   min = 0, max = 1000, value = 1, step = 1),
       
       actionButton(ns('refresh'), "Generate Plot"),
-      p("Download this data"),
-      downloadButton(outputId = ns("downloadDat"), label = "Download Data Table"),
-      
+   
     ),
     
     mainPanel(
@@ -64,6 +62,9 @@ QTLUI <- function(id){
       shinycssloaders::withSpinner(plotlyOutput(ns("volcano")),
                                    color = "#6A2798"
       ),
+         p("Download this data"),
+      downloadButton(outputId = ns("downloadDat"), label = "Download Data Table"),
+      
     )
   )
 }

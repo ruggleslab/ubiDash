@@ -14,10 +14,12 @@ body > .container-fluid {
   justify-content: space-between;
 }
 
-#heatmapTab-heatmap.shiny-plot-output, #simplifiedHeatmapTab-heatmap.shiny-plot-output{
+.shiny-plot-output{
   height:auto!important;
   min-height:400px;
 }
+
+
 
 body > .container-fluid > .container-fluid {
       padding-left: 10px!important;

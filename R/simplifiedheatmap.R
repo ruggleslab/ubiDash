@@ -31,8 +31,7 @@ simplifiedHeatmapUI <- function(id, cohorts) {
       ),
       
       actionButton(ns("generate"), label = "Generate plot"),
-      p("Download this data"),
-      downloadButton(outputId = ns("download"), label = "Download Data"),
+    
     ),
     mainPanel(
       textOutput(ns("err")) %>%
@@ -40,6 +39,8 @@ simplifiedHeatmapUI <- function(id, cohorts) {
       shinycssloaders::withSpinner(plotOutput(ns("heatmap")),
                                    color = "#6A2798"
       ),
+        p("Download this data"),
+      downloadButton(outputId = ns("download"), label = "Download Data"),
     )
   )
 }

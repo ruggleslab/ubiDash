@@ -21,12 +21,7 @@ drugResponseUI <- function(id) {
       ),
       actionButton(ns("refresh"), "Generate Plot"),
       
-      p("Download this data"),
-      downloadButton(outputId = ns("selected_gene_drugmat"), label = "selected_gene_drugmat"),
-      downloadButton(outputId = ns("selected_gene_all_wilcoxon"), label = "selected_gene_all_wilcoxon"),
-      downloadButton(outputId = ns("selected_gene_sigdrug_wilcoxon"), label = "selected_gene_sigdrug_wilcoxon"),
-      downloadButton(outputId = ns("selected_gene_subdrugmat"), label = "selected_gene_subdrugmat"),
-      downloadButton(outputId = ns("selected_gene_corr"), label = "selected_gene_corr")
+    
     ),
     mainPanel(
       textOutput(ns("err")) %>%
@@ -44,6 +39,12 @@ drugResponseUI <- function(id) {
         color = "#6A2798"
       ),
       # DTOutput(ns("plot3data")),
+        p("Download this data"),
+      downloadButton(outputId = ns("selected_gene_drugmat"), label = "selected_gene_drugmat"),
+      downloadButton(outputId = ns("selected_gene_all_wilcoxon"), label = "selected_gene_all_wilcoxon"),
+      downloadButton(outputId = ns("selected_gene_sigdrug_wilcoxon"), label = "selected_gene_sigdrug_wilcoxon"),
+      downloadButton(outputId = ns("selected_gene_subdrugmat"), label = "selected_gene_subdrugmat"),
+      downloadButton(outputId = ns("selected_gene_corr"), label = "selected_gene_corr")
     )
   )
 }

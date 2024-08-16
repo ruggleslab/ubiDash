@@ -36,14 +36,15 @@ oncoplotUI <- function(id, cohorts) {
       actionButton(ns("refresh"), "Generate Plot"),
 
       # download options
-      p("Download this data"),
-      downloadButton(outputId = ns("downloadOncoMutations"), label = "Download Mutations Data"),
+     
       # downloadButton(outputId = ns("downloadOncoCohorts"), label = "Download Cohort Data"),
     ),
     mainPanel(
       textOutput(ns("error")) %>%
         tagAppendAttributes(class = "error"),
-      shinycssloaders::withSpinner(plotOutput(ns("mutationOncoplot")), color = "#6A2798")
+      shinycssloaders::withSpinner(plotOutput(ns("mutationOncoplot")), color = "#6A2798"),
+       p("Download this data"),
+      downloadButton(outputId = ns("downloadOncoMutations"), label = "Download Mutations Data"),
     )
   )
 }

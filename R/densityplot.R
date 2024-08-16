@@ -19,13 +19,13 @@ densityUI <- function(id) {
         options = list(`live-search` = TRUE),
       ),
       actionButton(ns('refresh'), "Generate Plot"),
-      p("Download this data"),
-      downloadButton(outputId = ns("download"), label = "Download")
     ),
     mainPanel(
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
       shinycssloaders::withSpinner(plotOutput(ns("plot"), ), color = "#6A2798"),
+      p("Download this data"),
+      downloadButton(outputId = ns("download"), label = "Download")
     )
   )
 }
@@ -42,6 +42,13 @@ densityServer <- function(id) {
     )
     
     sample = eventReactive(input$refresh, {
+      
+      validate(
+        need(isolate(input$gene), 'Please select a gene.'),
+        need(isolate(input$datatype), 'Please select a data type'),
+      )
+      
+      
       ups_gn <- isolate(input$gene)
       data_type <- isolate(input$datatype)
       xlab <- ifelse(data_type == "rna", "Log2(TPM+1)", "Log2(Intensity)")

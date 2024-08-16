@@ -82,12 +82,7 @@ heatmapUI <- function(id, cohorts) {
         ),
         actionButton(ns("generateHeatmap"), "Generate Heatmap"),
       ),
-      p("Download this data"),
-      downloadButton(outputId = ns("download"), label = "Download Data"),
-      conditionalPanel(
-        condition = paste0("input['", ns("dataset"), "'] != 'PRIDE'"),
-        downloadButton(outputId = ns("downloadSampleInfo"), label = "Download Sample Info")
-      )
+    
     ),
     
     # Show a plot of the generated distribution
@@ -97,6 +92,12 @@ heatmapUI <- function(id, cohorts) {
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
       shinycssloaders::withSpinner(plotOutput(ns("heatmap")), color = "#6A2798"),
+      p("Download this data"),
+      downloadButton(outputId = ns("download"), label = "Download Data"),
+      conditionalPanel(
+        condition = paste0("input['", ns("dataset"), "'] != 'PRIDE'"),
+        downloadButton(outputId = ns("downloadSampleInfo"), label = "Download Sample Info")
+      )
     )
   )
 }
