@@ -11,7 +11,7 @@ volcanoUI <- function(id, cohorts){
       # input options
       selectizeInput(inputId = ns("genes"),
                      choices = NULL,
-                     label =  "Genes",options = list(`live-search` = TRUE),  multiple = TRUE),
+                     label =  "Genes of Interest",options = list(`live-search` = TRUE),  multiple = TRUE),
    
       # cutoff options
       selectInput(ns("PValCutoff"), "Adjusted P Value Cutoff:", c(0.001, 0.01, 0.05)),
@@ -47,7 +47,7 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
       data = as.data.frame(DE_protein[[isolate(input$cohort)]])
       data$POI <- "Other"
       data$POI[data$gene %in% crl_genes] = "CRL"
-      data$POI[toupper(data$gene) %in% genes] = "Potential Substrate"
+      data$POI[toupper(data$gene) %in% genes] = "Gene of Interest"
       data$log.scal.pval <- -log10(data$sca.adj.pval)
       
      return(data)
@@ -78,7 +78,7 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
           "P Value: ", log.scal.pval, "\n",
           sep = ""
         ))) +
-        scale_color_manual(breaks = c("CRL", "Potential Substrate", "Other"), values = c("#FF0000", "#0000FF", "#888888")) +
+        scale_color_manual(breaks = c("CRL", "Gene of Interest", "Other"), values = c("#FF0000", "#0000FF", "#888888")) +
         geom_vline(xintercept = logFCCutoff, linetype = "solid", color = "red") +
         geom_vline(xintercept = -logFCCutoff, linetype = "solid", color = "red") +
         geom_hline(yintercept = PValCutoff, linetype = "solid", color = "red")
