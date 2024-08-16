@@ -3,6 +3,8 @@ drugResponseUI <- function(id) {
 
   sidebarLayout(
     sidebarPanel(
+      h3("Drug Response"),
+      p("(description paragraph)"),
       selectizeInput(
         inputId = ns("inputGene"),
         choices = NULL,

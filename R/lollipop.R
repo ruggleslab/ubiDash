@@ -4,6 +4,8 @@ lollipopUI <- function(id){
   sidebarLayout(
     sidebarPanel(
       h3("Lollipop Plot"),
+      p("(description paragraph)"),
+      
       selectizeInput(
         inputId = ns("gene"),
         choices = NULL,

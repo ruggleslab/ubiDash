@@ -8,6 +8,8 @@ corrAnalysisUI <- function(id, cohorts) {
       "Gene vs Gene",
       sidebarLayout(
         sidebarPanel(
+        h3("Gene vs. Gene Correlation Analysis"),
+        p("(description paragraph)"),
           tabsetPanel(
             id = ns("GvGpanel"), selected = "mRNA",
             tabPanel(
@@ -97,6 +99,8 @@ corrAnalysisUI <- function(id, cohorts) {
       "Gene vs All",
       sidebarLayout(
         sidebarPanel(
+        h3("Gene vs. All Correlation Analysis"),
+        p("(description paragraph)"),
           tabsetPanel(
             id = ns("GvApanel"), selected = "mRNA",
             tabPanel(
@@ -160,6 +164,8 @@ corrAnalysisUI <- function(id, cohorts) {
       "Gene Panel",
       sidebarLayout(
         sidebarPanel(
+        h3("Gene Panel Correlation Analysis"),
+        p("(description paragraph)"),
           tabsetPanel(
             id = ns("GvPpanel"), selected = "mRNA",
             tabPanel(

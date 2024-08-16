@@ -4,6 +4,8 @@ volcanoUI <- function(id, cohorts){
   sidebarLayout(
     sidebarPanel(
       h3("Volcano Plot"),
+      p("(description paragraph)"),
+      
       selectInput(ns("cohort"), "Cohort", cohorts),
       
       # input options

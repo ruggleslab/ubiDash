@@ -6,11 +6,16 @@ oncoplotUI <- function(id, cohorts) {
       h3("Oncoplot"),
 
       # gene inputs
-
+      p("(description paragraph)"),
+      
+      sliderInput(ns("maxOncoGenes"), "Max Number of Genes to Display:",
+        min = 1, max = 50,
+        value = 10
+      ),
       selectizeInput(
         inputId = ns("genes"),
         choices = NULL,
-        label = "Genes",
+        label = "Custon Gene Set",
         options = list(`live-search` = TRUE),
         multiple = TRUE
       ),
@@ -19,12 +24,6 @@ oncoplotUI <- function(id, cohorts) {
       # selectInput(ns("oncoDelims"), "Delimiter", c("tab", "comma")),
       #
       # options
-      sliderInput(ns("maxOncoGenes"), "Max Number of Genes to Display:",
-        min = 1, max = 50,
-        value = 10
-      ),
-      checkboxInput(ns("sortByCohort"), "Sort by Cohort", value = FALSE),
-      h3("Cohorts"),
       selectizeInput(
         inputId = ns("cohorts"),
         choices = cohorts,
@@ -33,6 +32,7 @@ oncoplotUI <- function(id, cohorts) {
         options = list(`live-search` = TRUE),
         multiple = TRUE
       ),
+      checkboxInput(ns("sortByCohort"), "Sort by Cohort", value = FALSE),
       actionButton(ns("refresh"), "Generate Plot"),
 
       # download options

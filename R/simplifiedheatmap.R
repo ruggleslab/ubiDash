@@ -4,7 +4,7 @@ simplifiedHeatmapUI <- function(id, cohorts) {
   sidebarLayout(
     sidebarPanel(
       h3("Summarized Profile"),
-      p("description paragraph here"),
+      p("(description paragraph)"),
       selectizeInput(
         inputId = ns("geneset"),
         choices = NULL,
@@ -32,8 +32,7 @@ simplifiedHeatmapUI <- function(id, cohorts) {
       
       actionButton(ns("generate"), label = "Generate plot"),
       p("Download this data"),
-      downloadButton(outputId = ns("downloadMtert"), label = "Tertile Data"),
-      downloadButton(outputId = ns("downloadPrtn"), label = "Original Data")
+      downloadButton(outputId = ns("download"), label = "Download Data"),
     ),
     mainPanel(
       textOutput(ns("err")) %>%
@@ -73,134 +72,102 @@ simplifiedHeatmapServer <-
         server = TRUE
       )
       
-      output$heatmap = renderPlot({
+      missing = reactiveVal()
+      data_type = reactiveVal()
+      crl_num = reactiveVal()
+      crl_total = reactiveVal()
+      crl = reactiveVal()
+      
+      
+      dataset = eventReactive(input$generate, {
+        
+        input_datatype = isolate(input$datatype)
+        if(!isTruthy(input_datatype)){
+          input_datatype = "rna_fpkm"
+        }
         
         i = isolate(input$geneset)
         if(!isTruthy(i)){
           i = "DUBs and UBL demodifiers"
         }
         
-        type <- isolate(input$tissueType)
+        
         crl <- names(gns[i])
         crl_total <- length(gns[[i]])
         
-        
-        input$generate
-        
-        if(isolate(input$datatype) == "rna fpkm"){
+        if(input_datatype == "rna fpkm"){
+          dataset = mem_get_from_drive("pride_fpkm_rna_expression.rds")
+          data_type(c("RNA","FPKM"))
           
-          rna_fpkm <- mem_get_from_drive("pride_fpkm_rna_expression.rds")
-          rna_fpkm <- data.frame(rna_fpkm[rownames(rna_fpkm) %in% gns[[i]],])
+        } else if(input_datatype == "rna tpm"){
+          dataset = mem_get_from_drive("pride_tpm_rna_expression.rds") 
+          data_type(c("RNA","TPM"))
           
-          crl_num <- nrow(rna_fpkm)
-          
-          data_type <- "fpkm"
-          
-          rna_percent <- as.data.frame(apply(t(rna_fpkm), 2, function(x) x / max(x) * 100))
-          rna_percent <- as.data.frame(t(rna_percent))
-          
-         
-          
-          missing <- setdiff(gns[[i]], rownames(rna_percent))
-          
-
-          ht <- draw(Heatmap(as.matrix(rna_percent),
-                             name = "ht",
-                             col = col_fun,
-                             column_title = glue("{crl} RNA profiles of {type} human tissues\n
-                            N (SR) = {crl_num} of {crl_total}"),
-                             cluster_columns = F,
-                             row_names_gp = gpar(fontsize = 9),
-                             border_gp = gpar(col = "black"),
-                             rect_gp = gpar(col = "white"),
-                             heatmap_legend_param = list(title = "FPKM-RNA\nLevels, %"
-                                                         # legend_direction = "horizontal",
-                                                         # title_position = "topleft"
-                             ),
-                             column_names_side =  "top",
-                             column_names_rot = 45
-          ))
-          
-          return(ht)
-        } else if(isolate(input$datatype) == "rna tpm"){
-          
-          rna_tpm <- mem_get_from_drive("pride_tpm_rna_expression.rds")                
-          
-          rna_tpm <- rna_tpm[rownames(rna_tpm) %in% gns[[i]],]
-          
-          crl_num <- nrow(rna_tpm)
-          
-          
-          data_type <- "tpm"
-          
-          rna_percent <- as.data.frame(apply(t(rna_tpm), 2, function(x) x / max(x) * 100))
-          rna_percent <- as.data.frame(t(rna_percent))
-          
-          missing <- setdiff(gns[[i]], rownames(rna_percent))
-          
-          ht <- draw(Heatmap(as.matrix(rna_percent),
-                             name = "ht",
-                             col = col_fun,
-                             column_title = glue("{crl} RNA profiles of {type} human tissues\n
-                              N (SR) = {crl_num} of {crl_total}"),
-                             cluster_columns = F,
-                             row_names_gp = gpar(fontsize = 9),
-                             border_gp = gpar(col = "black"),
-                             rect_gp = gpar(col = "white"),
-                             heatmap_legend_param = list(title = "TPM-RNA\nLevels, %"
-                                                         # legend_direction = "horizontal",
-                                                         # title_position = "topleft"
-                             ),
-                             column_names_side =  "top",
-                             column_names_rot = 45
-          ))
-          
-          return(ht)
-          
-          
-        } else {
-          
-          i = 1
-          type <- "normal"
-          crl <- names(gns[i])
-          crl_total <- length(gns[[i]])
-          
-          pro_ibaq <- mem_get_from_drive("pride_log2ibaq_protein_expression.rds")
-          
-          pro_ibaq <- pro_ibaq[rownames(pro_ibaq) %in% gns[[i]], ]
-          crl_num <- nrow(pro_ibaq)
-          
-          data_type <- "ibaq"
-          
-          pro_percent <- as.data.frame(apply(t(pro_ibaq), 2, function(x) x / max(x) * 100))
-          pro_percent <- as.data.frame(t(pro_percent))
-          
-          pro_percent = na.omit(pro_percent)
-          
-          missing <- setdiff(gns[[i]], rownames(pro_percent))
-          
-          ht <- draw(Heatmap(as.matrix(pro_percent),
-                              col = col_fun,
-                              column_title = glue("{crl} Protein profiles of {type} human tissues\n
-                              N (SR) = {crl_num} of {crl_total}"),
-                              cluster_columns = F,
-                              # cluster_rows = F,
-                              row_names_gp = gpar(fontsize = 9),
-                              border_gp = gpar(col = "black"),
-                              rect_gp = gpar(col = "white"),
-                              heatmap_legend_param = list(title = "Protein\nLevels, %"
-                                                          # legend_direction = "horizontal",
-                                                          # title_position = "topleft"
-                              ),
-                              column_names_side =  "top",
-                              column_names_rot = 45
-          ))
-          
-          return(ht)
+        } else{
+          dataset = mem_get_from_drive("pride_log2ibaq_protein_expression.rds")
+          dataset = 2^dataset
+          data_type(c("PROTEIN","IBAQ"))
         }
         
+        
+        crl_num(nrow(dataset))
+        
+        crl <- names(gns[i])
+        
+        crl_total <- length(gns[[i]])
+        
+        
+        dataset <- dataset[rownames(dataset) %in% gns[[i]], ]
+        crl_num <- nrow(dataset)
+        
+        dataset_percent <- as.data.frame(apply(t(dataset), 2, function(x) x / max(x) * 100))
+        dataset_percent <- as.data.frame(t(dataset_percent))
+        
+        dataset_percent = na.omit(dataset_percent)
+        
+        missing(setdiff(gns[[i]], rownames(dataset_percent)))
+        
+        return(dataset_percent)
+      },ignoreNULL = FALSE, ignoreInit=FALSE)
+      
+      
+      output$heatmap = renderPlot({
+        
+        req(dataset())
+        
+        type <- "normal"
+        
+        
+        ht <- draw(Heatmap(as.matrix(dataset()),
+                           name = "ht",
+                           col = col_fun,
+                           column_title = glue("{crl()} {data_type()[1]} profiles of {type} human tissues\n
+                          N (SR) = {crl_total()} of {crl_num()}"),
+                           cluster_columns = F,
+                           row_names_gp = gpar(fontsize = 9),
+                           border_gp = gpar(col = "black"),
+                           rect_gp = gpar(col = "white"),
+                           heatmap_legend_param = list(title = glue("{data_type()[2]}-{data_type()[1]}\nLevels, %")
+                                                       # legend_direction = "horizontal",
+                                                       # title_position = "topleft"
+                           ),
+                           column_names_side =  "top",
+                           column_names_rot = 45
+        ))
+        
+          
+        ht
+       
       }, height = 1000)
       
-      
+      output$download <- downloadHandler(
+        filename = function() {
+          paste("data-", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          req(dataset())
+          write.csv(dataset(), file)
+        }
+      )
     })
   }

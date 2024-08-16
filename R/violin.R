@@ -4,6 +4,8 @@ violinUI <- function(id, cohorts) {
   sidebarLayout(
     sidebarPanel(
       h3("Descriptive Statistics"),
+      p("(description paragraph)"),
+      
       tabsetPanel(
         id = ns("datatype"),
         selected = "mRNA",
@@ -45,7 +47,7 @@ violinUI <- function(id, cohorts) {
           inputId = ns("cohorts"),
           choices = cohorts,
           selected = cohorts,
-          label = "Select cohorts",
+          label = "Cohorts",
           options = list(`live-search` = TRUE),
           multiple = TRUE
         ),

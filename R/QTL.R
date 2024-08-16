@@ -4,6 +4,7 @@ QTLUI <- function(id){
   sidebarLayout(
     sidebarPanel(
       h3("Quantitative Trait Locus (QTL) Analysis"),
+      p("(description paragraph)"),
       selectizeInput(
         inputId = ns("mutgene"),
         choices = NULL,
