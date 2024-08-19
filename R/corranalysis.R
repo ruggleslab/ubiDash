@@ -75,22 +75,26 @@ corrAnalysisUI <- function(id, cohorts) {
             )
           )
         ),
-        mainPanel(
+          mainPanel(
           conditionalPanel(
             condition = paste0("input['", ns("GvGpanel"), "\'] == \'mRNA\'"),
             withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrRna")), color = "#6A2798"),
             tableOutput(outputId = ns("outputTabGvgCorrRna")),
-            uiOutput(outputId = ns("downLoadButtonGvgCorrRna"))
+            downloadButton(ns("downLoadGvgCorrRna"), label = "Download correlation data")
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvGpanel"), "\'] == \'Protein\'"),
             withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrProtein")), color = "#6A2798"),
-            tableOutput(outputId = ns("outputTabGvgCorrProtein"))
+            tableOutput(outputId = ns("outputTabGvgCorrProtein")),
+            downloadButton(ns("downLoadGvgCorrProtein"), label = "Download correlation data")
+            
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvGpanel"), "\'] == \'mRNA/Protein\'"),
             withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrBoth")), color = "#6A2798"),
-            tableOutput(outputId = ns("outputTabGvgCorrBoth"))
+            tableOutput(outputId = ns("outputTabGvgCorrBoth")),
+            downloadButton(ns("downLoadGvgCorrBoth"), label = "Download correlation data")
+            
           )
         )
       )
@@ -149,13 +153,15 @@ corrAnalysisUI <- function(id, cohorts) {
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'Protein\'"),
                 # DTOutput(ns("outputTabGvACorrProtein")),
-                withSpinner(plotOutput(outputId = ns("outputPlotGvACorrProtein")), color = "#6A2798")
+                withSpinner(plotOutput(outputId = ns("outputPlotGvACorrProtein")), color = "#6A2798"),
+                downloadButton(ns("downLoadGvACorrProtein"), label = "Download correlation data")
+                
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'mRNA\'"),
                 # DT::dataTableOutput(outputId = ns("outputTabGvACorrRna")),
-                withSpinner(plotOutput(outputId = ns("outputPlotGvACorrRna")), color = "#6A2798")
-          
+                withSpinner(plotOutput(outputId = ns("outputPlotGvACorrRna")), color = "#6A2798"),
+                downloadButton(ns("downLoadGvACorrRna"), label = "Download correlation data")
           )
         )
       )
@@ -224,17 +230,18 @@ corrAnalysisUI <- function(id, cohorts) {
           conditionalPanel(
             condition = paste0("input['", ns("GvPpanel"), "\'] == \'mRNA\'"),
             withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrRna")), color = "#6A2798"),
-            uiOutput(ns("dataDownLoadGvpCorrRna"))
+            downloadButton(ns("downLoadGvpCorrRna"), label = "Download correlation data")
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvPpanel"), "\'] == \'Protein\'"),
             withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrProtein")), color = "#6A2798"),
-            uiOutput(ns("dataDownLoadGvpCorrProtein"))
+            downloadButton(ns("downLoadGvpCorrProtein"), label = "Download correlation data")
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvPpanel"), "\'] == \'mRNA/Protein\'"),
             withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrBoth")), color = "#6A2798"),
-            uiOutput(ns("dataDownLoadGvpCorrBoth"))
+            downloadButton(ns("downLoadGvpCorrBoth"), label = "Download correlation data")
+            
           )
         )
       )
@@ -463,16 +470,17 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       resGvpCorrRna()$corrPlot
     })
 
-    output$dataDownLoadGvpCorrRna <- renderUI({
-      req(input$generateGvpCorrRna)
-      downloadButton("downLoadGvpCorrRna", label = "Download correlation data")
-    })
+    # output$dataDownLoadGvpCorrRna <- renderUI({
+    #   req(input$generateGvpCorrRna)
+    #   downloadButton("downLoadGvpCorrRna", label = "Download correlation data")
+    # })
 
     output$downLoadGvpCorrRna <- downloadHandler(
       filename = function() {
         paste0("ubiDashCorrData", ".xlsx")
       },
       content = function(file) {
+        print("hi")
         write.xlsx(resGvpCorrRna()$corTab, file, row.names = TRUE)
       }
     )
@@ -502,10 +510,10 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       resGvpCorrProtein()$corrPlot
     })
 
-    output$dataDownLoadGvpCorrProtein <- renderUI({
-      req(input$generateGvpCorrProtein)
-      downloadButton("downLoadGvpCorrProtein", label = "Download correlation data")
-    })
+    # output$dataDownLoadGvpCorrProtein <- renderUI({
+    #   req(input$generateGvpCorrProtein)
+    #   downloadButton("downLoadGvpCorrProtein", label = "Download correlation data")
+    # })
 
     output$downLoadGvpCorrProtein <- downloadHandler(
       filename = function() {
@@ -543,10 +551,10 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       resGvpCorrBoth()$corrPlot
     })
 
-    output$dataDownLoadGvpCorrBoth <- renderUI({
-      req(input$generateGvpCorrBoth)
-      downloadButton("downLoadGvpCorrBoth", label = "Download correlation data")
-    })
+    # output$dataDownLoadGvpCorrBoth <- renderUI({
+    #   req(input$generateGvpCorrBoth)
+    #   downloadButton("downLoadGvpCorrBoth", label = "Download correlation data")
+    # })
 
     output$downLoadGvpCorrBoth <- downloadHandler(
       filename = function() {
@@ -556,5 +564,54 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         write.xlsx(resGvpCorrBoth()$corTab, file, row.names = TRUE)
       }
     )
+    
+    
+    output$downLoadGvgCorrRna <- downloadHandler(
+      filename = function() {
+        paste0("ubiDashCorrData", ".xlsx")
+      },
+      content = function(file) {
+        print(resGvgCorrRna)
+        write.xlsx(resGvgCorrRna()$corTab, file, row.names = TRUE)
+      }
+    )
+    output$downLoadGvgCorrProtein <- downloadHandler(
+      filename = function() {
+        paste0("ubiDashCorrData", ".xlsx")
+      },
+      content = function(file) {
+        write.xlsx(resGvgCorrProtein()$corTab, file, row.names = TRUE)
+      }
+    )
+    output$downLoadGvgCorrBoth <- downloadHandler(
+      filename = function() {
+        paste0("ubiDashCorrData", ".xlsx")
+      },
+      content = function(file) {
+        write.xlsx(resGvgCorrBoth()$corTab, file, row.names = TRUE)
+      }
+    )
+    
+    
+    
+    
+    
+    output$downLoadGvACorrRna <- downloadHandler(
+      filename = function() {
+        paste0("ubiDashCorrData", ".xlsx")
+      },
+      content = function(file) {
+        write.xlsx(resGvACorrRna()$corTab, file, row.names = TRUE)
+      }
+    )
+    output$downLoadGvACorrProtein <- downloadHandler(
+      filename = function() {
+        paste0("ubiDashCorrData", ".xlsx")
+      },
+      content = function(file) {
+        write.xlsx(resGvACorrProtein()$corTab, file, row.names = TRUE)
+      }
+    )
+  
   })
 }

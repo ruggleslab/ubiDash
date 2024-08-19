@@ -72,7 +72,13 @@ heatmapUI <- function(id, cohorts) {
         checkboxInput(ns("clusterRow"), "Cluster rows",
                       value = TRUE
         ),
-        
+        checkboxInput(ns("zscores"), "Z Scores",
+                      value = FALSE
+        ),
+        checkboxInput(ns("showSubtypeLegend"), "Show Subtype Legend",
+                      value = FALSE
+        ),
+
         # toggle clustering and separation by tumor and normal
         conditionalPanel(
           condition = paste0("input['", ns("dataset"), "'] == 'CPTAC'"),
@@ -178,6 +184,10 @@ heatmapServer <-
       output$heatmap <- renderPlot({
         input$generateHeatmap
         
+        # validate(
+        #   need(!isolate(input$separateNandT) || !isolate(input$zscores), 'Can\'t separate normal and tumor when Row Z Score are enabled.'),
+        # )
+        
         ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
         
         cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
@@ -251,6 +261,7 @@ heatmapServer <-
           colors = colorsTbl$color
           names(colors) = colorsTbl$id
           
+         
           ha <-
             HeatmapAnnotation(
               Type = cohortSubsetLabels$sample_type,
@@ -260,10 +271,18 @@ heatmapServer <-
                 Type = colors,
                 Subtype = colors,
                 Cohort = colors
-                )
+                ),
+              
+              show_legend = c(T,T,isolate(input$showSubtypeLegend))
             )
           
           hm <- NULL
+          
+          if(isolate(input$zscores)){
+            inputGenesMat = z_score(inputGenesMat, 1)
+            legendName = "Row Z Score"
+           
+          }
           
           colsplit <- NULL
           if (isolate(input$separateNandT)) {
@@ -272,30 +291,22 @@ heatmapServer <-
           
           data(inputGenesMat)
           sample_info(cohortSubsetLabels)
+      
           
-          
-          tryCatch(
-            {
-              output$err <- renderText({
-                ""
-              })
-              drawHeatmap(
-                inputGenesMat,
-                ha,
-                colsplit,
-                isolate(input$clusterCol),
-                isolate(input$clusterRow),
-                legendName
-              )
-            },
-            error = function(e) {
-              print(e)
-              output$err <- renderText({
-                "Warning: Not enough data to cluster columns"
-              })
-              drawHeatmap(inputGenesMat, ha, colsplit, FALSE, FALSE, legendName)
-            }
+          output$err <- renderText({
+            ""
+          })
+          drawHeatmap(
+            inputGenesMat,
+            ha,
+            colsplit,
+            isolate(input$clusterCol),
+            isolate(input$clusterRow),
+            legendName,
+            F
+            # output$err
           )
+          
           
         } else if (isolate(input$dataset) == "CCLE") {
           if (isolate(input$datatype) == "Protein") {
@@ -345,56 +356,53 @@ heatmapServer <-
               as.matrix(sub.ccle[which(rowMeans(!is.na(sub.ccle)) > 0.5), ])
           }
           
-          ha <- HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle), ]$Cancer_subtype)
+          ha <- HeatmapAnnotation(subtype = ccle_samples[colnames(sub.ccle), ]$Cancer_subtype, show_legend = isolate(input$showSubtypeLegend))
           
+          
+          if(isolate(input$zscores)){
+            sub.ccle = z_score(sub.ccle, 1)
+            legendName = "Row Z Score"
+            
+          }
           data(sub.ccle)
           
           
-          tryCatch(
-            {
-              output$err <- renderText({
-                ""
-              })
-              Heatmap(
-                sub.ccle,
-                top_annotation = ha,
-                column_names_gp = grid::gpar(fontsize = 3),
-                show_column_names = FALSE, show_row_names = TRUE,
-                cluster_columns = isolate(input$clusterCol),
-                cluster_rows = isolate(input$clusterRow)
-              )
-            },
-            error = function(e) {
-              print(e)
-              output$err <- renderText({
-                "Warning: Not enough data to cluster columns"
-              })
-              Heatmap(
-                sub.ccle,
-                top_annotation = ha,
-                column_names_gp = grid::gpar(fontsize = 3),
-                show_column_names = FALSE, show_row_names = TRUE,
-                cluster_columns = FALSE,
-                cluster_rows = FALSE
-              )
-            }
+          output$err <- renderText({
+            ""
+          })
+          
+          drawHeatmap(
+            sub.ccle,
+            ha,
+            NULL,
+            isolate(input$clusterCol),
+            isolate(input$clusterRow),
+            legendName,
+            F
+            # output$err
           )
+          
           
         } else if (isolate(input$dataset) == "PRIDE") {
           
+          
           if (isolate(input$datatype) == "Protein") {
+            legendName <- "Log2(Relative Abundance)"
             dataset <- mem_get_from_drive("pride_log2ibaq_protein_expression.rds")
             
           } else {
+            legendName <- "Log2(TPM + 1)"
             
-            if(isolate(input$pridedataset) == "tpm")
+            if(isolate(input$pridedataset) == "tpm"){
               dataset <- as.matrix(mem_get_from_drive("pride_tpm_rna_expression.rds"))
+            }
             
             else{
               dataset <- as.matrix(mem_get_from_drive("pride_fpkm_rna_expression.rds"))
             }
             
           }
+          
           
           
           inputGenes <- isolate(input$genes)
@@ -405,40 +413,30 @@ heatmapServer <-
           
           sub.pride <- dataset[inputGenes, ]
           
+          
+          if(isolate(input$zscores)){
+            sub.pride = z_score(sub.pride, 1)
+            legendName = "Row Z Score"
+            
+          }
           data(sub.pride)
           
-          tryCatch(
-            {
-              output$err <- renderText({
-                ""
-              })
-              Heatmap(
-                sub.pride,
-                column_names_gp = grid::gpar(fontsize = 8),
-                show_column_names = FALSE, show_row_names = TRUE,
-                cluster_columns = isolate(input$clusterCol),
-                cluster_rows = isolate(input$clusterRow)
-              )
-            },
-            error = function(e) {
-              print(e)
-              output$err <- renderText({
-                "Warning: Not enough data to cluster columns"
-              })
-              Heatmap(
-                sub.pride,
-                column_names_gp = grid::gpar(fontsize = 8),
-                show_column_names = FALSE, show_row_names = TRUE,
-                cluster_columns = FALSE,
-                cluster_rows = FALSE
-              )
-            }
+          
+          output$err <- renderText({
+            ""
+          })
+          drawHeatmap(
+            sub.pride,
+            NULL,
+            NULL,
+            isolate(input$clusterCol),
+            isolate(input$clusterRow),
+            legendName,
+            T
           )
-          
-          
         }
       },
-      height = plotHeight
+      height = 1000
       )
       
       

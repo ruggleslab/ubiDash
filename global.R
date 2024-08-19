@@ -165,7 +165,20 @@ if(!skip_load_data){
   # load("./data/defaults.RData")
   
   
-  
+  z_score <- function(data_matrix, which = c(1,2)) { # 1 rows, 2 columns
+    # Remove rows with all NA values
+    data_matrix <- data_matrix[!apply(is.na(data_matrix), which, all), , drop = FALSE]
+    # data_matrix <- data_matrix[!apply(is.nan(data_matrix), which, all), , drop = FALSE]
+    
+    # Calculate the row means and standard deviations
+    row_means <- rowMeans(data_matrix, na.rm = TRUE)
+    row_sds <- apply(data_matrix, which, sd, na.rm = TRUE)
+    
+    # Calculate Z-scores for each row
+    z_scores <- (data_matrix - row_means) / row_sds
+    
+    return(z_scores)
+  }
   
   colorsTbl = read.csv("./data/colors.csv")
   # colors = colorsTbl$color[1:11]
@@ -175,14 +188,25 @@ if(!skip_load_data){
   # )
   
   
-  drawHeatmap <- function(inputGenesMat, annotation,colsplit, clusterCol, clusterRow, legendName){
+  drawHeatmap <- function(inputGenesMat, annotation,colsplit, clusterCol, clusterRow, legendName, column_names){
+    
+                
     hm <- Heatmap(inputGenesMat,
                   name = legendName,
-                  show_column_names = FALSE, show_row_names = TRUE,
+                  show_column_names = column_names, show_row_names = TRUE,
                   top_annotation = annotation, heatmap_legend_param = list(direction = "horizontal"),
-                  column_split = colsplit, cluster_columns = clusterCol, cluster_rows = clusterRow
+                  column_split = colsplit, cluster_columns = clusterCol, cluster_rows = clusterRow,
+                  column_names_rot = 45,
+                  column_names_gp = grid::gpar(fontsize = 13.2),
+                  column_names_side ="top"  
     )
-    return(draw(hm, heatmap_legend_side = "bottom", annotation_legend_side = "right"))
+    
+    return(draw(hm, 
+                heatmap_legend_side = "bottom", 
+                annotation_legend_side = "right"
+    ))
+    
+    
   }
   
   

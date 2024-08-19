@@ -85,7 +85,7 @@ violinUI <- function(id, cohorts) {
 
 
 violinServer <-
-  function(id
+  function(id, colorsTbl
            # cptac_rna,
            #  cptac_protein,
            # cptac_samples,
@@ -262,6 +262,8 @@ violinServer <-
         
       },ignoreNULL = FALSE, ignoreInit=FALSE)
       
+      colors  = colorsTbl$color
+      names(colors) = colorsTbl$id
       
       output$plots_ui <- renderUI({
         
@@ -302,7 +304,7 @@ violinServer <-
         }
         
         lapply(genes, function(gene) {
-          print(paste("Generating plot for", gene))  # Debugging print
+          # print(paste("Generating plot for", gene))  # Debugging print
           output[[paste0("plot_", gene)]] <- renderPlotly({
             generatePlot(gene)
           })
@@ -340,7 +342,7 @@ violinServer <-
           ) +
             geom_boxplot(
               show.legend = FALSE,
-              # position = position_dodge()
+              position = position_dodge()
             )
         } else if (isolate(input$dataset) == "CCLE") {
           violin <- ggplot(
@@ -349,7 +351,7 @@ violinServer <-
           ) +
             geom_boxplot(
               show.legend = FALSE,
-              # position = position_dodge(),
+              position = position_dodge(),
               fill = "#FFBD42"
             )
         }
@@ -361,10 +363,7 @@ violinServer <-
             size = .75,
             stroke = .1
           ) +
-            scale_fill_manual(values = c(
-              "Tumor" = "#FFBD42",
-              "Normal" = "#BA5CF4"
-            ))
+            scale_fill_manual(values = colors)
         } else if (isolate(input$dataset) == "CCLE") {
           violin <- violin + geom_point(
             aes(text = paste0(
@@ -408,10 +407,10 @@ violinServer <-
         
         
         
-        return(ggplotly(violin, tooltip = "text"))
-               # %>%
-               #   # https://stackoverflow.com/questions/58586314/keeping-dodge-position-in-boxplot-passed-to-plotly
-               #   layout(boxmode = "group"))
+        return(ggplotly(violin, tooltip = "text")
+               %>%
+                 # https://stackoverflow.com/questions/58586314/keeping-dodge-position-in-boxplot-passed-to-plotly
+                 layout(boxmode = "group"))
         # }))
       }
       

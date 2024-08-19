@@ -6,10 +6,18 @@ simplifiedHeatmapUI <- function(id, cohorts) {
       h3("Summarized Profile"),
       p("(description paragraph)"),
       selectizeInput(
-        inputId = ns("geneset"),
-        choices = NULL,
+        inputId = ns("filterby"),
+        choices = c("Class", "Group", "Type", "Subtype"),
         multiple = FALSE,
-        selected = "E2",
+        selected = "Class",
+        label = "Filter By",
+        options = list(`live-search` = TRUE),
+      ),
+      selectizeInput(
+        inputId = ns("geneset"),
+        choices = c("DUBs and UBL demodifiers"),
+        multiple = FALSE,
+        selected = "DUBs and UBL demodifiers",
         label = "Geneset",
         options = list(`live-search` = TRUE),
       ),
@@ -60,18 +68,36 @@ simplifiedHeatmapServer <-
         filter(Branch == "Ubiquitin Proteasome System") %>% 
         select(Gene.Symbol, Class, Group, Type, Subtype)
       
+      sort_by = c("Class", "Group", "Type", "Subtype")
+      
+
       # below let user decide whether to split by Class, Group or Subtype
-      gns <- split(ups_genes$Gene.Symbol, ups_genes[, "Class"]) 
       
       col_fun = colorRamp2(c(0, 50, 100), c("#EFECEA", "#86A6DF", "#2C4E80"))
       
-      updateSelectizeInput(
-        session,
-        "geneset",
-        choices = names(gns),
-        # selected = c(),
-        server = TRUE
-      )
+      aa = as.list(unique(ups_genes[,"Class"]))
+      
+
+      observeEvent(input$filterby, {
+        options = unique(ups_genes[,input$filterby])
+        # print(options)
+        if(input$filterby == "Class"){
+          updateSelectizeInput(
+            session,
+            "geneset",
+            choices = options,
+            selected = c("DUBs and UBL demodifiers"),
+            server = TRUE
+          )
+        } else {
+          updateSelectizeInput(
+            session,
+            "geneset",
+            choices = options,
+            server = TRUE
+          )
+        }
+      })
       
       missing = reactiveVal()
       data_type = reactiveVal()
@@ -81,6 +107,14 @@ simplifiedHeatmapServer <-
       
       
       dataset = eventReactive(input$generate, {
+        
+        gns <- split(ups_genes$Gene.Symbol, ups_genes[, input$filterby]) 
+        
+        if(input$filterby != "Class"){
+          validate(
+            need(isolate(input$geneset), 'Please select a gene set.'),
+          )
+        }
         
         input_datatype = isolate(input$datatype)
         if(!isTruthy(input_datatype)){
