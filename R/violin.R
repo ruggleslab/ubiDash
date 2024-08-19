@@ -1,6 +1,6 @@
 violinUI <- function(id, cohorts) {
   ns <- NS(id)
-
+  
   sidebarLayout(
     sidebarPanel(
       h3("Descriptive Statistics"),
@@ -13,7 +13,7 @@ violinUI <- function(id, cohorts) {
           "mRNA",
           selectizeInput(
             inputId = ns("mRNAGenes"),
-            choices = NULL,
+            choices =  c("KBTBD11"),
             multiple = T,
             selected = c("KBTBD11"),
             label = "Genes",
@@ -24,7 +24,7 @@ violinUI <- function(id, cohorts) {
           "protein",
           selectizeInput(
             inputId = ns("proteinGenes"),
-            choices = NULL,
+            choices =  c("KBTBD11"),
             multiple = T,
             selected = c("KBTBD11"),
             label = "Genes",
@@ -32,7 +32,7 @@ violinUI <- function(id, cohorts) {
           ),
         ),
       ),
-       
+      
       selectizeInput(
         inputId = ns("dataset"),
         choices = c("CPTAC", "CCLE"),
@@ -63,20 +63,21 @@ violinUI <- function(id, cohorts) {
         ),
       ),
       actionButton(ns("generate"), label = "Generate plot"),
-     
-
+      
+      
     ),
     mainPanel(
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
-      shinycssloaders::withSpinner(
-        plotlyOutput(ns("violin"),
-          height =
-            "1000px"
-        ),
-        color = "#6A2798"
-      ),
-       p("Download this data"),
+      # shinycssloaders::withSpinner(
+      #   plotlyOutput(ns("violin"),
+      #                height =
+      #                  "1000px"
+      #   ),
+      #   color = "#6A2798"
+      # ),
+      uiOutput(ns("plots_ui")),
+      p("Download this data"),
       downloadButton(outputId = ns("download"), label = "Download")
     )
   )
@@ -86,12 +87,12 @@ violinUI <- function(id, cohorts) {
 violinServer <-
   function(id
            # cptac_rna,
-          #  cptac_protein,
+           #  cptac_protein,
            # cptac_samples,
-           ) {
+  ) {
     moduleServer(id, function(input, output, session) {
+      ns <- session$ns  # Access the namespace function
       
-
       updateSelectizeInput(
         session,
         "mRNAGenes",
@@ -99,14 +100,14 @@ violinServer <-
         server = TRUE,
         selected = "KBTBD11"
       )
-
+      
       updateSelectizeInput(
         session,
         "subtype",
         choices = ccle_samples_subtypes,
         server = TRUE,
       )
-
+      
       updateSelectizeInput(
         session,
         "proteinGenes",
@@ -114,10 +115,10 @@ violinServer <-
         server = TRUE,
         selected = "KBTBD11"
       )
-
+      
       observe({
         input$dataset
-
+        
         if (input$dataset == "CCLE") {
           updateSelectizeInput(
             session,
@@ -126,7 +127,7 @@ violinServer <-
             server = TRUE,
             selected = "KBTBD11"
           )
-
+          
           updateSelectizeInput(
             session,
             "proteinGenes",
@@ -142,7 +143,7 @@ violinServer <-
             server = TRUE,
             selected = "KBTBD11"
           )
-
+          
           updateSelectizeInput(
             session,
             "proteinGenes",
@@ -159,6 +160,12 @@ violinServer <-
         p <- NULL
         dataset <- NULL
         samples <- NULL
+        
+        validate(
+          need(isolate(input$datatype) != "protein" || length(isolate(input$proteinGenes)) >= 1, 'Please select at least one gene.'),
+          need(isolate(input$datatype) != "mRNA" || length(isolate(input$mRNAGenes)) >= 1, 'Please select at least one gene.'),
+        )
+        
         
         if (isolate(input$dataset) == "CPTAC") {
           if (isolate(input$datatype) == "protein") {
@@ -254,18 +261,59 @@ violinServer <-
         return(violin.input)
         
       },ignoreNULL = FALSE, ignoreInit=FALSE)
-
-
-      output$violin <- renderPlotly({
-        # input$generate
+      
+      
+      output$plots_ui <- renderUI({
         
-        validate(
-          need(isolate(input$datatype) != "protein" || length(isolate(input$proteinGenes)) >= 1, 'Please select at least one gene.'),
-          need(isolate(input$datatype) != "mRNA" || length(isolate(input$mRNAGenes)) >= 1, 'Please select at least one gene.'),
-        )
-       
+        input$generate
+        violin.input()
+        
+        if(isolate(input$datatype) == "protein"){
+          genes = isolate(input$proteinGenes)
+        } else{
+          genes = isolate(input$mRNAGenes)
+        }
+        
+        if(!isTruthy(genes)){
+          genes = "KBTBD11"
+        }
+        
+        plot_output_list <- lapply(genes, function(gene) {
+          plotname <- ns(paste0("plot_", gene))
+          shinycssloaders::withSpinner(
+            plotlyOutput(outputId = plotname),
+            color = "#6A2798"
+          )
+        })
+        # print(plot_output_list)
+        do.call(tagList, plot_output_list)
+      })
+      
+      observeEvent(violin.input(), {
+        
+        if(input$datatype == "protein"){
+          genes = input$proteinGenes
+        } else{
+          genes = input$mRNAGenes
+        }
+        
+        if(!isTruthy(genes)){
+          genes = "KBTBD11"
+        }
+        
+        lapply(genes, function(gene) {
+          print(paste("Generating plot for", gene))  # Debugging print
+          output[[paste0("plot_", gene)]] <- renderPlotly({
+            generatePlot(gene)
+          })
+        })
+      },ignoreNULL = FALSE, ignoreInit=FALSE)
+      
+      
+      generatePlot <- function(gene) {
+        
         ylab <- NULL
-
+        
         if (isolate(input$datatype) == "protein") {
           ylab <- paste(
             isolate(input$datatype),
@@ -274,13 +322,15 @@ violinServer <-
         } else {
           ylab <- paste(isolate(input$datatype), "expression, log2(TPM + 1)")
         }
-
+        
         violin <- NULL
-
-
+        
+        sub_violin.input = filter(violin.input(), variable == gene)
+        
+        
         if (isolate(input$dataset) == "CPTAC") {
           violin <- ggplot(
-            violin.input(),
+            sub_violin.input,
             aes(
               x = cohort_code,
               y = value,
@@ -290,16 +340,16 @@ violinServer <-
           ) +
             geom_boxplot(
               show.legend = FALSE,
-              position = position_dodge()
+              # position = position_dodge()
             )
         } else if (isolate(input$dataset) == "CCLE") {
           violin <- ggplot(
-            violin.input(),
+            sub_violin.input,
             aes(x = Subtype, y = value)
           ) +
             geom_boxplot(
               show.legend = FALSE,
-              position = position_dodge(),
+              # position = position_dodge(),
               fill = "#FFBD42"
             )
         }
@@ -331,11 +381,11 @@ violinServer <-
             stroke = .1
           )
         }
-
-
+        
+        
         violin <- violin +
           theme_prism() +
-
+          
           # re-naming x and y axis
           labs(
             x = NULL,
@@ -344,10 +394,10 @@ violinServer <-
               isolate(input$dataset),
               isolate(input$datatype),
               ", n =",
-              nrow(POIs_reactive())
+              nrow(sub_violin.input)
             )
           ) +
-          facet_grid(rows = vars(violin.input()$variable)) +
+          facet_grid(rows = vars(sub_violin.input$variable)) +
           theme(axis.text.x = element_text(
             angle = 60,
             vjust = 0.5,
@@ -355,13 +405,15 @@ violinServer <-
             size = 5
           )) +
           theme(axis.text.x = element_text(size = 8))
-
-
-
-        ggplotly(violin, tooltip = "text") %>%
-          # https://stackoverflow.com/questions/58586314/keeping-dodge-position-in-boxplot-passed-to-plotly
-          layout(boxmode = "group")
-      })
+        
+        
+        
+        return(ggplotly(violin, tooltip = "text"))
+               # %>%
+               #   # https://stackoverflow.com/questions/58586314/keeping-dodge-position-in-boxplot-passed-to-plotly
+               #   layout(boxmode = "group"))
+        # }))
+      }
       
       output$download <- downloadHandler(
         filename = function() {
@@ -375,4 +427,6 @@ violinServer <-
       
       
     })
+    
+    
   }
