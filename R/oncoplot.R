@@ -93,6 +93,20 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts, colorsTbl) {
       print(colors)
       print(inputCohorts)
       colors = colors[names(colors) %in% inputCohorts()]
+      
+      vc_colors = c("#EF476F", "#F78C6B", "#FFD166", "#83D483", "#06D6A0", "#0CB0A9", "#118AB2","#073B4C", "#000000")
+      # vc_colors = c("#0AA0BF","#F6114A", "#F36E98", "#78B177", "#9862A2", "#F05006", "#25998F","#FCA00C", "#000000")
+      names(vc_colors) = c(
+        'Missense_Mutation',
+        'Frame_Shift_Del',
+        'Frame_Shift_Ins',
+        'Nonsense_Mutation',
+        'Splice_Site',
+        'In_Frame_Ins',
+        'In_Frame_Del',
+        'Nonstop_Mutation',
+        'Multi_Hit'
+      )
 
       return(oncoplot(
         maf = filteredMaf(),
@@ -100,6 +114,12 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts, colorsTbl) {
         genes = inputGenes,
         annotationColor = list(cohort_code = colors),
         sortByAnnotation = isolate(input$sortByCohort),
+        gene_mar = 8,
+        # barcode_mar = 20,
+        fontSize  = 1,
+        annotationFontSize = 1.5,
+        legendFontSize = 1.5,
+        colors = vc_colors,
         # drawColBar = F,
         # cBioPortal = T,
         clinicalFeatures = "cohort_code"
