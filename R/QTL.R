@@ -1,4 +1,4 @@
-QTLUI <- function(id){
+QTLUI <- function(id, cohorts){
   ns <- NS(id)
   
   sidebarLayout(
@@ -26,6 +26,14 @@ QTLUI <- function(id){
         multiple = FALSE,
         label = "Data Type",
         options = list(`live-search` = TRUE),
+      ),
+      selectizeInput(
+        inputId = ns("cohorts"),
+        choices = cohorts,
+        selected = cohorts,
+        label = "Cohorts",
+        options = list(`live-search` = TRUE),
+        multiple = TRUE
       ),
       h5("Volcano Plot"),
       selectizeInput(
@@ -138,6 +146,8 @@ QTLServer <- function(id, genelists, colorsTbl) {
       samples <- cptac_samples %>% 
         select(c(harmonized_data_id, cohort_code))
       
+      samples = filter(samples, cohort_code %in% isolate(input$cohorts))
+      
       cohorts <- levels(as.factor(cptac_samples$cohort))
       
       if(input$datatype == "pro"){
@@ -162,6 +172,7 @@ QTLServer <- function(id, genelists, colorsTbl) {
       
       # To specify WT / Mutant boxplot order
       df[[m]] <- factor(df[[m]], levels = c("WT", "Mutant"))
+      
       
       ggplot(df, aes(x = !!sym(m), y = !!sym(gn))) +
         geom_boxplot(outlier.shape = NA) +

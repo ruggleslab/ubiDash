@@ -45,7 +45,7 @@ shinyUI(
         ),
         tabPanel("QTL Analysis",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          QTLUI("QTLTab")
+          QTLUI("QTLTab", cohorts)
         )
       ),
       navbarMenu(
