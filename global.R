@@ -85,6 +85,9 @@ if(!skip_load_data){
   
   load("./data/searchlists.RData")
   
+  cohorts1.1 = c("BRCA","COAD","HGSC","LUAD","ccRCC","UCEC","PDAC","LSCC","GBM","HNSCC","MB","HCC") 
+  
+  
   
   #pride dataset
   # pride_protein <- mem_get_from_drive("pride_lfq_protein_expression.rds")

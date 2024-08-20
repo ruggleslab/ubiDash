@@ -35,6 +35,9 @@ dataDownloadUI <- function(id){
         tags$th(a(icon("download"),"cptac_sample_info_with_subtypes.csv",href="https://drive.google.com/uc?export=download&id=1gRysoGtYpQvcEwS7y2VeoMqZbCanPqm1")),
       ),
       tags$tr(
+        tags$th(a(icon("download"),"cptac_samples_info_across_datatypes_v1.1.rds",href="https://drive.google.com/uc?export=download&id=16Wf6gpvVQUBb_yau-MfzEFb6MscvNKIx")),
+      ),
+      tags$tr(
         tags$th(a(icon("download"),"ccle_tpm_rna_expression.csv",href="https://drive.google.com/uc?export=download&id=1PydHmcj3HSCAWDI9TjrVGApfoOMstd0J")),
       ),
       tags$tr(

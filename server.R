@@ -10,6 +10,7 @@ load("./data/defaults.RData")
 
 source('./R/corranalysis.R')
 
+
 # server ----
 
 shinyServer(function(input, output, session) {
@@ -45,7 +46,7 @@ shinyServer(function(input, output, session) {
   # lollipop tab
   lollipopServer("lollipopTab") # maf
   
-  QTLServer("QTLTab", genelists, colorsTbl)
+  QTLServer("QTLTab", genelists, colorsTbl, cohorts1.1)
   
     densityServer("densityTab") # maf
 

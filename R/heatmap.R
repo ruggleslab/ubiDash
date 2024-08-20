@@ -48,8 +48,8 @@ heatmapUI <- function(id, cohorts) {
           condition = paste0("input['", ns("dataset"), "'] != 'PRIDE'"),
           selectizeInput(
             inputId = ns("subtype"),
-            choices = cohorts,
-            selected = cohorts,
+            choices = NULL,
+            selected = NULL,
             label = "Subtypes",
             options = list(`live-search` = TRUE),
             multiple = TRUE
@@ -72,8 +72,8 @@ heatmapUI <- function(id, cohorts) {
         checkboxInput(ns("clusterRow"), "Cluster rows",
                       value = TRUE
         ),
-        checkboxInput(ns("zscores"), "Z Scores",
-                      value = FALSE
+        checkboxInput(ns("zscores"), "Row Z Scores",
+                      value = TRUE
         ),
         checkboxInput(ns("showSubtypeLegend"), "Show Subtype Legend",
                       value = FALSE
@@ -188,22 +188,15 @@ heatmapServer <-
         #   need(!isolate(input$separateNandT) || !isolate(input$zscores), 'Can\'t separate normal and tumor when Row Z Score are enabled.'),
         # )
         
+        cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
+       
+        
         ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
         
         cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
-        cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+        cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
        
-        # pride_protein <- 
-        
-        
-        filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
-        # remove rows with over 50% NA
-        filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
-        
-        filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
-        filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
-        # remove rows with over 50% NA
-        filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
+       
         
         
         instanceTnLabels = NULL
@@ -218,29 +211,70 @@ heatmapServer <-
           if (isolate(input$datatype) == "Protein") {
             legendName = "Log2(Relative Abundance)"
             dataset = cptac_protein
+            
+            
+            samples = filter(cptac_samples, datatype == "protein")
+            print(nrow(samples))
+            missing_rows <- !(samples$harmonized_data_id %in% colnames(dataset))
+            samples <- samples[!missing_rows, ]
+            print(nrow(samples))
+            samples = samples[!duplicated(samples$harmonized_data_id),]
+            rownames(samples) = samples$harmonized_data_id
+            
+            
+            tnlabels <- subset(samples, type %in% c("Tumor", "Normal"), select = c("type", "cohort", "cancer_subtype"))
             instanceTnLabels = tnlabels
+            
             
           } else {
             legendName = "Log2(TPM + 1)"
             dataset = cptac_rna
+            
+            samples = filter(cptac_samples, datatype == "rna")
+            missing_rows <- !(samples$harmonized_data_id %in% colnames(dataset))
+            samples <- samples[!missing_rows, ]
+            samples = samples[!duplicated(samples$harmonized_data_id),]
+            rownames(samples) = samples$harmonized_data_id
+            
+            
+            tnlabels <- subset(samples, type %in% c("Tumor", "Normal"), select = c("type", "cohort", "cancer_subtype"))
+            filteredTnlabels = tnlabels[rownames(tnlabels) %in% colnames(cptac_rna),]
+            
             instanceTnLabels = filteredTnlabels
           }
+          
+      
+          
+            # filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
+            # filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
+       
+          # filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
+          # # remove rows with over 50% NA
+          # filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
           
           cohortSubsetLabels = instanceTnLabels
           
           if (length(isolate(input$subtype)) != 0) {
             cohortSubsetLabels = filter(cohortSubsetLabels,
-                                        Cancer_subtype %in% isolate(input$subtype))
+                                        cancer_subtype %in% isolate(input$subtype))
           }
           if (length(isolate(input$cohort)) != 0) {
             cohortSubsetLabels = filter(cohortSubsetLabels,
-                                        cohort_code %in% isolate(input$cohort))
+                                        cohort %in% isolate(input$cohort))
           }
           
           inputGenes <- isolate(input$genes)
           if (!isTruthy(inputGenes)) {
             inputGenes = genesSubset$genes
           }
+          
+          # print(cohortSubsetLabels)
+          # e = rownames(cohortSubsetLabels) %in% colnames(dataset)
+          # print("e")
+          # print(colnames(dataset)[!e])
+          # print(length(colnames(dataset)))
+          # 
+          # rownames_in_dataset = rownames(cohortSubsetLabels) %in% colnames(dataset)
           
           inputGenesMat <-
             dataset[inputGenes, rownames(cohortSubsetLabels)]
@@ -264,9 +298,9 @@ heatmapServer <-
          
           ha <-
             HeatmapAnnotation(
-              Type = cohortSubsetLabels$sample_type,
-              Cohort = cohortSubsetLabels$cohort_code,
-              Subtype = cohortSubsetLabels$Cancer_subtype,
+              Type = cohortSubsetLabels$type,
+              Cohort = cohortSubsetLabels$cohort,
+              Subtype = cohortSubsetLabels$cancer_subtype,
               col = list(
                 Type = colors,
                 Subtype = colors,
@@ -286,7 +320,7 @@ heatmapServer <-
           
           colsplit <- NULL
           if (isolate(input$separateNandT)) {
-            colsplit <- cohortSubsetLabels$sample_type
+            colsplit <- cohortSubsetLabels$type
           }
           
           data(inputGenesMat)
