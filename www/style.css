@@ -14,7 +14,7 @@ body > .container-fluid {
   justify-content: space-between;
 }
 
-.shiny-plot-output{
+.shiny-plot-output, .plotly-container, .plotly{
   height:auto!important;
   min-height:400px;
 }

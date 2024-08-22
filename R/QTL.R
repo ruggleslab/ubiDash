@@ -121,8 +121,8 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
 
       cptac_samples = cptac_samples[cptac_samples$type == "Tumor",]
       
-      cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       # mut <- mem_get_from_drive("cptac_v1.1_mut.rds")
       
       load("./data/dat~cptac_v1.1_list_object_mut_cnv_rna_pro.RData")
@@ -144,7 +144,7 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
                          nm = colors$id) # names
       
       
-      selected_cohorts = input$cohorts
+      selected_cohorts = isolate(input$cohorts)
       if(!isTruthy(selected_cohorts)){
         selected_cohorts = cohorts
       }

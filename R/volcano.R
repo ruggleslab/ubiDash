@@ -43,7 +43,7 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
                          server = TRUE)
     
     data = eventReactive(input$refresh, {
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       
       genes <- isolate(input$genes)
       
@@ -82,14 +82,14 @@ volcanoServer <- function(id, crl_genes, DE_protein) {
         ylab("-Log10(adjusted p-val)") +
         xlab("Log2(Tumor/Normal)") +
         labs(title = isolate(input$cohort)) +
-        geom_point(shape = 16, alpha = .5, mapping = aes(text = paste(
+        geom_point(shape = 16, alpha = .5, stroke=NA, size = 2, mapping = aes(text = paste(
           "Gene: ", gene, "\n",
           "POI: ", POI, "\n",
           "LogFC: ", logFC, "\n",
           "P Value: ", log.scal.pval, "\n",
           sep = ""
         ))) +
-        scale_color_manual(breaks = c("CRL", "Gene of Interest", "Other"), values = c("#FF0000", "#0000FF", "#888888")) +
+        scale_color_manual(breaks = c("CRL", "Gene of Interest", "Other"), values = c("#FF0000", "#0000FF", "#00000066")) +
         geom_vline(xintercept = logFCCutoff, linetype = "solid", color = "red") +
         geom_vline(xintercept = -logFCCutoff, linetype = "solid", color = "red") +
         geom_hline(yintercept = PValCutoff, linetype = "solid", color = "red")

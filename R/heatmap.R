@@ -193,7 +193,7 @@ heatmapServer <-
         
         ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
         
-        cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+        cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
         cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
        
        
@@ -209,7 +209,7 @@ heatmapServer <-
         if (isolate(input$dataset) == "CPTAC") {
           
           if (isolate(input$datatype) == "Protein") {
-            legendName = "Log2(Relative Abundance)"
+            legendName = "Log2(Intensity)"
             dataset = cptac_protein
             
             
