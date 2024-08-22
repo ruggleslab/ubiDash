@@ -364,7 +364,8 @@ violinServer <-
           ) +
             scale_fill_manual(values = colors) +
             scale_color_manual(values = colors) +
-            ggh4x::facet_grid2(cols = vars(sub_violin.input$cohort), rows = NULL, scales = ifelse(isolate(input$independentY), "free", "fixed"), independent = ifelse(isolate(input$independentY), "y", "none")) 
+            facet_wrap(facets = vars(sub_violin.input$cohort), scales = ifelse(isolate(input$independentY), "free", "fixed")) 
+            # ggh4x::facet_grid2(cols = vars(sub_violin.input$cohort), rows = NULL, scales = ifelse(isolate(input$independentY), "free", "fixed"), independent = ifelse(isolate(input$independentY), "y", "none")) 
         } else if (isolate(input$dataset) == "CCLE") {
           violin <- violin + geom_point(
             aes(text = paste0(

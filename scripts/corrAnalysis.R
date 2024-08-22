@@ -26,6 +26,8 @@
 # asd$singCorrTab
 
 singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, cptac_rna, cptac_samples) {
+    xlab = "Log2(Intensity)"
+    ylab = "Log2(TPM + 1)"
   if (!is.null(cptac_protein) & !is.null(cptac_rna)) {
     # cohort filter
     cptac_samples_filt <- cptac_samples[cptac_samples$cohort_code %in% cohort, ]
@@ -50,6 +52,14 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
     selectedGeneA <- selectedGeneA[, intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
     selectedGeneB <- selectedGeneB[, intersect(colnames(selectedGeneA), colnames(selectedGeneB))]
   } else if (!is.null(cptac_protein) | !is.null(cptac_rna)) { # for RNA or Protein separately
+    
+    if(!is.null(cptac_protein)){
+      ylab = "Log2(Intensity)"
+    }
+    if(!is.null(cptac_rna)){
+      xlab = "Log2(TPM + 1)"
+    }
+    
     varToAssign <- list(cptac_protein, cptac_rna)
     inPut <- as.data.frame(varToAssign[which(c(!is.null(cptac_protein), !is.null(cptac_rna)))])
     rm(varToAssign)
@@ -129,18 +139,19 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
     geom_point(size = 2, alpha = .6) +
     geom_smooth(method = "lm", size = 2) +
     # geom_smooth(aes(x = geneAExp, y = geneBExp,color = NULL),method = "lm", size = 2) +
-    xlab(paste0("Log2 expression of \n", geneNameA)) +
-    ylab(paste0("Log2 expression of \n", geneNameB)) +
+    xlab(glue("{xlab} {geneNameA}")) +
+    ylab(glue("{ylab} {geneNameB}")) +
     annotate(geom = "text", x = xmax, y = ymax, label = paste0("p = ", pValue, "\n", "R = ", rho)) +
     # coord_cartesian(clip = "off")+
+    theme_minimal() +
     theme(
       legend.position = "right",
       panel.background = element_rect(fill = NA, colour = "grey50"),
       panel.grid = element_blank(),
       axis.text.x = element_text(size = 12, colour = "black"),
       axis.text.y = element_text(size = 12, colour = "black"),
-      axis.title.y = element_text(size = 12, face = "bold", vjust = 2),
-      axis.title.x = element_text(size = 12, face = "bold", vjust = 2)
+      axis.title.y = element_text(size = 12, vjust = 2),
+      axis.title.x = element_text(size = 12, vjust = 2)
     )
   # scatPlot
 
@@ -379,6 +390,8 @@ panelCorr <- function(geneNamesRNA, geneNamesProtein, tissueType, cohort, cptac_
       font.label = list(size = 12, color = "black"),
       rotate.x.text = TRUE
     ) +
+      theme_minimal() +
+      
       # scale_fill_gradient(low = "purple",high = "red") +
       gradient_fill(c("purple", "white", "red"))
 
