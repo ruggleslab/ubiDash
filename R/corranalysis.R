@@ -78,20 +78,20 @@ corrAnalysisUI <- function(id, cohorts) {
           mainPanel(
           conditionalPanel(
             condition = paste0("input['", ns("GvGpanel"), "\'] == \'mRNA\'"),
-            withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrRna")), color = "#6A2798"),
+            withSpinner(plotlyOutput(outputId = ns("outputPlotGvgCorrRna")), color = "#6A2798"),
             tableOutput(outputId = ns("outputTabGvgCorrRna")),
             downloadButton(ns("downLoadGvgCorrRna"), label = "Download correlation data")
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvGpanel"), "\'] == \'Protein\'"),
-            withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrProtein")), color = "#6A2798"),
+            withSpinner(plotlyOutput(outputId = ns("outputPlotGvgCorrProtein")), color = "#6A2798"),
             tableOutput(outputId = ns("outputTabGvgCorrProtein")),
             downloadButton(ns("downLoadGvgCorrProtein"), label = "Download correlation data")
             
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvGpanel"), "\'] == \'mRNA/Protein\'"),
-            withSpinner(plotOutput(outputId = ns("outputPlotGvgCorrBoth")), color = "#6A2798"),
+            withSpinner(plotlyOutput(outputId = ns("outputPlotGvgCorrBoth")), color = "#6A2798"),
             tableOutput(outputId = ns("outputTabGvgCorrBoth")),
             downloadButton(ns("downLoadGvgCorrBoth"), label = "Download correlation data")
             
@@ -229,17 +229,17 @@ corrAnalysisUI <- function(id, cohorts) {
         mainPanel(
           conditionalPanel(
             condition = paste0("input['", ns("GvPpanel"), "\'] == \'mRNA\'"),
-            withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrRna")), color = "#6A2798"),
+            withSpinner(plotlyOutput(outputId = ns("outputPlotGvpCorrRna")), color = "#6A2798"),
             downloadButton(ns("downLoadGvpCorrRna"), label = "Download correlation data")
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvPpanel"), "\'] == \'Protein\'"),
-            withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrProtein")), color = "#6A2798"),
+            withSpinner(plotlyOutput(outputId = ns("outputPlotGvpCorrProtein")), color = "#6A2798"),
             downloadButton(ns("downLoadGvpCorrProtein"), label = "Download correlation data")
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvPpanel"), "\'] == \'mRNA/Protein\'"),
-            withSpinner(plotOutput(outputId = ns("outputPlotGvpCorrBoth")), color = "#6A2798"),
+            withSpinner(plotlyOutput(outputId = ns("outputPlotGvpCorrBoth")), color = "#6A2798"),
             downloadButton(ns("downLoadGvpCorrBoth"), label = "Download correlation data")
             
           )
@@ -284,7 +284,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
 
-    output$outputPlotGvgCorrRna <- renderPlot({
+    output$outputPlotGvgCorrRna <- renderPlotly({
       resGvgCorrRna()$singCorrPlot
     })
     output$outputTabGvgCorrRna <- renderTable(
@@ -318,7 +318,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
 
 
 
-    output$outputPlotGvgCorrProtein <- renderPlot({
+    output$outputPlotGvgCorrProtein <- renderPlotly({
       resGvgCorrProtein()$singCorrPlot
     })
     output$outputTabGvgCorrProtein <- renderTable(
@@ -350,7 +350,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
 
-    output$outputPlotGvgCorrBoth <- renderPlot({
+    output$outputPlotGvgCorrBoth <- renderPlotly({
       resGvgCorrBoth()$singCorrPlot
     })
     output$outputTabGvgCorrBoth <- renderTable(
@@ -466,7 +466,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
 
-    output$outputPlotGvpCorrRna <- renderPlot({
+    output$outputPlotGvpCorrRna <- renderPlotly({
       resGvpCorrRna()$corrPlot
     })
 
@@ -506,7 +506,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
 
-    output$outputPlotGvpCorrProtein <- renderPlot({
+    output$outputPlotGvpCorrProtein <- renderPlotly({
       resGvpCorrProtein()$corrPlot
     })
 
@@ -547,7 +547,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
 
-    output$outputPlotGvpCorrBoth <- renderPlot({
+    output$outputPlotGvpCorrBoth <- renderPlotly({
       resGvpCorrBoth()$corrPlot
     })
 

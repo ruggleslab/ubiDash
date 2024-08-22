@@ -302,14 +302,23 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
         p= ggplot(df(), aes(x = LFC_median, y = -log10(fdr), label = mutation, color = mutation %in% selected_genelist)) + #, color = Class)) +
           geom_point(alpha = 0.5, size = 1.2) +
           scale_color_manual(name=glue("{isolate(input$genelist)} Gene"),  values = c("TRUE" = "#44BBFF", "FALSE" = "#55555555"))+
-          theme_prism(border = TRUE) +
+          theme_prism() +
           # scale_color_manual(values = colors, name = "UPS Class") +
           labs(x = glue("log2(mut/wt)\n{gn}-LFC"), y = "-log10(p-adj)",
                title = glue("QTL-{i}: 10 CPTAC Cohorts"),
                # subtitle = glue("Integration of adjusted p-values"),
                caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
           geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
-          geom_vline(xintercept = 0, linetype = "dashed", color = "black") # +
+          geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+          theme(
+            text = element_text(family = "Arial"),  # Change to desired sans-serif font
+            axis.text = element_text(family = "Arial"),
+            axis.title = element_text(family = "Arial"),
+            plot.title = element_text(family = "Arial"),
+            plot.subtitle = element_text(family = "Arial"),
+            plot.caption = element_text(family = "Arial")
+          )
+
 
         return(p)
       }

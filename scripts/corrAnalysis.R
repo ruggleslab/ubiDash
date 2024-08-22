@@ -126,7 +126,7 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
   ymax <- max(dat$geneBExp)
 
   scatPlot <- ggplot(dat, aes(x = geneAExp, y = geneBExp, color = Cohort)) +
-    geom_point(size = 4) +
+    geom_point(size = 2, alpha = .6) +
     geom_smooth(method = "lm", size = 2) +
     # geom_smooth(aes(x = geneAExp, y = geneBExp,color = NULL),method = "lm", size = 2) +
     xlab(paste0("Log2 expression of \n", geneNameA)) +
@@ -137,10 +137,10 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
       legend.position = "right",
       panel.background = element_rect(fill = NA, colour = "grey50"),
       panel.grid = element_blank(),
-      axis.text.x = element_text(size = 26, colour = "black"),
-      axis.text.y = element_text(size = 26, colour = "black"),
-      axis.title.y = element_text(size = 26, face = "bold", vjust = 2),
-      axis.title.x = element_text(size = 26, face = "bold", vjust = 2)
+      axis.text.x = element_text(size = 12, colour = "black"),
+      axis.text.y = element_text(size = 12, colour = "black"),
+      axis.title.y = element_text(size = 12, face = "bold", vjust = 2),
+      axis.title.x = element_text(size = 12, face = "bold", vjust = 2)
     )
   # scatPlot
 
@@ -212,12 +212,12 @@ multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac
     xlab("Rho Value") +
     theme(
       legend.title = element_blank(),
-      legend.text = element_text(size = 25),
+      legend.text = element_text(size = 12),
       legend.position = "bottom",
-      axis.text.x = element_text(size = 25, colour = "black"),
-      axis.text.y = element_text(size = 25, colour = "black"),
-      axis.title.x = element_text(size = 25, vjust = 2, face = "bold"),
-      axis.title.y = element_text(size = 25, vjust = 2, face = "bold")
+      axis.text.x = element_text(size = 12, colour = "black"),
+      axis.text.y = element_text(size = 12, colour = "black"),
+      axis.title.x = element_text(size = 12, vjust = 2, face = "bold"),
+      axis.title.y = element_text(size = 12, vjust = 2, face = "bold")
     ) +
     guides(col = guide_legend(nrow = 2, byrow = TRUE))
 
