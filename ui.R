@@ -1,6 +1,9 @@
 # make plot square
 
-cohorts <- c("BRCA", "CCRCC", "COAD", "GBM", "HCC", "HNSCC", "LSCC", "LUAD", "OV", "PDA", "UCEC")
+cohorts1.1 = c("BRCA","COAD","HGSC","LUAD","ccRCC","UCEC","PDAC","LSCC","GBM","HNSCC"
+               # ,"MB","HCC"
+) 
+cohorts = c("BRCA","COAD","HGSC","LUAD","CCRCC","UCEC","PDA","LSCC","GBM","HNSCC", "OV") 
 abstract <- paste(read.delim("./www/assets/abstract.txt"))
 
 shinyUI(
