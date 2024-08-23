@@ -4,6 +4,8 @@ library("tidyverse")
 library("googledrive")
 library("memoise")
 
+options(rsconnect.max.bundle.size=3000000000)
+
 # loading R packages
 source("./scripts/load.packages.R")
 pks_lst <- readLines("./www/packages.txt")

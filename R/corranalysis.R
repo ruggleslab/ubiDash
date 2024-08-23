@@ -265,8 +265,8 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     
     
     # Gene vs Gene correlation RNA
-    updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = cptac_rna_genes, server = TRUE, selected = "A1BG", options = list(placeholder = "Type gene name"))
-    updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = cptac_rna_genes, server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = cptac_rna_genes, server = TRUE, selected = "BTRC", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = cptac_rna_genes, server = TRUE, selected = "CTNNB1", options = list(placeholder = "Type gene name"))
     
     resGvgCorrRna <- eventReactive(input$generateGvgCorrRna, {
       validate(
@@ -332,8 +332,8 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     )
     
     # Protein vs Gene correlation
-    updateSelectizeInput(session, "inputGvgCorrBothNameA", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "A1BG", options = list(placeholder = "Type Protein name"))
-    updateSelectizeInput(session, "inputGvgCorrBothNameB", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvgCorrBothNameA", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "BTRC", options = list(placeholder = "Type Protein name"))
+    updateSelectizeInput(session, "inputGvgCorrBothNameB", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "CTNNB1", options = list(placeholder = "Type gene name"))
     
     resGvgCorrBoth <- eventReactive(input$generateGvgCorrBoth, {
       cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
