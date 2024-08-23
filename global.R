@@ -4,7 +4,7 @@ library("tidyverse")
 library("googledrive")
 library("memoise")
 
-options(rsconnect.max.bundle.size=8000000000)
+options(rsconnect.max.bundle.size=3145728000)
 
 # loading R packages
 source("./scripts/load.packages.R")
