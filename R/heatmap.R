@@ -178,6 +178,33 @@ heatmapServer <-
         }
       })
       
+      observeEvent(input$cohort,{
+        
+        
+        if(length(cohorts) == length(input$cohort)){
+          updateSelectizeInput(
+            session,
+            "subtype",
+            choices = tnlabels$cancer_subtype,
+            selected = c(),
+            server = TRUE
+          )
+        } else {
+          cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
+          
+          tnlabels <- subset(cptac_samples, type %in% c("Tumor", "Normal"), select = c("type", "cohort", "cancer_subtype"))
+          
+          updateSelectizeInput(
+            session,
+            "subtype",
+            choices = filter(tnlabels, cohort %in% input$cohort)$cancer_subtype,
+            selected = c(),
+            server = TRUE
+          )
+        }
+        
+      })
+      
       
       # default plot height
       plotHeight <- reactiveVal(956)
