@@ -327,7 +327,7 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
     
     output$downloadDat <- downloadHandler(
       filename = function() {
-        paste("data-", Sys.Date(), ".csv", sep = "")
+        paste("mutations-QTL-", isolate(input$plottype),"-",  isolate(input$datatype), "-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
         

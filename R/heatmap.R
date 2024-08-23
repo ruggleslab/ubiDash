@@ -194,8 +194,7 @@ heatmapServer <-
         
         cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
        
-        ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
-        
+
         cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
         cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
        
@@ -472,7 +471,7 @@ heatmapServer <-
       
       output$downloadSampleInfo <- downloadHandler(
         filename = function() {
-          paste("sample-info-", Sys.Date(), ".csv", sep = "")
+          paste("expression-profile-heatmap-sample-info-", isolate(input$dataset), "-",isolate(input$datatype), "-", Sys.Date(), ".csv", sep = "")
         },
         content = function(file) {
           write.csv(sample_info(), file)
@@ -480,7 +479,7 @@ heatmapServer <-
       )
       output$download <- downloadHandler(
         filename = function() {
-          paste("data-", Sys.Date(), ".csv", sep = "")
+          paste("expression-profile-heatmap-", isolate(input$dataset), "-",isolate(input$datatype), "-", Sys.Date(), ".csv", sep = "")
         },
         content = function(file) {
           if(isTruthy(data())){

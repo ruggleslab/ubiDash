@@ -149,15 +149,17 @@ singleCorr <- function(geneNameA, geneNameB, tissueType, cohort, cptac_protein, 
   colors  = colorsTbl$color
   names(colors) = colorsTbl$id
   
+  print(dat$Cohort)
+  
   scatPlot <- ggplot(dat, aes(x = geneAExp, y = geneBExp, color = Cohort)) +
     geom_point(size = 2, alpha = .6) +
     scale_color_manual(values = colors) +
     geom_smooth(method = "lm", size = 2) +
-    scale_fill_manual(values = colors) +
+    # scale_fill_manual(values = colors) +
     # geom_smooth(aes(x = geneAExp, y = geneBExp,color = NULL),method = "lm", size = 2) +
     xlab(glue("{xlab} {geneNameA}")) +
     ylab(glue("{ylab} {geneNameB}")) +
-    annotate(geom = "text", x = xmax, y = ymax, label = paste0("p = ", pValue, "\n", "R = ", rho)) +
+    annotate(geom = "text", x = xmax, y = ymax, label = paste0("p = ", pValue, "\n", "ρ = ", rho)) +
     # coord_cartesian(clip = "off")+
     theme_minimal() +
     theme(
@@ -229,16 +231,17 @@ multiCorr <- function(geneName, tissueType, cutOff, cohort, cptac_protein, cptac
   colnames(plotTab) <- c("From", "Genes", "R_value", "P_value")
   plotTab$R_value <- as.numeric(plotTab$R_value)
   plotTab$P_value <- as.numeric(plotTab$P_value)
+  plotTab$P_adj <- p.adjust(plotTab$P_value, method = "BH")
   
 
-  corrPlot <- ggplot(data = plotTab, aes(x = R_value, y = -log10(P_value), label = Genes)) +
+  corrPlot <- ggplot(data = plotTab, aes(x = R_value, y = -log10(P_adj), label = Genes)) +
     geom_point() +
     theme_minimal() +
     geom_text_repel(size = 3, max.overlaps = 20) +
     # geom_vline(xintercept=c(cutOff), col="black", linetype = "dashed") +
     geom_hline(yintercept = -log10(0.01), col = "black", linetype = "dashed") +
-    ylab("-log10(p-value)") +
-    xlab("Rho Value") +
+    ylab("-log10(p-adj)") +
+    xlab("Rho, ρ") +
     theme(
       legend.title = element_blank(),
       legend.text = element_text(size = 12),

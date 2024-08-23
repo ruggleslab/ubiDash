@@ -130,7 +130,11 @@ oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
     output$downloadOncoMutations <- downloadHandler(
 
       filename = function() {
-        paste("data-", Sys.Date(), ".csv", sep = "")
+        if(length(isolate(input$cohorts)) == length(cohorts) && !isTruthy(isolate(input$genes))){
+          paste("mutations-oncoplot-", Sys.Date(), ".csv", sep = "")
+        } else {
+          paste("mutations-oncoplot-custom", Sys.Date(), ".csv", sep = "")
+        }
       },
       content = function(file) {
         write.csv(filteredMaf()@data, file)

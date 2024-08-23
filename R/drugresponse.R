@@ -562,7 +562,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
     # downloads ----
     output$selected_gene_drugmat <- downloadHandler(
       filename = function() {
-        paste("selected_gene_drugmat-", Sys.Date(), ".csv", sep = "")
+        paste("drug-sensitivity-drugmat-",isolate(input$inputGene), "-", Sys.Date(), ".csv", sep = "")
+        
       },
       content = function(file) {
         write.csv(selected_gene_drugmat(), file)
@@ -571,7 +572,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
 
     output$selected_gene_all_wilcoxon <- downloadHandler(
       filename = function() {
-        paste("selected_gene_all_wilcoxon-", Sys.Date(), ".csv", sep = "")
+        paste("drug-sensitivity-all_wilcoxon-",isolate(input$inputGene), "-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
         write.csv(selected_gene_all_wilcoxon(), file)
@@ -580,7 +581,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
 
     output$selected_gene_sigdrug_wilcoxon <- downloadHandler(
       filename = function() {
-        paste("selected_gene_sigdrug_wilcoxon-", Sys.Date(), ".csv", sep = "")
+        paste("drug-sensitivity-sigdrug-wilcoxon-",isolate(input$inputGene), "-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
         write.csv(selected_gene_sigdrug_wilcoxon(), file)
@@ -589,7 +590,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
 
     output$selected_gene_subdrugmat <- downloadHandler(
       filename = function() {
-        paste("selected_gene_subdrugmat-", Sys.Date(), ".csv", sep = "")
+        paste("drug-sensitivity-subdrugmat-",isolate(input$inputGene), "-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
         write.csv(selected_gene_subdrugmat(), file)
@@ -598,7 +599,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
 
     output$selected_gene_corr <- downloadHandler(
       filename = function() {
-        paste("selected_gene_corr-", Sys.Date(), ".csv", sep = "")
+        paste("drug-sensitivity-corr-",isolate(input$inputGene), "-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
         write.csv(selected_gene_corr(), file)

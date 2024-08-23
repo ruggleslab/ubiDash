@@ -123,7 +123,7 @@ corrAnalysisUI <- function(id, cohorts) {
               sliderInput(
                 inputId = ns("inputGvACorrRnaR"),
                 label = "Set correlation coefficient cut-off",
-                value = c(0.5, 1), min = -1, max = 1, step = 0.05
+                value = c(-1, -0.5), min = -1, max = 1, step = 0.05
               ),
               actionButton(ns("generateGvACorrRna"), label = "Start Analysis")
             ),
@@ -143,7 +143,7 @@ corrAnalysisUI <- function(id, cohorts) {
               sliderInput(
                 inputId = ns("inputGvACorrProteinR"),
                 label = "Set correlation coefficient cut-off",
-                value = c(0.5, 1), min = -1, max = 1, step = 0.05
+                value = c(-1, -0.5), min = -1, max = 1, step = 0.05
               ),
               actionButton(ns("generateGvACorrProtein"), label = "Start Analysis")
             )
@@ -480,7 +480,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     
     output$downLoadGvpCorrRna <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GenePanelRNA-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         write.xlsx(resGvpCorrRna()$corTab, file, row.names = TRUE)
@@ -519,7 +519,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     
     output$downLoadGvpCorrProtein <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GenePanelProtein-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         write.xlsx(resGvpCorrProtein()$corTab, file, row.names = TRUE)
@@ -560,7 +560,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     
     output$downLoadGvpCorrBoth <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GenePanelProteinRNA-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         write.xlsx(resGvpCorrBoth()$corTab, file, row.names = TRUE)
@@ -570,7 +570,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     
     output$downLoadGvgCorrRna <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GeneVsGeneRNA-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         # print(resGvgCorrRna)
@@ -579,7 +579,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     )
     output$downLoadGvgCorrProtein <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GeneVsGeneProtein-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         write.xlsx(resGvgCorrProtein()$corTab, file, row.names = TRUE)
@@ -587,7 +587,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     )
     output$downLoadGvgCorrBoth <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GeneVsGeneProteinRNA-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         write.xlsx(resGvgCorrBoth()$corTab, file, row.names = TRUE)
@@ -600,7 +600,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     
     output$downLoadGvACorrRna <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GeneVsAllRNA-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         write.xlsx(resGvACorrRna()$corTab, file, row.names = TRUE)
@@ -608,7 +608,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     )
     output$downLoadGvACorrProtein <- downloadHandler(
       filename = function() {
-        paste0("ubiDashCorrData", ".xlsx")
+        paste0("GeneVsAllProtein-custom-", Sys.Date(), ".xlsx")
       },
       content = function(file) {
         write.xlsx(resGvACorrProtein()$corTab, file, row.names = TRUE)

@@ -16,7 +16,7 @@ violinUI <- function(id, cohorts) {
             choices =  c("KBTBD11"),
             multiple = F,
             selected = c("KBTBD11"),
-            label = "Genes",
+            label = "Gene",
             options = list(`live-search` = TRUE),
           ),
         ),
@@ -27,7 +27,7 @@ violinUI <- function(id, cohorts) {
             choices =  c("KBTBD11"),
             multiple = F,
             selected = c("KBTBD11"),
-            label = "Genes",
+            label = "Gene",
             options = list(`live-search` = TRUE),
           ),
         ),
@@ -336,7 +336,7 @@ violinServer <-
             geom_boxplot(
               show.legend = FALSE,
               position = position_dodge()
-            )
+            ) 
         } else if (isolate(input$dataset) == "CCLE") {
           violin <- ggplot(
             sub_violin.input,
@@ -364,7 +364,9 @@ violinServer <-
             pch = 21,
             color = "black"
           ) +
-            theme(strip.text.x = element_blank(),
+            theme_minimal() +
+            theme(
+              # strip.text.x = element_blank(),
                   axis.title.x=element_blank(),
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank()) +
@@ -388,6 +390,8 @@ violinServer <-
             size = .75,
             stroke = .1
           ) +
+            theme_minimal() +
+            
             theme(axis.text.x = element_text(size = 8, angle = 90))
           
           # +
@@ -395,7 +399,7 @@ violinServer <-
         }
         
         violin <- violin +
-          theme_prism() +
+          # theme_prism() +
           
           # re-naming x and y axis
           labs(
@@ -426,7 +430,11 @@ violinServer <-
       
       output$download <- downloadHandler(
         filename = function() {
-          paste("data-", Sys.Date(), ".csv", sep = "")
+          if (isolate(input$datatype) == "protein") {
+            paste("descriptive-statistics-", isolate(input$dataset), "-protein-",isolate(input$proteinGenes), "-", Sys.Date(), ".csv", sep = "")
+          } else {
+            paste("descriptive-statistics-", isolate(input$dataset), "-mRNA-",isolate(input$mRNAGenes), "-", Sys.Date(), ".csv", sep = "")
+          }
         },
         content = function(file) {
           req(violin.input())

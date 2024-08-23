@@ -1,4 +1,4 @@
-# load("./data/defaults.RData")
+load("./data/defaults.RData")
 # loading default objects below:
 # genesSubset
 # defaultHeatmap

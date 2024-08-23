@@ -197,7 +197,7 @@ simplifiedHeatmapServer <-
       
       output$download <- downloadHandler(
         filename = function() {
-          paste("data-", Sys.Date(), ".csv", sep = "")
+          paste("summarized-profile-pride-", isolate(input$datatype), "-",isolate(input$geneset), "-", Sys.Date(), ".csv", sep = "")
         },
         content = function(file) {
           req(dataset())

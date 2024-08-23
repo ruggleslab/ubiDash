@@ -49,22 +49,6 @@ if(!skip_load_data){
     return(data)
   }
   
-  # rdata_from_drive <- function(filename){
-  #   ## download the file in current wd and save the object so you know the location of the download
-  #   ## This function can fail so wrap it in an error object to rerun it if it fails
-  #   file_data <- drive_download(filename, overwrite = TRUE)
-  # 
-  #   ## Loading the Rds object based on the local path that it's stored in
-  #   load(file_data$local_path)
-  # 
-  #   ## Deleting the file once it's loaded in to save on storage space
-  #   if (file.exists(file_data$local_path)) {
-  #     #Delete file if it exists
-  #     file.remove(file_data$local_path)
-  #   }
-  # 
-  # }
-  
   
   mem_get_from_drive <- memoise(get_from_drive)
   # mem_rdata_from_drive <- memoise(rdata_from_drive)
@@ -73,17 +57,7 @@ if(!skip_load_data){
   
   mem_readRDS <- memoise(readRDS)
   
-  # Datasets ----
   
-  # ccle dataset
-  # ccle_rna <- mem_get_from_drive("ccle_tpm_rna_expression.rds")
-  # ccle_protein <- mem_get_from_drive("ccle_tmt_protein_expression.rds")
-  # ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
-  
-  # cptac dataset
-  # cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
-  # cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
-  # cptac_samples <- mem_get_from_drive("cptac_sample_info_with_subtypes.rds")
   
   load("./data/searchlists.RData")
   
@@ -91,34 +65,16 @@ if(!skip_load_data){
   cohorts1.1 = c("BRCA","COAD","HGSC","LUAD","ccRCC","UCEC","PDAC","LSCC","GBM","HNSCC"
                  # ,"MB","HCC"
                  ) 
+  cohorts = c("BRCA","COAD","HGSC","LUAD","CCRCC","UCEC","PDA","LSCC","GBM","HNSCC", "OV") 
   
   
   
-  #pride dataset
-  # pride_protein <- mem_get_from_drive("pride_lfq_protein_expression.rds")
-  
-  
-  # for correlations tab
-  # plot_tab <- mem_get_from_drive("cptac_multi_omic_correlations.rds")
   
   
   currentTime =  as.numeric(Sys.time())
   print(glue("read datasets in {(currentTime- time) * 1000} ms"))
   time = currentTime
   
-  # # maf for lollipop and oncoplot tabs 
-  # maf = readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-  
-  # currentTime =  as.numeric(Sys.time())
-  # print(glue("read maf in {(currentTime- time) * 1000} ms"))
-  # time = currentTime
-  
-  
-  # Information used by various modules ----
-  
-  # cohort  and sample type of all normal and tumor samples
-  # get list of cohorts
-  # cohorts <- unique(tnlabels$cohort_code)
   
   genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
   crl_genes = unique(genes$hgnc_symbol)
@@ -130,22 +86,6 @@ if(!skip_load_data){
   genelists = readRDS("./data/combined_genelists.rds")
   
   
-  # Tab-specific variables ----
-  
-  # Oncoplot ----
-  
-  # cohort_colors = list(cohort_code = c(BRCA = "royalblue4",
-  #                                      CCRCC = "maroon4",
-  #                                      COAD = "goldenrod1",
-  #                                      GBM = "aquamarine",
-  #                                      HCC = "pink3",
-  #                                      HNSCC = "coral4",
-  #                                      LSCC = "slategray3",
-  #                                      LUAD = "mediumpurple",
-  #                                      OV = "seagreen",
-  #                                      PDA = "lightgoldenrod2",
-  #                                      UCEC = "orangered3"))
-  
   top_crls = readRDS("./data/topcrls.rds")
   
   currentTime =  as.numeric(Sys.time())
@@ -153,24 +93,10 @@ if(!skip_load_data){
   time = currentTime
   
   
-  # Correlations ----
-  # source("./scripts/GenerateCorrPlot.R")
-  # 
-  # lines = list(geom_hline(yintercept=.5, color = "red") ,
-  #              geom_hline(yintercept=-.5,  color = "red") ,
-  #              geom_vline(xintercept=-.5,color = "red") ,
-  #              geom_vline(xintercept=--.5, color = "red") ,
-  #              geom_hline(yintercept=0, size = 1, color = "black") ,
-  #              geom_vline(xintercept=-0, size = 1, color = "black"))
-  
   
   currentTime =  as.numeric(Sys.time())
   print(glue("Prepared correlations data in {(currentTime- time) * 1000} ms"))
   time = currentTime
-  
-  # Heatmap ----
-  # load("./data/defaults.RData")
-  
   
   z_score <- function(data_matrix, which = c(1,2)) { # 1 rows, 2 columns
     # Remove rows with all NA values
@@ -188,13 +114,7 @@ if(!skip_load_data){
   }
   
   colorsTbl = read.csv("./data/colors.csv")
-  # colors = colorsTbl$color[1:11]
-  # colorList <- list(
-  #   Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
-  #   Cohort = setNames(colors, nm = cohorts)
-  # )
-  
-  
+ 
   drawHeatmap <- function(inputGenesMat, annotation,colsplit, clusterCol, clusterRow, legendName, column_names){
     
                 
@@ -241,13 +161,13 @@ if(!skip_load_data){
   source("./data/simplifiedheatmap/tgr_misc.R")
   
   
-  get_prt.global.AI <- function(){
-    data = get_from_drive("cptac_tmt-log2-AI_protein_expression.rds")
-    data = data_norm(data, col_center = T)
-    return(data)
-  }
+  # get_prt.global.AI <- function(){
+  #   data = get_from_drive("cptac_tmt-log2-AI_protein_expression.rds")
+  #   data = data_norm(data, col_center = T)
+  #   return(data)
+  # }
   
-  mem_prt.global.AI <- memoise(get_prt.global.AI)
+  # mem_prt.global.AI <- memoise(get_prt.global.AI)
   
   
   labels <- read.csv("./data/simplifiedheatmap/sub_types.csv")
@@ -286,17 +206,12 @@ if(!skip_load_data){
   time = currentTime
   
   # correlations ----
-  
-  # E3_genes <-
-  #   read_excel(path = "./data/simplifiedheatmap/UPS_genes.xlsx",
-  #              sheet = 4)
+
   
   currentTime =  as.numeric(Sys.time())
   print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
   time = currentTime
-  # dat <- list(rna = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_eQTLs.rds"),
-  #             pro = mem_get_from_drive("CPTAC_Pancan_UPS_genome-wide_pQTLs.rds"))
-  
+ 
   print(glue("Total startup time was {(time-startTime) * 1000} ms"))
   rm(time, currentTime, startTime)
   
