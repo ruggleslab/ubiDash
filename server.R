@@ -1,4 +1,4 @@
-load("./data/defaults.RData")
+# load("./data/defaults.RData")
 # loading default objects below:
 # genesSubset
 # defaultHeatmap
@@ -8,7 +8,7 @@ load("./data/defaults.RData")
 # source("./scripts/SplitInputGenes.R")
 
 
-source('./R/corranalysis.R')
+# source('./R/corranalysis.R')
 
 
 # server ----
@@ -22,7 +22,7 @@ shinyServer(function(input, output, session) {
     # ccle_protein,
     # ccle_rna,
     # pride_protein,
-    tnlabels,
+    # tnlabels,
     colorsTbl,
     filteredProteinMat,
     filteredMRNAMat,
@@ -41,7 +41,7 @@ shinyServer(function(input, output, session) {
   violinServer("violinTab", colorsTbl) # cptac_protein, cptac_rna, cptac_samples
 
   # oncoplot tab ----
-  oncoplotServer("oncoTab", cptac_samples, top_crls, cohorts, colorsTbl) # cptac_protein, maf
+  oncoplotServer("oncoTab", top_crls, cohorts, colorsTbl) # cptac_protein, maf
 
   # lollipop tab
   lollipopServer("lollipopTab") # maf
@@ -50,7 +50,7 @@ shinyServer(function(input, output, session) {
   
     densityServer("densityTab") # maf
 
-  corrAnalysisServer("corrAnalysisTab", cohorts, cptac_samples) # cptac_protein, cptac_rna
+  corrAnalysisServer("corrAnalysisTab", cohorts1.1, colorsTbl) # cptac_protein, cptac_rna
 
   drugResponseServer("drugResponseTab",
                      drug,

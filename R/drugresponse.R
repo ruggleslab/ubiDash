@@ -80,8 +80,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         selected_gene_name <- "VHL"
       }
 
-      print(selected_gene_name)
-      print(selected_gene)
+      # print(selected_gene_name)
+      # print(selected_gene)
 
       selected_gene_exp <- exp[exp$GENE_SYMBOLS == selected_gene_name, ]
       selected_gene_exp <- t(selected_gene_exp[, -c(1:2)]) # transpose
@@ -130,7 +130,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           return(NULL)
         }
         
-        print("plot1")
+        # print("plot1")
 
         ### generate expression by type
 
@@ -157,7 +157,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           return(NULL)
         }
         
-        print("plot2")
+        # print("plot2")
         
         selected_gene_copy = selected_gene()
         
@@ -419,7 +419,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           return(NULL)
         }
         
-        print("plot3")
+        # print("plot3")
         # spearman correlation
         drugall <- drug[, c(1, 2, 5)] # keep cell line, ic50 and drugname
         # wider df
@@ -477,7 +477,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
         # generate volcano plot_met
         # pdf(file="/Users/staceyvann/Desktop/Lab/Drug Sensitivity/selected_gene/selected_gene_Corr_vln.pdf",width=11,height=9)
         # vln <-
-        print(head(testdf))
+        # print(head(testdf))
         text <- paste(
           "<b>", "Drug Name: ", testdf$DRUG_NAME, "</b>", "\n",
           "corr coeff: ", testdf$corr.coef, "\n",
@@ -541,8 +541,8 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           )
         
         labeledPoints <- filter(testdf, (DRUG_NAME %in% isolate(input$inputDrugs)))
-        print(labeledPoints)
-        print("DRUGS")
+        # print(labeledPoints)
+        # print("DRUGS")
         
         if (nrow(labeledPoints) > 0) {
           plt <- plt + geom_text(

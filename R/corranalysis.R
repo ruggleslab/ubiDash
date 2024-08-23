@@ -1,15 +1,15 @@
 corrAnalysisUI <- function(id, cohorts) {
-
+  
   ns <- NS(id)
-
+  
   navbarMenu(
     "Correlation Analysis",
     tabPanel(
       "Gene vs Gene",
       sidebarLayout(
         sidebarPanel(
-        h3("Gene vs. Gene Correlation Analysis"),
-        p("(description paragraph)"),
+          h3("Gene vs. Gene Correlation Analysis"),
+          p("(description paragraph)"),
           tabsetPanel(
             id = ns("GvGpanel"), selected = "mRNA",
             tabPanel(
@@ -75,7 +75,7 @@ corrAnalysisUI <- function(id, cohorts) {
             )
           )
         ),
-          mainPanel(
+        mainPanel(
           conditionalPanel(
             condition = paste0("input['", ns("GvGpanel"), "\'] == \'mRNA\'"),
             withSpinner(plotlyOutput(outputId = ns("outputPlotGvgCorrRna")), color = "#6A2798"),
@@ -103,8 +103,8 @@ corrAnalysisUI <- function(id, cohorts) {
       "Gene vs All",
       sidebarLayout(
         sidebarPanel(
-        h3("Gene vs. All Correlation Analysis"),
-        p("(description paragraph)"),
+          h3("Gene vs. All Correlation Analysis"),
+          p("(description paragraph)"),
           tabsetPanel(
             id = ns("GvApanel"), selected = "mRNA",
             tabPanel(
@@ -152,16 +152,16 @@ corrAnalysisUI <- function(id, cohorts) {
         mainPanel(
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'Protein\'"),
-                # DTOutput(ns("outputTabGvACorrProtein")),
-                withSpinner(plotOutput(outputId = ns("outputPlotGvACorrProtein")), color = "#6A2798"),
-                downloadButton(ns("downLoadGvACorrProtein"), label = "Download correlation data")
-                
+            # DTOutput(ns("outputTabGvACorrProtein")),
+            withSpinner(plotOutput(outputId = ns("outputPlotGvACorrProtein")), color = "#6A2798"),
+            downloadButton(ns("downLoadGvACorrProtein"), label = "Download correlation data")
+            
           ),
           conditionalPanel(
             condition = paste0("input['", ns("GvApanel"), "\'] == \'mRNA\'"),
-                # DT::dataTableOutput(outputId = ns("outputTabGvACorrRna")),
-                withSpinner(plotOutput(outputId = ns("outputPlotGvACorrRna")), color = "#6A2798"),
-                downloadButton(ns("downLoadGvACorrRna"), label = "Download correlation data")
+            # DT::dataTableOutput(outputId = ns("outputTabGvACorrRna")),
+            withSpinner(plotOutput(outputId = ns("outputPlotGvACorrRna")), color = "#6A2798"),
+            downloadButton(ns("downLoadGvACorrRna"), label = "Download correlation data")
           )
         )
       )
@@ -170,8 +170,8 @@ corrAnalysisUI <- function(id, cohorts) {
       "Gene Panel",
       sidebarLayout(
         sidebarPanel(
-        h3("Gene Panel Correlation Analysis"),
-        p("(description paragraph)"),
+          h3("Gene Panel Correlation Analysis"),
+          p("(description paragraph)"),
           tabsetPanel(
             id = ns("GvPpanel"), selected = "mRNA",
             tabPanel(
@@ -250,29 +250,29 @@ corrAnalysisUI <- function(id, cohorts) {
 }
 
 
-corrAnalysisServer <- function(id, cohorts, cptac_samples) {
-
-
-
+corrAnalysisServer <- function(id, cohorts, colorsTbl) {
+  
+  
+  
   moduleServer(id, function(input, output, session) {
     # protein specific correlation ----
     source(file = "./scripts/corrAnalysis.R")
-
-    # cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
-    # cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
-
-
     
-
+    #             cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
+    # cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+    
+    cptac_samples = mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
+    
+    
     # Gene vs Gene correlation RNA
     updateSelectizeInput(session, "inputGvgCorrRnaNameA", choices = cptac_rna_genes, server = TRUE, selected = "A1BG", options = list(placeholder = "Type gene name"))
     updateSelectizeInput(session, "inputGvgCorrRnaNameB", choices = cptac_rna_genes, server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
-
+    
     resGvgCorrRna <- eventReactive(input$generateGvgCorrRna, {
       validate(
         need(length(isolate(input$inputGvgCorrRnaCohort)) >= 1, 'Please select at least one cohort.'),
       )
-      cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+      cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
       singleCorr(
         geneNameA = input$inputGvgCorrRnaNameA,
         geneNameB = input$inputGvgCorrRnaNameB,
@@ -280,10 +280,11 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         tissueType = input$inputGvgCorrRnaStype,
         cptac_protein = NULL,
         cptac_rna = cptac_rna,
-        cptac_samples = cptac_samples
+        cptac_samples = cptac_samples,
+        colorsTbl
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
+    
     output$outputPlotGvgCorrRna <- renderPlotly({
       resGvgCorrRna()$singCorrPlot
     })
@@ -294,14 +295,14 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       rownames = T,
       colnames = F
     )
-
-
+    
+    
     # Protein vs Protein correlation RNA
     updateSelectizeInput(session, "inputGvgCorrProteinNameA", choices = cptac_protein_genes, server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
     updateSelectizeInput(session, "inputGvgCorrProteinNameB", choices = cptac_protein_genes, server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
-
+    
     resGvgCorrProtein <- eventReactive(input$generateGvgCorrProtein, {
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       validate(
         need(length(isolate(input$inputGvgCorrProteinCohort)) >= 1, 'Please select at least one cohort.'),
       )
@@ -312,12 +313,13 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         tissueType = input$inputGvgCorrProteinStype,
         cptac_protein = cptac_protein,
         cptac_rna = NULL,
-        cptac_samples = cptac_samples
+        cptac_samples = cptac_samples,
+        colorsTbl
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
-
-
+    
+    
+    
     output$outputPlotGvgCorrProtein <- renderPlotly({
       resGvgCorrProtein()$singCorrPlot
     })
@@ -328,14 +330,14 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       rownames = T,
       colnames = F
     )
-
+    
     # Protein vs Gene correlation
     updateSelectizeInput(session, "inputGvgCorrBothNameA", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "A1BG", options = list(placeholder = "Type Protein name"))
     updateSelectizeInput(session, "inputGvgCorrBothNameB", choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)), server = TRUE, selected = "HIF1A", options = list(placeholder = "Type gene name"))
-
+    
     resGvgCorrBoth <- eventReactive(input$generateGvgCorrBoth, {
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
-      cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
+      cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
       validate(
         need(length(isolate(input$inputGvgCorrBothCohort)) >= 1, 'Please select at least one cohort.'),
       )
@@ -346,10 +348,11 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         tissueType = input$inputGvgCorrBothStype,
         cptac_protein = cptac_protein,
         cptac_rna = cptac_rna,
-        cptac_samples = cptac_samples
+        cptac_samples = cptac_samples,
+        colorsTbl
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
+    
     output$outputPlotGvgCorrBoth <- renderPlotly({
       resGvgCorrBoth()$singCorrPlot
     })
@@ -360,11 +363,11 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
       rownames = T,
       colnames = F
     )
-
+    
     # Gene vs All correlation for proteins
     updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = cptac_protein_genes, server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
     resGvACorrProtein <- eventReactive(input$generateGvACorrProtein, {
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       validate(
         need(length(isolate(input$inputGvACorrProteinCohort)) >= 1, 'Please select at least one cohort.'),
       )
@@ -378,7 +381,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_samples = cptac_samples
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
+    
     # output$outputTabGvACorrProtein <- renderDT(
     #   server = FALSE,
     #   {
@@ -399,15 +402,15 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     #     )
     #   )
     # )
-
+    
     output$outputPlotGvACorrProtein <- renderPlot({
       resGvACorrProtein()$corrPlot
     })
-
+    
     # Gene vs All correlation for RNA
     updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = cptac_rna_genes, server = TRUE, selected = "A1BG", options = list(placeholder = "Type gene name"))
     resGvACorrRna <- eventReactive(input$generateGvACorrRna, {
-      cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+      cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
       validate(
         need(length(isolate(input$inputGvACorrRnaCohort)) >= 1, 'Please select at least one cohort.'),
       )
@@ -421,7 +424,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_samples = cptac_samples
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
+    
     # output$outputTabGvACorrRna <- DT::renderDataTable(
     #   server = FALSE,
     #   {
@@ -441,16 +444,16 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
     #     )
     #   )
     # )
-
+    
     output$outputPlotGvACorrRna <- renderPlot({
       resGvACorrRna()$corrPlot
     })
-
+    
     # Gene panel correlation for RNA
     updateSelectizeInput(session, "inputGvpCorrRnaGeneName", selected=c("A1BG","A1CF","A2M","A2ML1","A3GALT2"), choices = cptac_rna_genes, server = TRUE, options = list(placeholder = "Type gene name"))
-
+    
     resGvpCorrRna <- eventReactive(input$generateGvpCorrRna, {
-      cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
+      cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
       validate(
         need(length(isolate(input$inputGvpCorrRnaCohort)) >= 1, 'Please select at least one cohort.'),
         need(length(isolate(input$inputGvpCorrRnaGeneName)) >= 1, 'Please select at least one gene'),
@@ -465,32 +468,31 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_samples = cptac_samples
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
+    
     output$outputPlotGvpCorrRna <- renderPlotly({
       resGvpCorrRna()$corrPlot
     })
-
+    
     # output$dataDownLoadGvpCorrRna <- renderUI({
     #   req(input$generateGvpCorrRna)
     #   downloadButton("downLoadGvpCorrRna", label = "Download correlation data")
     # })
-
+    
     output$downLoadGvpCorrRna <- downloadHandler(
       filename = function() {
         paste0("ubiDashCorrData", ".xlsx")
       },
       content = function(file) {
-        print("hi")
         write.xlsx(resGvpCorrRna()$corTab, file, row.names = TRUE)
       }
     )
-
-
+    
+    
     # Gene panel correlation for Protein
     updateSelectizeInput(session, "inputGvpCorrProteinGeneName", selected=c("VHL","A1BG","A2M","A2ML1","A4GALT"), choices = cptac_protein_genes, server = TRUE, options = list(placeholder = "Type gene name"))
-
+    
     resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein, {
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       validate(
         need(length(isolate(input$inputGvpCorrProteinCohort)) >= 1, 'Please select at least one cohort.'),
         need(length(isolate(input$inputGvpCorrProteinGeneName)) >= 1, 'Please select at least one gene'),
@@ -505,16 +507,16 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_samples = cptac_samples
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
+    
     output$outputPlotGvpCorrProtein <- renderPlotly({
       resGvpCorrProtein()$corrPlot
     })
-
+    
     # output$dataDownLoadGvpCorrProtein <- renderUI({
     #   req(input$generateGvpCorrProtein)
     #   downloadButton("downLoadGvpCorrProtein", label = "Download correlation data")
     # })
-
+    
     output$downLoadGvpCorrProtein <- downloadHandler(
       filename = function() {
         paste0("ubiDashCorrData", ".xlsx")
@@ -523,15 +525,15 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         write.xlsx(resGvpCorrProtein()$corTab, file, row.names = TRUE)
       }
     )
-
+    
     # Gene panel correlation for Protein/RNA
     updateSelectizeInput(session, "inputGvpCorrBothGeneNameA", selected=c("A1BG","A1CF","A2M","A2ML1","A3GALT2"), choices = cptac_rna_genes, server = TRUE, options = list(placeholder = "Type gene name"))
     updateSelectizeInput(session, "inputGvpCorrBothGeneNameB", selected=c("VHL","A1BG","A2M","A2ML1","A4GALT"), choices = cptac_protein_genes, server = TRUE, options = list(placeholder = "Type protein name"))
-
-
+    
+    
     resGvpCorrBoth <- eventReactive(input$generateGvpCorrBoth, {
-      cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
+      cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
+      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       validate(
         need(length(isolate(input$inputGvpCorrBothCohort)) >= 1, 'Please select at least one cohort.'),
         need(length(isolate(input$inputGvpCorrBothGeneNameA)) >= 1 & length(isolate(input$inputGvpCorrBothGeneNameB)) >= 1, 'Please select at least one for each feild'),
@@ -546,16 +548,16 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         cptac_samples = cptac_samples
       )
     },ignoreNULL = FALSE, ignoreInit=FALSE)
-
+    
     output$outputPlotGvpCorrBoth <- renderPlotly({
       resGvpCorrBoth()$corrPlot
     })
-
+    
     # output$dataDownLoadGvpCorrBoth <- renderUI({
     #   req(input$generateGvpCorrBoth)
     #   downloadButton("downLoadGvpCorrBoth", label = "Download correlation data")
     # })
-
+    
     output$downLoadGvpCorrBoth <- downloadHandler(
       filename = function() {
         paste0("ubiDashCorrData", ".xlsx")
@@ -571,7 +573,7 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         paste0("ubiDashCorrData", ".xlsx")
       },
       content = function(file) {
-        print(resGvgCorrRna)
+        # print(resGvgCorrRna)
         write.xlsx(resGvgCorrRna()$corTab, file, row.names = TRUE)
       }
     )
@@ -612,6 +614,6 @@ corrAnalysisServer <- function(id, cohorts, cptac_samples) {
         write.xlsx(resGvACorrProtein()$corTab, file, row.names = TRUE)
       }
     )
-  
+    
   })
 }

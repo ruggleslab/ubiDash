@@ -359,12 +359,19 @@ violinServer <-
             position = (position_jitterdodge(dodge.width = 0.9)),
             alpha = .5,
             size = 2,
-            stroke = .1,
-            mapping = aes(color = type)
+            stroke = 1,
+            mapping = aes(fill = type),
+            pch = 21,
+            color = "black"
           ) +
+            theme(strip.text.x = element_blank(),
+                  axis.title.x=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank()) +
             scale_fill_manual(values = colors) +
             scale_color_manual(values = colors) +
-            facet_wrap(facets = vars(sub_violin.input$cohort), scales = ifelse(isolate(input$independentY), "free", "fixed")) 
+            facet_wrap(facets = vars(sub_violin.input$cohort), scales = ifelse(isolate(input$independentY), "free", "free_x"), axes = "all_x") 
+          
             # ggh4x::facet_grid2(cols = vars(sub_violin.input$cohort), rows = NULL, scales = ifelse(isolate(input$independentY), "free", "fixed"), independent = ifelse(isolate(input$independentY), "y", "none")) 
         } else if (isolate(input$dataset) == "CCLE") {
           violin <- violin + geom_point(
@@ -380,7 +387,9 @@ violinServer <-
             alpha = .5,
             size = .75,
             stroke = .1
-          ) 
+          ) +
+            theme(axis.text.x = element_text(size = 8, angle = 90))
+          
           # +
           #   facet_grid(cols = vars(sub_violin.input$Subtype), rows = NULL) 
         }
@@ -398,14 +407,13 @@ violinServer <-
               ", n =",
               nrow(sub_violin.input)
             )
-          ) +
+          ) 
           # theme(axis.text.x = element_text(
           #   angle = 60,
           #   vjust = 0.5,
           #   hjust = 1,
           #   size = 5
           # )) +
-          theme(axis.text.x = element_text(size = 8, angle = 90))
         
         violin
         

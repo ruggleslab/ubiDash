@@ -30,10 +30,12 @@ if(!skip_load_data){
   
   
   get_from_drive <- function(filename){
-    print(filename)
+    # print(filename)
     ## download the file in current wd and save the object so you know the location of the download
     ## This function can fail so wrap it in an error object to rerun it if it fails
+    suppressMessages(
     file_data <- drive_download(filename, overwrite = TRUE)
+    )
     
     ## Loading the Rds object based on the local path that it's stored in
     data <- readRDS(file_data$local_path)
@@ -81,11 +83,14 @@ if(!skip_load_data){
   # cptac dataset
   # cptac_rna <- mem_get_from_drive("duplicates_averaged_cptac_rna.rds")
   # cptac_protein <- mem_get_from_drive("cptac_tmt-log2-RI_protein_expression.rds")
-  cptac_samples <- mem_get_from_drive("cptac_sample_info_with_subtypes.rds")
+  # cptac_samples <- mem_get_from_drive("cptac_sample_info_with_subtypes.rds")
   
   load("./data/searchlists.RData")
   
-  cohorts1.1 = c("BRCA","COAD","HGSC","LUAD","ccRCC","UCEC","PDAC","LSCC","GBM","HNSCC","MB","HCC") 
+  
+  cohorts1.1 = c("BRCA","COAD","HGSC","LUAD","ccRCC","UCEC","PDAC","LSCC","GBM","HNSCC"
+                 # ,"MB","HCC"
+                 ) 
   
   
   
@@ -112,9 +117,8 @@ if(!skip_load_data){
   # Information used by various modules ----
   
   # cohort  and sample type of all normal and tumor samples
-  tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code", "Cancer_subtype"))
   # get list of cohorts
-  cohorts <- unique(tnlabels$cohort_code)
+  # cohorts <- unique(tnlabels$cohort_code)
   
   genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
   crl_genes = unique(genes$hgnc_symbol)

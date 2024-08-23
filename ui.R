@@ -53,7 +53,7 @@ shinyUI(
         # heatmap tab ----
         tabPanel("Heatmap",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          heatmapUI("heatmapTab", cohorts)
+          heatmapUI("heatmapTab", cohorts1.1)
         ),
         tabPanel("Summarized Profile",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
@@ -81,14 +81,14 @@ shinyUI(
         # need to let users input genes of interest
         tabPanel("Descriptive Statistics",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
-          violinUI("violinTab", cohorts)
+          violinUI("violinTab", cohorts1.1)
         ),
         tabPanel("Drug Sensitivity",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
           drugResponseUI("drugResponseTab")
         ),
       ),
-      corrAnalysisUI("corrAnalysisTab", cohorts),
+      corrAnalysisUI("corrAnalysisTab", cohorts1.1),
       tabPanel("Download Data",
                theme = bs_theme(version = 5, bootswatch = "pulse"),
       dataDownloadUI("downloadTab"),

@@ -50,7 +50,7 @@ oncoplotUI <- function(id, cohorts) {
 }
 
 
-oncoplotServer <- function(id,cptac_samples, top_crls, cohorts, colorsTbl) {
+oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
   moduleServer(id,function(input,output,session){
 
     
@@ -81,6 +81,8 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts, colorsTbl) {
     },ignoreNULL = FALSE, ignoreInit=FALSE)
     
     output$mutationOncoplot <- renderPlot({
+      
+      # cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
 
       inputGenes <- isolate(input$genes)
       
@@ -90,8 +92,7 @@ oncoplotServer <- function(id,cptac_samples, top_crls, cohorts, colorsTbl) {
 
       colors = colorsTbl$color
       names(colors) =  colorsTbl$id
-      print(colors)
-      print(inputCohorts)
+    
       colors = colors[names(colors) %in% inputCohorts()]
       
       # vc_colors = c("#EF476F", "#F78C6B", "#FFD166", "#83D483", "#06D6A0", "#0CB0A9", "#118AB2","#073B4C", "#000000")

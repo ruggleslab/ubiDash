@@ -116,7 +116,7 @@ heatmapServer <-
            #  ccle_protein,
            #  ccle_rna,
            #  pride_protein,
-           tnlabels,
+           # tnlabels,
            colorsTbl,
            filteredProteinMat,
            filteredMRNAMat,
@@ -142,11 +142,15 @@ heatmapServer <-
                                  server = TRUE
             )
           }
+
+          cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
           
+          tnlabels <- subset(cptac_samples, type %in% c("Tumor", "Normal"), select = c("type", "cohort", "cancer_subtype"))
+
           updateSelectizeInput(
             session,
             "subtype",
-            choices = tnlabels$Cancer_subtype,
+            choices = tnlabels$cancer_subtype,
             selected = c(),
             server = TRUE
           )
@@ -190,12 +194,10 @@ heatmapServer <-
         
         cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
        
-        
         ccle_samples <- mem_get_from_drive("ccle_sample_info.rds")
         
         cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
         cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
-       
        
         
         
@@ -214,10 +216,8 @@ heatmapServer <-
             
             
             samples = filter(cptac_samples, datatype == "protein")
-            print(nrow(samples))
             missing_rows <- !(samples$harmonized_data_id %in% colnames(dataset))
             samples <- samples[!missing_rows, ]
-            print(nrow(samples))
             samples = samples[!duplicated(samples$harmonized_data_id),]
             rownames(samples) = samples$harmonized_data_id
             
@@ -268,13 +268,7 @@ heatmapServer <-
             inputGenes = genesSubset$genes
           }
           
-          # print(cohortSubsetLabels)
-          # e = rownames(cohortSubsetLabels) %in% colnames(dataset)
-          # print("e")
-          # print(colnames(dataset)[!e])
-          # print(length(colnames(dataset)))
-          # 
-          # rownames_in_dataset = rownames(cohortSubsetLabels) %in% colnames(dataset)
+        
           
           inputGenesMat <-
             dataset[inputGenes, rownames(cohortSubsetLabels)]
