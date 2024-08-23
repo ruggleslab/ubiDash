@@ -347,6 +347,12 @@ panelCorr <- function(geneNamesRNA, geneNamesProtein, tissueType, cohort, cptac_
     ) +
       gradient_fill(c("purple", "white", "red"))
     
+    corrPlot <- corrPlot + aes(text = paste(
+      "Adjusted p-value:", qval
+    ))
+    
+    ggplotly(corrPlot, tooltip = "text")
+    
     # corrPlot
   } else if (!is.null(cptac_protein) | !is.null(cptac_rna)) { # for RNA or Protein separately
     varToAssign <- list(cptac_protein, cptac_rna)
@@ -409,13 +415,18 @@ panelCorr <- function(geneNamesRNA, geneNamesProtein, tissueType, cohort, cptac_
       color.range = c(0, 5),
       fill = "cor",
       font.label = list(size = 12, color = "black"),
-      rotate.x.text = TRUE
+      rotate.x.text = TRUE,
     ) +
       theme_minimal() +
       
       # scale_fill_gradient(low = "purple",high = "red") +
       gradient_fill(c("purple", "white", "red"))
     
+    corrPlot <- corrPlot + aes(text = paste(
+      "Adjusted p-value:", qval
+    ))
+    
+    ggplotly(corrPlot, tooltip = "text")
     # corrPlot
   }
   

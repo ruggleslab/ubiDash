@@ -5,6 +5,8 @@ QTLUI <- function(id, cohorts){
     sidebarPanel(
       h3("Quantitative Trait Locus (QTL) Analysis"),
       p("(description paragraph)"),
+      p("Plots may take over a minute to load."),
+      p("The data has been filtered by the hDC, hChR, and hTF genesets in order to fit in the application. For this reason, the volcano plot may be blank for some inputs."),
       selectizeInput(
         inputId = ns("mutgene"),
         choices = NULL,

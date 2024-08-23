@@ -365,7 +365,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     )
     
     # Gene vs All correlation for proteins
-    updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = cptac_protein_genes, server = TRUE, selected = "VHL", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvACorrProteinGeneName", choices = cptac_protein_genes, server = TRUE, selected = "BTRC", options = list(placeholder = "Type gene name"))
     resGvACorrProtein <- eventReactive(input$generateGvACorrProtein, {
       cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       validate(
@@ -408,7 +408,7 @@ corrAnalysisServer <- function(id, cohorts, colorsTbl) {
     })
     
     # Gene vs All correlation for RNA
-    updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = cptac_rna_genes, server = TRUE, selected = "A1BG", options = list(placeholder = "Type gene name"))
+    updateSelectizeInput(session, "inputGvACorrRnaGeneName", choices = cptac_rna_genes, server = TRUE, selected = "BTRC", options = list(placeholder = "Type gene name"))
     resGvACorrRna <- eventReactive(input$generateGvACorrRna, {
       cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
       validate(
