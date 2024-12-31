@@ -337,7 +337,7 @@ heatmapServer <-
             output$err <- renderText({
               ""
             })
-<<<<<<< HEAD
+
 
             Heatmap(
               sub.ccle,
