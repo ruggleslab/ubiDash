@@ -3,6 +3,7 @@ library("readxl")
 library("tidyverse")
 library("googledrive")
 library("memoise")
+library("plotly")
 
 options(rsconnect.max.bundle.size=3145728000)
 
