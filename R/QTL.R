@@ -320,11 +320,8 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
           #   plot.subtitle = element_text(family = "Arial"),
           #   plot.caption = element_text(family = "Arial")
           # )
-
-
         return(p)
       }
-
     })
     
     output$downloadDat <- downloadHandler(

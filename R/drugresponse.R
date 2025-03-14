@@ -495,7 +495,7 @@ drugResponseServer <- function(id, drug, drugpath, exp, cell, crl_genes) {
           ylim(0, 10) +
           xlab("Spearman Correlation Coefficient") +
           ylab("-log<sub>10</sub> (Q-value)") +
-          ggtitle("Spearman correlation test between selected_gene expression and drug ln(IC50)") +
+          ggtitle(paste("Spearman correlation test between", input$inputGene, "expression and drug ln(IC50)"))+
           theme_bw() +
           theme(panel.background = element_blank()) +
           theme(panel.border = element_rect(

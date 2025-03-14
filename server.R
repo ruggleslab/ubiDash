@@ -1,70 +1,69 @@
-load("./data/defaults.RData")
-# loading default objects below:
-# genesSubset
-# defaultHeatmap
-# cohortsOnco
-# mutationsOnco
-
-# source("./scripts/SplitInputGenes.R")
-
-
-# source('./R/corranalysis.R')
-
-
-# server ----
-
 shinyServer(function(input, output, session) {
-  # heatmap tab ----
-  heatmapServer(
-    "heatmapTab", cohorts,
-    # cptac_protein,
-    # cptac_rna,
-    # ccle_protein,
-    # ccle_rna,
-    # pride_protein,
-    # tnlabels,
-    colorsTbl,
-    filteredProteinMat,
-    filteredMRNAMat,
-    # filteredTnlabels,
-    # defaultHeatmap,
-    genesSubset
-  )
-
-  # volcano plot tab ----
-  volcanoServer("volcanoTab", crl_genes, DE_protein) # cptac_protein
-
-  # correlation tab ----
-  # correlationsServer("corrTab", lines, E3_genes) # plot_tab
-
-  # boxplot tab ----
-  violinServer("violinTab", colorsTbl) # cptac_protein, cptac_rna, cptac_samples
-
-  # oncoplot tab ----
-  oncoplotServer("oncoTab", top_crls, cohorts, colorsTbl) # cptac_protein, maf
-
-  # lollipop tab
-  lollipopServer("lollipopTab") # maf
   
-  QTLServer("QTLTab", genelists, colorsTbl, cohorts1.1)
+
   
-    densityServer("densityTab") # maf
-
-  corrAnalysisServer("corrAnalysisTab", cohorts1.1, colorsTbl) # cptac_protein, cptac_rna
-
-  drugResponseServer("drugResponseTab",
-                     drug,
-                     drugpath,
-                     exp,
-                     cell,
-                     crl_genes)
-
-  simplifiedHeatmapServer("simplifiedHeatmapTab",
-                          tertiles,
-                          # prt.global.AI,
-                          labels,
-                          my.colors)
-  
-  dataDownloadServer("downloadTab")
+  # Observe which navbar tab is selected
+  observeEvent(input$mainNav, {
+    
+    # For the "Heatmap" tab:
+    if (input$mainNav == "Heatmap") {
+      heatmapHarmonizedServer("heatmapHarmonizedTab")
+    }
+    
+    # For the "Boxplot" tab:
+    else if (input$mainNav == "Boxplot") {
+      boxplotServer("boxplotTab")
+    }
+    
+    # For the "Volcano Plots" tab:
+    else if (input$mainNav == "Volcano Plots") {
+      volcanoServer("volcanoTab", DE_protein)
+    } 
+    else if (input$mainNav == "Heatmap Cancer Subtypes") {
+      heatmapCancerServer("HeatmapCancerTab")
+    }
+    else if (input$mainNav == "Heatmap Immune Subtypes") {
+      heatmapImmuneServer("HeatmapImmuneTab")
+    }
+    
+    # Similarly, add conditions for other tabs/modules as needed:
+    else if (input$mainNav == "Density Plots") {
+      # load file if required, then initialize the module
+      densityServer("densityTab")
+    }
+    else if (input$mainNav == "Pancan Gene vs Gene") {
+      scatterPlotServer("scatterPlotTab")
+    }
+    else if (input$mainNav == "Pancan Gene vs all") {
+      correlationGeneAllServer("correlationGeneAllTab")
+    }
+    else if (input$mainNav == "Pancan Gene Panel") {
+      correlationGeneServer("correlationGeneTab", cohorts1.1, colorsTbl)
+    }
+    else if (input$mainNav == "LSCC Ubiquityl") {
+      LSCCUbiquitylServer("LSCCUbiquitylTab")
+    }
+    else if (input$mainNav == "LSCC Upset") {
+      LSCCUpsetServer("LSCCUpsetTab")
+    }
+    else if (input$mainNav == "Oncoplot") {
+      oncoplotServer("oncoTab", top_crls, cohorts, colorsTbl)
+    }
+    else if (input$mainNav == "Lollipop") {
+      lollipopServer("lollipopTab")
+    }
+    else if (input$mainNav == "QTL Analysis") {
+      QTLServer("QTLTab", genelists, colorsTbl, cohorts1.1)
+    }
+    else if (input$mainNav == "Descriptive Statistics") {
+      violinServer("violinTab", colorsTbl)
+    }
+    else if (input$mainNav == "Drug Sensitivity") {
+      drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, genelists$UPS)
+    }
+    else if (input$mainNav == "Download Data") {
+      dataDownloadServer("downloadTab")
+    }
+  })
   
 })

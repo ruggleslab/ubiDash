@@ -1,12 +1,11 @@
 # make plot square
-
 cohorts1.1 = c("BRCA","COAD","HGSC","LUAD","ccRCC","UCEC","PDAC","LSCC","GBM","HNSCC"
                # ,"MB","HCC"
-) 
-cohorts = c("BRCA","COAD","HGSC","LUAD","CCRCC","UCEC","PDA","LSCC","GBM","HNSCC", "OV") 
+)
+cohorts = c("BRCA","COAD","HGSC","LUAD","CCRCC","UCEC","PDA","LSCC","GBM","HNSCC", "OV")
 abstract <- paste(read.delim("./www/assets/abstract.txt"))
 
-shinyUI(
+ui <- shinyUI(
   fluidPage(
     titlePanel(
       windowTitle = "UbiDash",
@@ -18,70 +17,76 @@ shinyUI(
     ),
     includeCSS("./www/style.css"),
     navbarPage(
-
-
+      id = "mainNav",
       img(src = "assets/ubiDash_logo.png", width = "120"),
       theme = bs_theme(version = 5, bootswatch = "pulse"),
-      # home page tab ----
       tabPanel("Home",
-        theme = bs_theme(version = 5, bootswatch = "pulse"),
-        tags$div(
+          tags$div(
           h1("Integrated multi-omic analysis of Cullin-RING E3 ligases in cancer"),
           p(abstract),
           img(src = "assets/OverviewSchematic.png", align = "right") %>%
             tagAppendAttributes(class = "home-img")
         ) %>%
-          tagAppendAttributes(class = "title-page")
+          tagAppendAttributes(class = "title-page"),
+        tags$iframe(src="https://docs.google.com/forms/d/e/1FAIpQLScjQcuKfMg_6HrA6aPIWoE2oH0S6pyt6a-spvUZr-SMmR0Kpg/viewform?embedded=true", width="640", height="449", frameborder="0", marginheight="0", marginwidth="0")
       ),
       navbarMenu(
-        "Mutations",
-
-        # oncoplot tab ----
+        "Expression Profile",
+        tabPanel("Heatmap",
+                 heatmapHarmonizedUI("heatmapHarmonizedTab")
+        ),
+        tabPanel("Boxplot",
+                 boxplotUI("boxplotTab")
+        ),
+        tabPanel("Density Plots",
+                 densityUI("densityTab")
+        )
+      ),
+      navbarMenu(
+        "Differential Expression Profile",
+        # volcano plot tab ----
+        tabPanel("Volcano Plots",
+                 volcanoUI("volcanoTab", DE_protein_cohorts)
+        ),
+        tabPanel("Heatmap Cancer Subtypes",
+                 heatmapCancerUI("HeatmapCancerTab")
+        ),
+        tabPanel("Heatmap Immune Subtypes",
+                 heatmapImmuneUI("HeatmapImmuneTab")
+        )
+      ),
+      navbarMenu(
+        "Correlations",
+        tabPanel("Pancan Gene vs Gene",
+                 scatterPlotUI("scatterPlotTab")
+        ),
+        tabPanel("Pancan Gene vs all",
+                 correlationGeneAllUI("correlationGeneAllTab")
+        ),
+        tabPanel("Pancan Gene Panel",
+                 correlationGeneUI("correlationGeneTab", cohorts1.1)
+        ),
+        tabPanel("LSCC Ubiquityl",
+                 LSCCUbiquitylUI("LSCCUbiquitylTab")
+        ),
+        tabPanel("LSCC Upset",
+                 LSCCUpsetUI("LSCCUpsetTab")
+        )
+      ), 
+      navbarMenu(
+        "Mutations (QTL)",
         tabPanel("Oncoplot",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
           oncoplotUI("oncoTab", cohorts)
         ),
-        # lollipop tab ----
         tabPanel("Lollipop",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
           lollipopUI("lollipopTab")
         ),
         tabPanel("QTL Analysis",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
           QTLUI("QTLTab", cohorts1.1)
         )
       ),
       navbarMenu(
-        "Expression Profile",
-        # heatmap tab ----
-        tabPanel("Heatmap",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
-          heatmapUI("heatmapTab", cohorts1.1)
-        ),
-        tabPanel("Summarized Profile",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
-          simplifiedHeatmapUI("simplifiedHeatmapTab")
-        ),
-        # volcano plot tab ----
-        tabPanel("Volcano Plots",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
-          volcanoUI("volcanoTab", DE_protein_cohorts)
-        ),
-        tabPanel("Density Plots",
-          theme = bs_theme(version = 5, bootswatch = "pulse"),
-          densityUI("densityTab")
-        ),
-      ),
-      navbarMenu(
-        "Functional Analysis",
-
-        # correlation tab ----
-        # tabPanel("Correlations",
-        #   theme = bs_theme(version = 5, bootswatch = "pulse"),
-        #   correlationsUI("corrTab")
-        # ),
-        # violin plot tap ----
-        # need to let users input genes of interest
+        "Functional Analysis (Drug association)",
         tabPanel("Descriptive Statistics",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
           violinUI("violinTab", cohorts1.1)
@@ -91,12 +96,12 @@ shinyUI(
           drugResponseUI("drugResponseTab")
         ),
       ),
-      corrAnalysisUI("corrAnalysisTab", cohorts1.1),
       tabPanel("Download Data",
                theme = bs_theme(version = 5, bootswatch = "pulse"),
       dataDownloadUI("downloadTab"),
       ),
     ),
+    
     tags$div() %>%
       tagAppendAttributes(class = "spacer"),
     tags$footer(
@@ -145,3 +150,4 @@ shinyUI(
     tags$script(src = "navbar.js"),
   )
 )
+

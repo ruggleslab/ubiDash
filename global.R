@@ -1,10 +1,19 @@
+
 library("glue")
 library("readxl")
 library("tidyverse")
 library("googledrive")
 library("memoise")
 library("plotly")
+library("ComplexUpset")
+library(scales)      # for scales::alpha
+library(ggpubr)      # for stat_cor
+library(ggprism)     # for theme_prism
+library(patchwork)   # for combining plots
 
+# 
+# if(!require(devtools)) install.packages("devtools")
+# devtools::install_github("krassowski/complex-upset")
 options(rsconnect.max.bundle.size=3145728000)
 
 # loading R packages
@@ -22,7 +31,7 @@ if(!skip_load_data){
   options(
     gargle_oauth_email = "ruggleslab.shinyseq.backend@gmail.com",
     gargle_oauth_cache = ".secrets/" ## location within the shiny structure to store the auth token
-  )
+)
 
   ## Getting the auth token (only needs to be done once, so if you have the file you don't need to do this)
   #drive_auth()
@@ -161,7 +170,7 @@ if(!skip_load_data){
 
   #Simplified Heatmap ----
 
-  source("./data/simplifiedheatmap/tgr_misc.R")
+
 
 
   # get_prt.global.AI <- function(){
@@ -172,19 +181,6 @@ if(!skip_load_data){
 
   # mem_prt.global.AI <- memoise(get_prt.global.AI)
 
-
-  labels <- read.csv("./data/simplifiedheatmap/sub_types.csv")
-
-
-  tertiles <- function(x) {
-    vTert <- quantile(x, c(0:3 / 3), na.rm = TRUE)
-    cut(
-      x,
-      vTert,
-      include.lowest = TRUE,
-      labels = c("Low", "Medium", "High")
-    )
-  }
 
 
   currentTime =  as.numeric(Sys.time())
