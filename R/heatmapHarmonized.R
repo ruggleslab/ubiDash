@@ -252,20 +252,19 @@ heatmapHarmonizedServer <- function(id) {
         write.csv(as.data.frame(filtered), file)
       }
     )
-    
+    # Make sure svglite is installed: install.packages("svglite")
     output$download_plot <- downloadHandler(
       filename = function() {
-        paste("heatmap-", Sys.Date(), ".png", sep = "")
+        paste("heatmap-", Sys.Date(), ".svg", sep = "")
       },
       content = function(file) {
-        png(file, width = 1200, height = 800)
+        svglite::svglite(file, width = 12, height = 8)
         
         data_list <- filteredData()
         mat_sub   <- data_list$mat
         sampl_sub <- data_list$sampl
         ups_sub   <- data_list$ups
         
-        # For the downloadable plot, subset sampl_sub to remove "method"
         annot_df <- sampl_sub[, c("dataset", "type", "tissue"), drop = FALSE]
         
         annot <- ComplexHeatmap::columnAnnotation(

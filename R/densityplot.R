@@ -171,7 +171,7 @@ densityServer <- function(id) {
           scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
           scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"), guide = FALSE)
         
-        ggsave(filename = file, plot = p, width = 5, height = 5, device = "svg")
+        ggsave(filename = file, plot = p, width = 10, height = 7, device = "svg")
       }
     )
     

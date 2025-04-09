@@ -194,8 +194,8 @@ if(!skip_load_data){
              nm = c("High", "Medium", "Low")) # for each category
 
   # volcano ----
-  DE_protein_cohorts <- excel_sheets("./data/DE_protein.xlsx")
-  DE_protein <- lapply(DE_protein_cohorts, function(cohort) read_excel("./data/DE_protein.xlsx", sheet = cohort))
+  DE_protein_cohorts <- excel_sheets("Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx")
+  DE_protein <- lapply(DE_protein_cohorts, function(cohort) read_excel("Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx", sheet = cohort))
   DE_protein <- lapply(DE_protein, as.data.frame)
   names(DE_protein) <- DE_protein_cohorts
 

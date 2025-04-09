@@ -11,79 +11,93 @@ heatmapCancerUI <- function(id) {
                   multiple = TRUE),
       selectInput(ns("cancerSubtypeSelect"), "Cancer Subtype",
                   choices = NULL,  # will be updated dynamically
-                  multiple = TRUE)
+                  multiple = TRUE),
+      # NEW: Protein search input with server‐side search.
+      selectizeInput(
+        ns("filter_proteins"),
+        label    = "Protein(s) of interest:",
+        choices  = NULL,
+        selected = NULL,
+        multiple = TRUE,
+        options  = list(
+          placeholder = "Type or select one or more protein symbols",
+          server = TRUE
+        )
+      )
     ),
     mainPanel(
-      shinycssloaders::withSpinner(plotOutput(ns("heatmapPlot"), height = "800px"), color = "#6A2798"),
+      shinycssloaders::withSpinner(
+        plotOutput(ns("heatmapPlot"), height = "800px"),
+        color = "#6A2798"
+      ),
       br(),
       downloadButton(ns("download"), "Download PDF"),
       downloadButton(ns("downloadData"), "Download Data")
     )
   )
 }
-
 heatmapCancerServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Load raw data once and store in a reactive so that you can update inputs
+    # Load raw data once
     data_raw <- reactive({
       prot <- read.csv("./data/DEqMS.results_cancer_subtypes_with_tumotPurity.csv")  # adjust file path
-      pn <- openxlsx::read.xlsx("./data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx",
-                                sheet = "dense")[, -1]%>%
-        filter(Branch == "Ubiquitin Proteasome System") 
+      pn <- openxlsx::read.xlsx(
+        "./data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx",
+        sheet = "dense"
+      )[, -1] %>%
+        dplyr::filter(Branch == "Ubiquitin Proteasome System")
       list(prot = prot, pn = pn)
     })
     
-    
-    # Update select input choices once the raw data is available
+    # Update select input choices based on loaded data
     observe({
       dat <- data_raw()
-      # For UPS Class: use unique values from pn$Class
+      
       updateSelectInput(session, "classSelect",
                         choices = unique(dat$pn$Class),
                         selected = unique(dat$pn$Class))
       
-      # For Cohort: use unique values from prot$cohort
       updateSelectInput(session, "cohortSelect",
                         choices = unique(dat$prot$cohort),
                         selected = unique(dat$prot$cohort))
       
-      # For Cancer Subtype: Extract correctly from contrast
-      # Extract what's before "_vs_Others" but after the first underscore
       cancer_subtypes <- unique(sapply(strsplit(dat$prot$contrast, "_vs_"), function(x) x[1]))
-    
-      
       updateSelectInput(session, "cancerSubtypeSelect",
                         choices = cancer_subtypes,
                         selected = cancer_subtypes)
-
+      
+      # Update the protein search input (using Gene.Symbol from network data)
+      updateSelectizeInput(session, "filter_proteins",
+                           choices = sort(unique(dat$pn$Gene.Symbol)),
+                           selected = NULL)
     })
     
-    # Create the heatmap when the user clicks "Generate Heatmap"
+    # Build the heatmap object
     heatmap_obj <- reactive({
       dat <- data_raw()
       prot <- dat$prot
       pn <- dat$pn
       
-      # Filter the protein network (pn) by selected UPS Class
+      # Filter the network data (pn) by selected UPS class if provided.
       if (!is.null(input$classSelect) && length(input$classSelect) > 0) {
         pn <- pn %>% dplyr::filter(Class %in% input$classSelect)
       }
       
-      # Filter the differential expression data (prot) by selected Cohort
+      # Filter the expression data (prot) by selected cohorts.
       if (!is.null(input$cohortSelect) && length(input$cohortSelect) > 0) {
         prot <- prot %>% dplyr::filter(cohort %in% input$cohortSelect)
       }
       
-      # Join pn with prot; keep one row per Gene.Symbol
+      # Merge network and differential expression data (one row per gene)
       proteins <- pn %>% 
         dplyr::group_by(Gene.Symbol) %>%
         dplyr::slice(1) %>%  
         dplyr::ungroup() %>%
         dplyr::left_join(prot, by = c("Gene.Symbol" = "gene"))
       
-      # Build a matrix for each cohort, then merge into one matrix
+      # Build a matrix for each cohort, then merge them.
       mat <- list()
       for (i in unique(prot$cohort)) {
         tmp <- proteins %>%
@@ -101,26 +115,52 @@ heatmapCancerServer <- function(id) {
         dplyr::filter(rowMeans(is.na(.)) < 0.2) %>% 
         as.matrix()
       
+      # --- NEW: Filter Entire UPS Class Based on Protein Selection ---
+      # If protein(s) of interest are selected, determine their UPS class(es)
+      # and filter the merged matrix to include all genes from that class.
+      if (!is.null(input$filter_proteins) && length(input$filter_proteins) > 0) {
+        gene_class_lookup <- proteins %>% 
+          dplyr::select(Gene.Symbol, Class) %>% 
+          dplyr::distinct()
+        selected_classes <- unique(gene_class_lookup$Class[
+          gene_class_lookup$Gene.Symbol %in% input$filter_proteins
+        ])
+        
+        gene_info <- data.frame(gene = rownames(merged_mat), stringsAsFactors = FALSE) %>%
+          dplyr::inner_join(gene_class_lookup, by = c("gene" = "Gene.Symbol"))
+        keep_rows <- gene_info$Class %in% selected_classes
+        merged_mat <- merged_mat[keep_rows, , drop = FALSE]
+      }
+      
+      # --- NEW: Create a display matrix that only shows the selected protein names ---
+      # In the display matrix, if protein(s) are selected, blank out row names that are NOT in the selection.
+      display_mat <- merged_mat
+      if (!is.null(input$filter_proteins) && length(input$filter_proteins) > 0) {
+        rn <- rownames(display_mat)
+        rn[!(rn %in% input$filter_proteins)] <- ""
+        rownames(display_mat) <- rn
+        show_names <- TRUE
+      } else {
+        show_names <- (nrow(display_mat) < 30)
+      }
+      
       # Create column annotations
       annotations <- data.frame(
-        Cohort = gsub("_.*", "", colnames(merged_mat)),
-        Cancer_subtype = gsub("^[^_]*_|_vs_Others$", "", colnames(merged_mat)),
-        row.names = colnames(merged_mat)
+        Cohort = gsub("_.*", "", colnames(display_mat)),
+        Cancer_subtype = gsub("^[^_]*_|_vs_Others$", "", colnames(display_mat)),
+        row.names = colnames(display_mat)
       )
       
-      # If a cancer subtype filter is set, subset the columns accordingly
+      # Subset columns based on cancer subtype filter
       if (!is.null(input$cancerSubtypeSelect) && length(input$cancerSubtypeSelect) > 0) {
-        # Filter using the same transformation we used for UI
-        extracted_subtypes <- gsub("^[^_]*_|_vs_Others$", "", colnames(merged_mat))
+        extracted_subtypes <- gsub("^[^_]*_|_vs_Others$", "", colnames(display_mat))
         keep_cols <- extracted_subtypes %in% input$cancerSubtypeSelect
-        merged_mat <- merged_mat[, keep_cols, drop = FALSE]
+        display_mat <- display_mat[, keep_cols, drop = FALSE]
         annotations <- annotations[keep_cols, , drop = FALSE]
       }
       
-      # Create a row annotation based on the protein Class
+      # Create row annotation by joining with the gene-to-class lookup
       x <- proteins %>% dplyr::select(Gene.Symbol, Class) %>% dplyr::distinct()
-      
-      # Only keep the classes for genes that are actually in the matrix
       Class <- data.frame(
         gene = rownames(merged_mat),
         stringsAsFactors = FALSE
@@ -128,16 +168,14 @@ heatmapCancerServer <- function(id) {
         dplyr::inner_join(x, by = c("gene" = "Gene.Symbol")) %>%
         tibble::column_to_rownames("gene")
       
-      # Clean up Cancer_subtype labels if needed
+      # Clean up cancer subtype labels
       annotations$Cancer_subtype <- gsub("_", "-", annotations$Cancer_subtype)
       annotations$Cancer_subtype[annotations$Cancer_subtype == "Serous-Adenocarcinoma"] <- "Serous Adenocarcinoma"
       annotations$Cancer_subtype[annotations$Cancer_subtype == "Terminal-Respiratory-Unit"] <- "Terminal Respiratory Unit"
       annotations$Cancer_subtype[annotations$Cancer_subtype == "IDH-mutant"] <- "IDH mutant"
       
-      # Load color definitions (assuming you have a colors.csv file)
+      # Load color definitions from file.
       colors <- read.csv("./data/colors.csv")
-      
-      # Only use the classes that are actually present in the filtered data
       present_classes <- unique(as.character(Class$Class))
       present_cohorts <- unique(as.character(annotations$Cohort))
       present_subtypes <- unique(as.character(annotations$Cancer_subtype))
@@ -155,25 +193,22 @@ heatmapCancerServer <- function(id) {
         nm = present_classes
       )
       
-      # Handle potential NA values in color mapping
-      colors.cohort[is.na(colors.cohort)] <- "#000000"  # Default to black
+      colors.cohort[is.na(colors.cohort)] <- "#000000"
       colors.subtypes[is.na(colors.subtypes)] <- "#000000"
       colors.class[is.na(colors.class)] <- "#000000"
       
-     
-      
-      # Build the heatmap using ComplexHeatmap
+      # Build the heatmap using the display matrix.
       ht <- ComplexHeatmap::Heatmap(
-        merged_mat,
+        display_mat,
         name = "LogFC",
         cluster_rows = TRUE,
         cluster_columns = TRUE,
-        show_row_names = FALSE,
+        show_row_names = show_names,
         show_column_names = FALSE,
-        split = Class$Class,  # Use Class$Class directly to match the actual data
+        split = Class$Class,  # group rows by UPS Class
         row_gap = grid::unit(0, "mm"),
         row_title = NULL,
-        column_title = "Differentially Expressed Proteins (DEPs) in cancer subtypes",  # fixed title
+        column_title = "Differentially Expressed Proteins (DEPs) in cancer subtypes",
         column_title_gp = grid::gpar(fontsize = 16, fontface = "bold"),
         top_annotation = ComplexHeatmap::HeatmapAnnotation(
           df = annotations[, c("Cohort", "Cancer_subtype")],
@@ -192,17 +227,19 @@ heatmapCancerServer <- function(id) {
         ),
         use_raster = FALSE
       )
+      
       list(ht = ht, mat = merged_mat, class_df = Class)
     })
+    
+    # Render the heatmap.
     output$heatmapPlot <- renderPlot({
       req(heatmap_obj())
       result <- heatmap_obj()
-      ht <- result$ht
-      merged_mat <- result$mat
       grid::grid.newpage()
-      ComplexHeatmap::draw(ht, newpage = TRUE)
-    },height = 800)
+      ComplexHeatmap::draw(result$ht, newpage = TRUE)
+    }, height = 800)
     
+    # Download handler for CSV export.
     output$downloadData <- downloadHandler(
       filename = function() {
         paste("cancer_heatmap_data_", Sys.Date(), ".csv", sep = "")
@@ -213,7 +250,7 @@ heatmapCancerServer <- function(id) {
       }
     )
     
-    # Download handler to export the heatmap as a SVG
+    # Download handler for PDF export.
     output$download <- downloadHandler(
       filename = function() {
         paste0("heatmap_", Sys.Date(), ".pdf")

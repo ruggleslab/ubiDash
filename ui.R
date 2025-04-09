@@ -22,13 +22,15 @@ ui <- shinyUI(
       theme = bs_theme(version = 5, bootswatch = "pulse"),
       tabPanel("Home",
           tags$div(
+          tags$iframe(src="https://docs.google.com/forms/d/e/1FAIpQLScjQcuKfMg_6HrA6aPIWoE2oH0S6pyt6a-spvUZr-SMmR0Kpg/viewform?embedded=true", width="640", height="449", frameborder="0", marginheight="0", marginwidth="0"),
+            
           h1("Integrated multi-omic analysis of Cullin-RING E3 ligases in cancer"),
           p(abstract),
+          
           img(src = "assets/OverviewSchematic.png", align = "right") %>%
             tagAppendAttributes(class = "home-img")
         ) %>%
-          tagAppendAttributes(class = "title-page"),
-        tags$iframe(src="https://docs.google.com/forms/d/e/1FAIpQLScjQcuKfMg_6HrA6aPIWoE2oH0S6pyt6a-spvUZr-SMmR0Kpg/viewform?embedded=true", width="640", height="449", frameborder="0", marginheight="0", marginwidth="0")
+          tagAppendAttributes(class = "title-page")
       ),
       navbarMenu(
         "Expression Profile",
