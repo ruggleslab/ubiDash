@@ -1,12 +1,12 @@
-QTLUI <- function(id, cohorts){
+QTLUI <- function(id, cohorts) {
   ns <- NS(id)
   
   sidebarLayout(
     sidebarPanel(
       h3("Quantitative Trait Locus (QTL) Analysis"),
-      p("(description paragraph)"),
+      p("This application analyzes protein data from the CPTAC Pancan dataset."),
       p("Plots may take over a minute to load."),
-      p("The data has been filtered by the hDC, hChR, and hTF genesets in order to fit in the application. For this reason, the volcano plot may be blank for some inputs."),
+      p("The data has been filtered by the hDC, hChR, and hTF genesets to fit within the application. For this reason, the volcano plot may be blank for some inputs."),
       selectizeInput(
         inputId = ns("mutgene"),
         choices = NULL,
@@ -14,19 +14,11 @@ QTLUI <- function(id, cohorts){
         label = "Mutant Gene",
         options = list(`live-search` = TRUE)
       ),
-      
       selectizeInput(
         inputId = ns("gene"),
         choices = NULL,
         multiple = FALSE,
         label = "UPS Gene",
-        options = list(`live-search` = TRUE)
-      ),
-      selectizeInput(
-        inputId = ns("datatype"),
-        choices = c("rna","pro"),
-        multiple = FALSE,
-        label = "Data Type",
         options = list(`live-search` = TRUE)
       ),
       selectizeInput(
@@ -41,7 +33,7 @@ QTLUI <- function(id, cohorts){
       selectizeInput(
         inputId = ns("plottype"),
         choices = c("Mutation Centric", "UPS Centric"),
-        selected = "UPS Centric", 
+        selected = "UPS Centric",
         multiple = FALSE,
         label = "Plot Type",
         options = list(`live-search` = TRUE)
@@ -49,7 +41,7 @@ QTLUI <- function(id, cohorts){
       selectizeInput(
         inputId = ns("genelist"),
         choices = NULL,
-        selected = "Mutation Centric", 
+        selected = "Mutation Centric",
         multiple = FALSE,
         label = "Gene List",
         options = list(`live-search` = TRUE)
@@ -58,90 +50,66 @@ QTLUI <- function(id, cohorts){
                 placeholder = "5e-8", value = "5e-8"),
       sliderInput(ns("n_genes"), "Minimum Number of Samples per Mutation Group",
                   min = 0, max = 1000, value = 1, step = 1),
-      
-      actionButton(ns('refresh'), "Generate Plot")
-      
+      actionButton(ns("refresh"), "Generate Plot")
     ),
-    
     mainPanel(
       textOutput(ns("err")) %>%
         tagAppendAttributes(class = "error"),
       shinycssloaders::withSpinner(plotlyOutput(ns("boxplot")),
-                                   color = "#6A2798"
-      ),
+                                   color = "#6A2798"),
       shinycssloaders::withSpinner(plotlyOutput(ns("volcano")),
-                                   color = "#6A2798"
-      ),
+                                   color = "#6A2798"),
       p("Download this data"),
       downloadButton(outputId = ns("downloadDat"), label = "Download Data Table")
-      
     )
   )
 }
-
 QTLServer <- function(id, genelists, colorsTbl, cohorts) {
-  moduleServer(id, function(input, output, session){
+  moduleServer(id, function(input, output, session) {
     
+    # Load mutation data
     mut <- mem_get_from_drive("cptac_v1.1_mut.rds")
     
-    observe({
-      if(input$datatype == "pro"){
-        updateSelectizeInput(session, 'gene', 
-                             choices = cptac_protein_genes, 
-                             server = TRUE, selected = "ABL1")
-      } else {
-        updateSelectizeInput(session, 'gene', 
-                             choices = cptac_rna_genes, 
-                             server = TRUE, selected = "ABL1")
-      }
-    })
+    # Load protein-specific gene choices (assuming cptac_protein_genes is available from the .RData file)
+    load("./data/dat~cptac_v1.1_list_object_mut_cnv_rna_pro.RData")
     
-    updateSelectizeInput(session, 'gene', 
-                         choices = cptac_rna_genes, 
+    # Update input choices (protein-only)
+    updateSelectizeInput(session, "gene",
+                         choices = cptac_protein_genes,
                          server = TRUE, selected = "ABL1")
-    
-    updateSelectizeInput(session, 'genelist', 
-                         choices = names(genelists), 
+    updateSelectizeInput(session, "genelist",
+                         choices = names(genelists),
                          server = TRUE, selected = "hCD")
-    
-    updateSelectizeInput(session, 'mutgene', 
-                         choices = colnames(mut), 
+    updateSelectizeInput(session, "mutgene",
+                         choices = colnames(mut),
                          server = TRUE, selected = "VHL.mut")
     
+    # Boxplot output
     output$boxplot <- renderPlotly({
-      ### Pancan Boxplots ###
-      
-      # Retrieve sample and expression data
+      # Load sample and protein expression data
       cptac_samples <- as.data.frame(mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds"))
       cptac_samples <- cptac_samples[cptac_samples$type == "Tumor",]
-      
-      cptac_rna <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
       cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
-      load("./data/dat~cptac_v1.1_list_object_mut_cnv_rna_pro.RData")
       
-      # Get UI inputs (without isolate so that reactivity occurs)
-      selected_datatype <- input$datatype
+      # Get UI inputs
       gn <- input$gene
       m <- input$mutgene
-      
-      if(!isTruthy(gn)) gn <- "ABL1"
-      if(!isTruthy(m)) m <- "VHL.mut"
+      if (!isTruthy(gn)) gn <- "ABL1"
+      if (!isTruthy(m)) m <- "VHL.mut"
       
       colors <- colorsTbl
       colors <- setNames(object = colors$color, nm = colors$id)
       
       selected_cohorts <- input$cohorts
-      if(!isTruthy(selected_cohorts)) selected_cohorts <- cohorts
+      if (!isTruthy(selected_cohorts)) selected_cohorts <- cohorts
       
-      samples <- filter(cptac_samples, cohort %in% cohorts & datatype == ifelse(selected_datatype == "rna", "rna", "protein"))
+      # Filter samples for protein data only
+      samples <- filter(cptac_samples, cohort %in% selected_cohorts & datatype == "protein")
       samples <- samples %>% select(c(harmonized_data_id, cohort))
       cohorts <- levels(as.factor(cptac_samples$cohort))
       
-      if(selected_datatype == "pro"){
-        E3 <- t(cptac_protein)
-      } else {
-        E3 <- t(cptac_rna)
-      }
+      # Use protein expression data
+      E3 <- t(cptac_protein)
       
       samples <- samples[!duplicated(samples$harmonized_data_id),]
       rownames(samples) <- samples$harmonized_data_id
@@ -159,25 +127,24 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
       # Define mutation status order
       df[[m]] <- factor(df[[m]], levels = c("WT", "Mutant"))
       
-      # ---- Apply n-mutation filter for the boxplot ----
+      # Apply n-mutation filter
       n_req <- input$n_genes
       n_mutant <- sum(df[[m]] == "Mutant", na.rm = TRUE)
       n_wt <- sum(df[[m]] == "WT", na.rm = TRUE)
       
-      # If either group has fewer samples than required, display a message.
-      if(n_mutant < n_req | n_wt < n_req) {
+      if (n_mutant < n_req | n_wt < n_req) {
         plot <- ggplot() +
-          annotate("text", x = 0.5, y = 0.5, 
-                   label = paste("Not enough samples in one of the groups:",
-                                 "\nWT:", n_wt, 
-                                 "\nMutant:", n_mutant, 
-                                 "\nMinimum required per group:", n_req),
+          annotate("text", x = 0.5, y = 0.5,
+                   label = paste("Not enough samples in one of the groups to meet your specified minimum:",
+                                 "\n- WT samples:", n_wt,
+                                 "\n- Mutant samples:", n_mutant,
+                                 "\n- Your specified minimum per group:", n_req),
                    size = 6, hjust = 0.5) +
           theme_void()
         return(ggplotly(plot))
       }
-      # ----------------------------------------------------
       
+      # Generate boxplot
       p <- ggplot(df, aes(x = !!sym(m), y = !!sym(gn))) +
         geom_boxplot(outlier.shape = NA) +
         geom_jitter(aes(color = cohort),
@@ -188,20 +155,20 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
         theme_minimal() +
         stat_compare_means(method = "wilcox.test") +
         labs(x = m, y = gn,
-             title = glue("CPTAC Pancan {selected_datatype}"))
+             title = "CPTAC Pancan Protein")
       
       return(p)
     })
     
+    # Reactive data frame for volcano plot
     df <- eventReactive(input$refresh, {
-      print("fdafda")
       dat <- readRDS("./data/CPTAC_Pancan_UPS_hCD_hTF_hChR_e_pQTLs.rds")
-      i <- isolate(input$datatype)
-      n <- isolate(input$n_genes)  # Capture the n filter value
+      i <- "pro"  # Hardcode to protein data
+      n <- isolate(input$n_genes)
       
-      if(isolate(input$plottype) == "Mutation Centric"){
+      if (isolate(input$plottype) == "Mutation Centric") {
         gn <- gsub(".mut", "", isolate(input$mutgene))
-        if(!isTruthy(gn)) gn <- "VHL"
+        if (!isTruthy(gn)) gn <- "VHL"
         
         df <- dat[[i]] %>%
           filter(n_mut > n &
@@ -212,21 +179,18 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
           mutate(Label = paste(ups_gene, mutation, sep = "-")) %>%
           mutate(Class = as.factor(Class))
         
-        print(paste("Rows after filtering:", nrow(df)))
-        print(head(df))
         return(df)
-        
       } else {
         selected_genelist <- genelists[[isolate(input$genelist)]]
-        if(!isTruthy(selected_genelist)){
+        if (!isTruthy(selected_genelist)) {
           selected_genelist <- genelists[["hCD"]]
         }
         
         gn <- gsub(".mut", "", isolate(input$gene))
-        if(!isTruthy(gn)) gn <- "ABL1"
+        if (!isTruthy(gn)) gn <- "ABL1"
         
         df <- dat[[i]] %>%
-          filter(ups_gene == gn & n_mut > n) %>%  # Added n_mut filter here
+          filter(ups_gene == gn & n_mut > n) %>%
           mutate(Label = paste(ups_gene, mutation, sep = "-")) %>%
           mutate(Class = as.factor(Class))
         
@@ -234,47 +198,46 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
       }
     }, ignoreNULL = FALSE, ignoreInit = FALSE)
     
-    
+    # Volcano plot output
     output$volcano <- renderPlotly({
       n <- isolate(input$n_genes)
-      i <- isolate(input$datatype)
-      p_adj <- as.numeric(gsub('\\*10\\^', 'e', isolate(input$pvalcutoff)))
-      if(!isTruthy(p_adj)) p_adj <- 5e-8
+      i <- "pro"  # Hardcode to protein data
+      p_adj <- as.numeric(gsub("\\*10\\^", "e", isolate(input$pvalcutoff)))
+      if (!isTruthy(p_adj)) p_adj <- 5e-8
       
-      if(isolate(input$plottype) == "Mutation Centric"){
+      if (isolate(input$plottype) == "Mutation Centric") {
         colors <- setNames(object = colorsTbl[colorsTbl$id %in% levels(df()$Class),]$color,
                            nm = levels(df()$Class))
         
         gn <- gsub(".mut", "", isolate(input$mutgene))
-        if(!isTruthy(gn)) gn <- "VHL"
+        if (!isTruthy(gn)) gn <- "VHL"
         
         p <- ggplot(df(), aes(x = LFC_median, y = -log10(fdr), label = ups_gene, color = Class)) +
           geom_point(alpha = 0.5, size = 2.5) +
           theme_prism(border = TRUE) +
           scale_color_manual(values = colors, name = "UPS Class") +
           labs(x = glue("log2({gn}-mut/wt)"), y = "-log10(p-adj)",
-               title = glue("QTL-{i}: 10 CPTAC Cohorts"),
-               caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p.adj = {p_adj}")) +
+               title = "QTL-pro: 10 CPTAC Cohorts",
+               caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p-adj = {p_adj}")) +
           geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
           geom_vline(xintercept = 0, linetype = "dashed", color = "black")
         
         return(p)
-        
       } else {
         selected_genelist <- genelists[[isolate(input$genelist)]]
-        if(!isTruthy(selected_genelist)){
+        if (!isTruthy(selected_genelist)) {
           selected_genelist <- genelists[["hCD"]]
         }
         
         gn <- gsub(".mut", "", isolate(input$gene))
-        if(!isTruthy(gn)) gn <- "ABL1"
+        if (!isTruthy(gn)) gn <- "ABL1"
         
         p <- ggplot(df(), aes(x = LFC_median, y = -log10(fdr), label = mutation, color = mutation %in% selected_genelist)) +
           geom_point(alpha = 0.5, size = 1.2) +
-          scale_color_manual(name = glue("{isolate(input$genelist)} Gene"),  values = c("TRUE" = "#44BBFF", "FALSE" = "#55555555")) +
+          scale_color_manual(name = glue("{isolate(input$genelist)} Gene"), values = c("TRUE" = "#44BBFF", "FALSE" = "#55555555")) +
           theme_minimal() +
           labs(x = glue("log2(mut/wt)\n{gn}-LFC"), y = "-log10(p-adj)",
-               title = glue("QTL-{i}: 10 CPTAC Cohorts"),
+               title = "QTL-pro: 10 CPTAC Cohorts",
                caption = glue("Filtered samples with n_mut > {n}\nDashed lines: p-adj = {p_adj}")) +
           geom_hline(yintercept = -log10(p_adj), linetype = "dashed", color = "black") +
           geom_vline(xintercept = 0, linetype = "dashed", color = "black")
@@ -283,14 +246,14 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
       }
     })
     
+    # Download handler
     output$downloadDat <- downloadHandler(
       filename = function() {
-        paste("mutations-QTL-", isolate(input$plottype), "-", isolate(input$datatype), "-", Sys.Date(), ".csv", sep = "")
+        paste("mutations-QTL-", isolate(input$plottype), "-pro-", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
         write.csv(df(), file)
       }
     )
-    
   })
 }

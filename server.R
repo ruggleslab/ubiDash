@@ -55,9 +55,6 @@ shinyServer(function(input, output, session) {
     else if (input$mainNav == "QTL Analysis") {
       QTLServer("QTLTab", genelists, colorsTbl, cohorts1.1)
     }
-    else if (input$mainNav == "Descriptive Statistics") {
-      violinServer("violinTab", colorsTbl)
-    }
     else if (input$mainNav == "Drug Sensitivity") {
       drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, genelists$UPS)
     }

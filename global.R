@@ -194,11 +194,18 @@ if(!skip_load_data){
              nm = c("High", "Medium", "Low")) # for each category
 
   # volcano ----
-  DE_protein_cohorts <- excel_sheets("Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx")
-  DE_protein <- lapply(DE_protein_cohorts, function(cohort) read_excel("Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx", sheet = cohort))
+  # Retrieve all sheet names from the Excel file
+  DE_protein_cohorts <- excel_sheets("./data/Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx")
+  # Exclude the sheet named "long table"
+  DE_protein_cohorts <- DE_protein_cohorts[DE_protein_cohorts != "long-table"]
+  # Read only the sheets you want into a list of data frames
+  DE_protein <- lapply(DE_protein_cohorts, function(cohort) {
+    read_excel("./data/Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx", sheet = cohort)
+  })
+  # Convert each element to a data.frame (if needed)
   DE_protein <- lapply(DE_protein, as.data.frame)
+  # Name the list elements after the corresponding cohorts
   names(DE_protein) <- DE_protein_cohorts
-
 
   currentTime =  as.numeric(Sys.time())
   print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
