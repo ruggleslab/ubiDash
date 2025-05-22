@@ -56,7 +56,7 @@ shinyServer(function(input, output, session) {
       QTLServer("QTLTab", genelists, colorsTbl, cohorts1.1)
     }
     else if (input$mainNav == "Drug Sensitivity") {
-      drugResponseServer("drugResponseTab", drug, drugpath, exp, cell, genelists$UPS)
+      drugResponseServer("drugResponseTab")
     }
     else if (input$mainNav == "Download Data") {
       dataDownloadServer("downloadTab")
