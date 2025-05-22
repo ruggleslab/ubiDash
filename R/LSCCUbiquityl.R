@@ -13,7 +13,14 @@ LSCCUbiquitylUI <- function(id) {
       actionButton(ns("generate_plot"), "Generate Scatter Plot")
     ),
     mainPanel(
-      shinycssloaders::withSpinner(plotOutput(ns("ubiScatterPlot")), color = "#6A2798")
+      conditionalPanel(
+        condition = sprintf("!output['%s']", ns("no_sites_trigger")),
+        shinycssloaders::withSpinner(plotOutput(ns("ubiScatterPlot")), color = "#6A2798")
+      ),
+      conditionalPanel(
+        condition = sprintf("output['%s']", ns("no_sites_trigger")),
+        uiOutput(ns("no_sites_msg"))
+      )
     )
   )
 }
@@ -72,7 +79,27 @@ LSCCUbiquitylServer <- function(id) {
       }
       updateSelectizeInput(session, "ub_site", choices = candidate_ub, selected = selected_site)
     })
-    
+    # If no site available
+    no_sites_trigger <- reactiveVal(FALSE)
+    output$no_sites_trigger <- reactive({
+      no_sites_trigger()
+    })
+    outputOptions(output, "no_sites_trigger", suspendWhenHidden = FALSE)
+    output$no_sites_msg <- renderUI({
+      if (no_sites_trigger()) {
+        div(style = " display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100px; 
+        width: 100%;
+        color: #6A2798;
+        font-weight: bold;
+        font-size: 1.2em;",
+            paste0("No ubiquityl sites available for ",input$substrate))
+      } else {
+        NULL
+      }
+    })
     ### Create Joined Data
     # Join the two data frames on sample_id.
     joined_data <- reactive({
@@ -85,7 +112,11 @@ LSCCUbiquitylServer <- function(id) {
     # - X-axis: the selected E3 protein measurement (from prot)
     # - Y-axis: the candidate ubiquityl site measurement (target column from ub.prot)
     scatter_plot <- eventReactive(input$generate_plot, {
-      req(input$e3, input$substrate, input$ub_site)
+      if (is.null(input$ub_site) || length(input$ub_site) == 0) {
+        no_sites_trigger(TRUE)
+        return(NULL)
+      }
+      no_sites_trigger(FALSE)
       # Build a list of plots for each selected candidate ubiquityl site.
       plots <- lapply(input$ub_site, function(site) {
         target_col <- site  # since each selected site already is in "CandidateSubstrate_site" format
@@ -121,7 +152,6 @@ LSCCUbiquitylServer <- function(id) {
       # Remove any NULL plots
       plots <- plots[!sapply(plots, is.null)]
       if (length(plots) == 0) return(NULL)
-      # Combine the plots in a grid (e.g., two columns)
       wrap_plots(plots, ncol = 2)
     })
     
