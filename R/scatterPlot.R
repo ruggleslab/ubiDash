@@ -47,70 +47,117 @@ scatterPlotUI <- function(id) {
 scatterPlotServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
-    ## ----------------------------
-    ## Data Loading & Pre-processing
-    ## ----------------------------
-    sampl_ <- readRDS("./data/cptac_plus_samples_info_across_datatypes_v1.1.rds")
-    
-    prot_ <- read.csv("./data/Combine_PanCan_CPTAC_Proteome-gene_V1.1_UMich_GENCODE34_Sinai_imputed.tsv",
-                      sep = "\t", check.names = FALSE)
-    
-    ups_data <- openxlsx::read.xlsx(
-      xlsxFile = './data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx',
-      sheet = 'dense'
-    )
-    
-    prot <- prot_ %>% 
-      dplyr::select(-c(Gene, GENECODE34_Symbol)) %>%
-      tibble::column_to_rownames(var = "HGNC_Approved_Symbol") %>% 
-      sweep(., 2, apply(., 2, median, na.rm = TRUE)) %>%  
-      t() %>% 
-      scale() %>%   
-      as.data.frame()
-    
-    samples <- sampl_ %>% 
-      dplyr::filter(datatype == "protein",
-                    harmonized_data_id %in% rownames(prot)) %>% 
-      dplyr::select(harmonized_data_id, cohort) %>% 
-      unique()
-    
-    colors <- read.csv("./data/colors.csv") %>% 
-      dplyr::filter(id %in% unique(samples$cohort)) %>% 
-      { setNames(.$color, .$id) }
-    print("colors scatter")
-    print(colors)
+
+    # Lazy load data containers
+    sampl_data <- reactiveVal(NULL)
+    prot_data <- reactiveVal(NULL)
+    ups_data_val <- reactiveVal(NULL)
+    processed_prot <- reactiveVal(NULL)
+    processed_samples <- reactiveVal(NULL)
+    processed_colors <- reactiveVal(NULL)
+
+    # Load data only when first needed
+    load_scatter_data <- function() {
+      if (is.null(sampl_data())) {
+        sampl_ <- readRDS("./data/cptac_plus_samples_info_across_datatypes_v1.1.rds")
+        sampl_data(sampl_)
+      }
+      if (is.null(prot_data())) {
+        prot_ <- read.csv("./data/Combine_PanCan_CPTAC_Proteome-gene_V1.1_UMich_GENCODE34_Sinai_imputed.tsv",
+                          sep = "\t", check.names = FALSE)
+        prot_data(prot_)
+      }
+      if (is.null(ups_data_val())) {
+        ups_data <- openxlsx::read.xlsx(
+          xlsxFile = './data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx',
+          sheet = 'dense'
+        )
+        ups_data_val(ups_data)
+      }
+    }
+
+    # Process data only when needed
+    get_processed_data <- function() {
+      if (is.null(processed_prot())) {
+        load_scatter_data()
+
+        prot <- prot_data() %>%
+          dplyr::select(-c(Gene, GENECODE34_Symbol)) %>%
+          tibble::column_to_rownames(var = "HGNC_Approved_Symbol") %>%
+          sweep(., 2, apply(., 2, median, na.rm = TRUE)) %>%
+          t() %>%
+          scale() %>%
+          as.data.frame()
+
+        processed_prot(prot)
+      }
+
+      if (is.null(processed_samples())) {
+        load_scatter_data()
+
+        samples <- sampl_data() %>%
+          dplyr::filter(datatype == "protein",
+                        harmonized_data_id %in% rownames(processed_prot())) %>%
+          dplyr::select(harmonized_data_id, cohort) %>%
+          unique()
+
+        processed_samples(samples)
+      }
+
+      if (is.null(processed_colors())) {
+        colors <- read.csv("./data/colors.csv") %>%
+          dplyr::filter(id %in% unique(processed_samples()$cohort)) %>%
+          { setNames(.$color, .$id) }
+
+        processed_colors(colors)
+      }
+
+      list(
+        prot = processed_prot(),
+        samples = processed_samples(),
+        colors = processed_colors(),
+        ups_data = ups_data_val()
+      )
+    }
     ## ----------------------------
     ## Update UPS Class, Protein of Interest, and Cohort Filter Inputs
     ## ----------------------------
-    ups_class_selection <- ups_data %>%
-      dplyr::filter(Branch == 'Ubiquitin Proteasome System') %>%
-      dplyr::pull(Class) %>%
-      unique()
-    
-    updateSelectizeInput(
-      session, "ups_class",
-      choices = ups_class_selection,
-      selected = "E3 ubiquitin and UBL ligases",  
-      server = TRUE
-    )
+    # Load UPS data and update inputs when module is first accessed
+    observe({
+      load_scatter_data()
+      ups_data <- ups_data_val()
+
+      ups_class_selection <- ups_data %>%
+        dplyr::filter(Branch == 'Ubiquitin Proteasome System') %>%
+        dplyr::pull(Class) %>%
+        unique()
+
+      updateSelectizeInput(
+        session, "ups_class",
+        choices = ups_class_selection,
+        selected = "E3 ubiquitin and UBL ligases",
+        server = TRUE
+      )
+    })
     
     # Update the "Protein of Interest" input based on the selected UPS class.
     observeEvent(input$ups_class, {
       req(input$ups_class)
-      
+      load_scatter_data()
+      ups_data <- ups_data_val()
+
       current_genes <- ups_data %>%
         dplyr::filter(Branch == 'Ubiquitin Proteasome System', Class == input$ups_class) %>%
         dplyr::pull(Gene.Symbol) %>%
         unique()
-      
+
       updateSelectizeInput(
         session, "e3",
         choices = current_genes,
         selected = if ("SKP2" %in% current_genes) "SKP2" else if (length(current_genes) > 0) current_genes[1] else NULL,
         server = TRUE
       )
-      
+
       # Update candidate substrate genes whenever the UPS class changes.
       full_candidates <- sort(unique(ups_data %>% dplyr::pull(Gene.Symbol)))
       updateSelectizeInput(
@@ -123,10 +170,13 @@ scatterPlotServer <- function(id) {
     # Remove the protein of interest gene from the candidate list when selected.
     observeEvent(input$e3, {
       req(input$e3)
+      load_scatter_data()
+      ups_data <- ups_data_val()
+
       full_candidates <- sort(unique(ups_data %>% dplyr::pull(Gene.Symbol)))
       candidate_choices <- setdiff(full_candidates, input$e3)
       new_selected <- setdiff(input$cs, input$e3)
-      
+
       updateSelectizeInput(
         session, "cs",
         choices = candidate_choices,
@@ -134,10 +184,11 @@ scatterPlotServer <- function(id) {
         server = TRUE
       )
     })
-    
+
     # Update cohort filter choices based on the samples data.
     observe({
-      cohort_choices <- sort(unique(samples$cohort))
+      data <- get_processed_data()
+      cohort_choices <- sort(unique(data$samples$cohort))
       updateSelectizeInput(
         session, "cohorts",
         choices = cohort_choices,
@@ -153,17 +204,23 @@ scatterPlotServer <- function(id) {
     
     observeEvent(input$generatePlots, {
       req(input$e3, input$cs)
-      
+
+      # Get processed data
+      data <- get_processed_data()
+      prot <- data$prot
+      samples <- data$samples
+      colors <- data$colors
+
       e3_gene <- trimws(input$e3)
       cs_genes <- input$cs
       target_genes <- c(e3_gene, cs_genes)
-      
-      df <- prot %>% 
-        tibble::rownames_to_column("harmonized_data_id") %>% 
-        dplyr::right_join(samples, by = "harmonized_data_id") %>% 
-        tibble::column_to_rownames("harmonized_data_id") %>% 
+
+      df <- prot %>%
+        tibble::rownames_to_column("harmonized_data_id") %>%
+        dplyr::right_join(samples, by = "harmonized_data_id") %>%
+        tibble::column_to_rownames("harmonized_data_id") %>%
         dplyr::select(cohort, dplyr::matches(paste0("^(", paste(target_genes, collapse = "|"), ")")))
-      
+
       # Use only the cohorts selected by the user.
       selected_cohorts <- if (is.null(input$cohorts) || length(input$cohorts) == 0) {
         sort(unique(samples$cohort))

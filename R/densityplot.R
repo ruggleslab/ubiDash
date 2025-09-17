@@ -29,13 +29,18 @@ densityUI <- function(id) {
 densityServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     
-    # Update the gene selectize input (assuming 'maf_genes' is defined globally)
+    # Load protein genes if not already available
+    if (!exists("cptac_protein_genes")) {
+      load("./data/searchlists.RData")
+    }
+    
+    # Update the gene selectize input with protein genes
     updateSelectizeInput(
       session,
       inputId = "gene",
-      choices = maf_genes,
+      choices = cptac_protein_genes,
       server = TRUE,
-      selected = "KBTBD11"
+      selected = "CRBN"
     )
     # Load and process the data when the user clicks refresh
     sample <- eventReactive(input$gene, {
@@ -44,26 +49,48 @@ densityServer <- function(id) {
       
       # Get the gene and datatype selections
       ups_gn   <- isolate(input$gene)
-      xlab     <- "Log2(TPM+1)"
+      xlab     <- "log2 Normalized Protein Expression"
       # Load the appropriate dataset using mem_get_from_drive()
-      dataset <- mem_get_from_drive("cptac_transformed_rna_expression_v1-1.rds")
+      dataset <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
       # Load sample metadata from the drive
       sample <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
       
       # Subset to the desired datatype and only include samples that passed QC
       sample <- subset(sample,
-                       datatype == 'rna' &
+                       datatype == 'protein' &
                          harmonized_data_id %in% colnames(dataset) &
                          include == "TRUE") %>%
         dplyr::select(c(harmonized_data_id, cohort, type, cancer_subtype)) %>%
         unique()
       
+      # Check if the gene exists in the dataset
+      validate(
+        need(ups_gn %in% rownames(dataset), 
+             paste("Gene", ups_gn, "not found in protein dataset."))
+      )
+      
       # Add the gene expression values to the sample data frame
       sample[[ups_gn]] <- as.numeric(dataset[ups_gn, sample$harmonized_data_id])
       
+      # Filter out samples with missing expression values
+      sample <- sample %>% 
+        dplyr::filter(!is.na(!!rlang::sym(ups_gn)))
+      
+      # Check if we have enough data
+      validate(
+        need(nrow(sample) >= 10, 
+             paste("Not enough data for gene", ups_gn, ". Need at least 10 samples with expression data."))
+      )
+      
       # Reorder cohorts based on the median expression of the gene of interest
-      sample <- sample %>%
-        dplyr::mutate(cohort = forcats::fct_reorder(cohort, !!rlang::sym(ups_gn), .fun = median, .na_rm = TRUE))
+      # Only reorder if we have data for all cohorts
+      tryCatch({
+        sample <- sample %>%
+          dplyr::mutate(cohort = forcats::fct_reorder(cohort, !!rlang::sym(ups_gn), .fun = median, .na_rm = TRUE))
+      }, error = function(e) {
+        # If reordering fails (due to missing data), keep original cohort order
+        warning("Could not reorder cohorts due to missing data for some cohorts. Using original order.")
+      })
       
       sample
     }, ignoreNULL = FALSE, ignoreInit = FALSE)
@@ -73,7 +100,7 @@ densityServer <- function(id) {
     output$plot <- renderPlot({
       req(sample())
       ups_gn   <- isolate(input$gene)
-      xlab     <- "Log2(TPM+1)"
+      xlab     <- "log2 Normalized Protein Expression"
       
       # Calculate annotations (sample sizes and median positions)
       annotations <- sample() %>%
@@ -88,29 +115,38 @@ densityServer <- function(id) {
       annotations <- annotations %>%
         dplyr::mutate(label_x = pmax(pmin(label_x, x_range[2]), x_range[1]))
       
-      ggplot(sample()) +
-        ggridges::geom_density_ridges(
-          aes(x = !!rlang::sym(ups_gn), y = cohort, fill = type),
-          alpha = 0.5,
-          bandwidth = 0.3,
-          scale = 1,
-          quantiles = 2,
-          quantile_lines = TRUE
-        ) +
-        ggrepel::geom_text_repel(
-          data = annotations,
-          aes(x = label_x, y = cohort, label = label, color = type),
-          nudge_y = 0.7,
-          segment.color = NA
-        ) +
-        labs(
-          x = glue::glue("{ups_gn}\n{xlab}"),
-          y = NULL,
-          title = glue::glue("{ups_gn} Global protein expression")
-        ) +
-        ggprism::theme_prism(border = TRUE) +
-        scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
-        scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"), guide = FALSE)
+      tryCatch({
+        ggplot(sample()) +
+          ggridges::geom_density_ridges(
+            aes(x = !!rlang::sym(ups_gn), y = cohort, fill = type),
+            alpha = 0.5,
+            bandwidth = 0.3,
+            scale = 1,
+            quantiles = 2,
+            quantile_lines = TRUE
+          ) +
+          ggrepel::geom_text_repel(
+            data = annotations,
+            aes(x = label_x, y = cohort, label = label, color = type),
+            nudge_y = 0.7,
+            segment.color = NA
+          ) +
+          labs(
+            x = glue::glue("{ups_gn}\n{xlab}"),
+            y = NULL,
+            title = glue::glue("{ups_gn} Protein Expression Distribution")
+          ) +
+          ggprism::theme_prism(border = TRUE) +
+          scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
+          scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"), guide = FALSE)
+      }, error = function(e) {
+        # If plotting fails, show an error message
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, 
+                   label = paste("Error creating plot:", e$message),
+                   size = 6, hjust = 0.5, vjust = 0.5) +
+          theme_void()
+      })
     }, width = 1000, height = 800)
     
     
@@ -134,7 +170,7 @@ densityServer <- function(id) {
       content = function(file) {
         req(sample())
         ups_gn   <- isolate(input$gene)
-        xlab <- "Log2(TPM+1)"
+        xlab <- "log2 Normalized Protein Expression"
         
         annotations <- sample() %>%
           dplyr::group_by(cohort, type) %>%
@@ -147,31 +183,41 @@ densityServer <- function(id) {
         annotations <- annotations %>%
           dplyr::mutate(label_x = pmax(pmin(label_x, x_range[2]), x_range[1]))
         
-        p <- ggplot(sample()) +
-          ggridges::geom_density_ridges(
-            aes(x = !!rlang::sym(ups_gn), y = cohort, fill = type),
-            alpha = 0.5,
-            bandwidth = 0.3,
-            scale = 1,
-            quantiles = 2,
-            quantile_lines = TRUE
-          ) +
-          ggrepel::geom_text_repel(
-            data = annotations,
-            aes(x = label_x, y = cohort, label = label, color = type),
-            nudge_y = 0.7,
-            segment.color = NA
-          ) +
-          labs(
-            x = glue::glue("{ups_gn}\n{xlab}"),
-            y = NULL,
-            title = glue::glue("{ups_gn} Global protein expression")
-          ) +
-          ggprism::theme_prism(border = TRUE) +
-          scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
-          scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"), guide = FALSE)
-        
-        ggsave(filename = file, plot = p, width = 10, height = 7, device = "svg")
+        tryCatch({
+          p <- ggplot(sample()) +
+            ggridges::geom_density_ridges(
+              aes(x = !!rlang::sym(ups_gn), y = cohort, fill = type),
+              alpha = 0.5,
+              bandwidth = 0.3,
+              scale = 1,
+              quantiles = 2,
+              quantile_lines = TRUE
+            ) +
+            ggrepel::geom_text_repel(
+              data = annotations,
+              aes(x = label_x, y = cohort, label = label, color = type),
+              nudge_y = 0.7,
+              segment.color = NA
+            ) +
+            labs(
+              x = glue::glue("{ups_gn}\n{xlab}"),
+              y = NULL,
+              title = glue::glue("{ups_gn} Protein Expression Distribution")
+            ) +
+            ggprism::theme_prism(border = TRUE) +
+            scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
+            scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"), guide = FALSE)
+          
+          ggsave(filename = file, plot = p, width = 10, height = 7, device = "svg")
+        }, error = function(e) {
+          # If plotting fails, create a simple error plot
+          error_plot <- ggplot() +
+            annotate("text", x = 0.5, y = 0.5, 
+                     label = paste("Error creating plot:", e$message),
+                     size = 6, hjust = 0.5, vjust = 0.5) +
+            theme_void()
+          ggsave(filename = file, plot = error_plot, width = 10, height = 7, device = "svg")
+        })
       }
     )
     

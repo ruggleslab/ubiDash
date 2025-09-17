@@ -3,15 +3,12 @@ boxplotUI <- function(id) {
   tagList(
     sidebarLayout(
       sidebarPanel(
-        # Select between Proteome or TSI data
         # Add static significance legend
         p(HTML("<b>Significance Levels:</b><br>",
                "ns: p > 0.05 (not significant)<br>",
                "*: p ≤ 0.05<br>",
                "**: p ≤ 0.01<br>",
                "***: p ≤ 0.001")),
-        selectInput(ns("data_type"), "Data Type",
-                    choices = c("Proteome", "TSI"), selected = "Proteome"),
         # Protein of Interest (auto-populated)
         selectInput(ns("protein"), "Protein of Interest", choices = NULL, selected = "CRBN"),
         # Sample type selection: allow Tumor, Normal, or both
@@ -41,12 +38,10 @@ boxplotServer <- function(id) {
     ns <- session$ns
     
     # Load required datasets and color mapping.
-    sampl.df <- readRDS("./data/sampl.df.rds")
     cptac_sampl <- readRDS("./data/cptac_samples_info_across_datatypes_v1.1.rds") %>%
       filter(include == "TRUE" & datatype == "protein") %>%
       select(harmonized_data_id, tissue, type, cohort) %>%
       unique()
-    mat <- readRDS("./data/mat.rds")
     mat_prot <- readRDS("./data/mat_prot.rds")
     
     colors_tab <- read.csv("./data/colors.csv")
@@ -63,30 +58,14 @@ boxplotServer <- function(id) {
       updateSelectInput(session, "cohort_filter", choices = cohorts, selected = cohorts)
     })
     
-    # Auto-populate protein choices based on available proteins in the TSI matrix.
+    # Auto-populate protein choices based on available proteins in the protein matrix.
     observe({
-      protein_choices <- sort(unique(rownames(mat)))
+      protein_choices <- sort(unique(rownames(mat_prot)))
       updateSelectInput(session, "protein", choices = protein_choices, selected = "CRBN")
     })
     
-    # Reactive expression for TSI data.
-    tsi_data <- reactive({
-      req(input$protein)
-      gene_data <- mat %>%
-        rankGenes() %>%
-        apply(., 2, function(x) x / max(x, na.rm = TRUE)) %>%
-        as.data.frame() %>%
-        rownames_to_column(var = "gene") %>%
-        filter(gene == input$protein) %>%
-        pivot_longer(cols = -gene,
-                     names_to = "harmonized_data_id",
-                     values_to = "value") %>%
-        inner_join(sampl.df, by = "harmonized_data_id")
-      gene_data
-    })
-    
-    # Reactive expression for Proteome data.
-    proteome_data <- reactive({
+    # Reactive expression for Protein data.
+    selected_data <- reactive({
       req(input$protein)
       gene_data_prot <- as.data.frame(mat_prot) %>%
         rownames_to_column(var = "gene") %>%
@@ -96,15 +75,6 @@ boxplotServer <- function(id) {
                      values_to = "value") %>%
         inner_join(cptac_sampl, by = "harmonized_data_id")
       gene_data_prot
-    })
-    
-    # Choose the appropriate data based on the data type selection.
-    selected_data <- reactive({
-      if (input$data_type == "TSI") {
-        tsi_data()
-      } else {
-        proteome_data()
-      }
     })
     
     # Filter the selected data by sample type and cohort selection.
@@ -125,11 +95,9 @@ boxplotServer <- function(id) {
       data <- filtered_data()
       req(nrow(data) > 0)
       
-      y_label <- ifelse(input$data_type == "TSI",
-                        "Tissue Specificity Index",
-                        "Normalized Proteome Expression")
+      y_label <- "log2 Normalized Protein Expression"
       plot_title <- paste(input$protein, paste(input$sample_type, collapse = ", "),
-                          "(", input$data_type, ")")
+                          "(Protein)")
       
       y_min <- min(data$value, na.rm = TRUE)
       y_max <- max(data$value, na.rm = TRUE)
@@ -138,7 +106,13 @@ boxplotServer <- function(id) {
         # Group by cohort and type for sample sizes
         sample_sizes <- data %>%
           group_by(cohort, type) %>%
-          summarise(n = n(), min_value = min(value, na.rm = TRUE), .groups = "drop")
+          summarise(
+            n = sum(!is.na(value)),  # Count only non-missing values
+            min_value = ifelse(sum(!is.na(value)) > 0, 
+                              min(value, na.rm = TRUE), 
+                              y_min),  # Use y_min if all values are missing
+            .groups = "drop"
+          )
         
         # Create the base boxplot
         p <- ggplot(data, aes(x = cohort, y = value, fill = type)) +
@@ -162,24 +136,47 @@ boxplotServer <- function(id) {
         
         # Add statistical annotations for valid cohorts
         if (length(valid_cohorts) > 0 && length(unique(data$type)) > 1) {
-          valid_data <- data %>% filter(cohort %in% valid_cohorts)
+          # Calculate p-values manually for each cohort and add as text annotations
+          stat_results <- data %>%
+            filter(cohort %in% valid_cohorts) %>%
+            group_by(cohort) %>%
+            do({
+              # Filter out missing values first
+              tumor_vals <- .$value[.$type == "Tumor" & !is.na(.$value)]
+              normal_vals <- .$value[.$type == "Normal" & !is.na(.$value)]
+              
+              # Only perform test if both groups have at least 3 non-missing samples
+              if(length(tumor_vals) >= 3 & length(normal_vals) >= 3) {
+                tryCatch({
+                  # Wilcoxon rank-sum test (Mann-Whitney U test)
+                  test_result <- wilcox.test(tumor_vals, normal_vals, exact = FALSE)
+                  p_val <- test_result$p.value
+                  
+                  # Convert p-value to significance stars
+                  sig_label <- case_when(
+                    is.na(p_val) ~ "",
+                    p_val > 0.05 ~ "ns",
+                    p_val <= 0.001 ~ "***",
+                    p_val <= 0.01 ~ "**",
+                    p_val <= 0.05 ~ "*",
+                    TRUE ~ ""
+                  )
+                  data.frame(p_value = p_val, label = sig_label, y_pos = y_max * 1.02)
+                }, error = function(e) {
+                  # If test fails for any reason, return empty result
+                  data.frame(p_value = NA, label = "", y_pos = y_max * 1.02)
+                })
+              } else {
+                # Not enough samples for reliable test
+                data.frame(p_value = NA, label = "", y_pos = y_max * 1.02)
+              }
+            })
           
-          # Kruskal-Wallis test with significance stars
-          p <- p +
-            stat_compare_means(data = valid_data,
-                               method = "kruskal.test",
-                               label = "p.signif",  # Use "p.format" for p-value instead
-                               label.y = y_max)  # Position at the top of the plot
-          
-          # Pairwise Wilcoxon tests (already using stars)
-          comparisons <- list(c("Tumor", "Normal"))
-          if (all(comparisons[[1]] %in% unique(valid_data$type))) {
-            p <- p + stat_compare_means(data = valid_data,
-                                        comparisons = comparisons,
-                                        aes(group = type),
-                                        label = "p.signif",
-                                        method = "wilcox.test",
-                                        label.y = y_max * 0.9)  # Slightly below Kruskal-Wallis
+          # Add text annotations for significance
+          if(nrow(stat_results) > 0 && any(stat_results$label != "")) {
+            p <- p + geom_text(data = stat_results %>% filter(label != ""), 
+                               aes(x = cohort, y = y_pos, label = label),
+                               size = 4, vjust = 0, inherit.aes = FALSE)
           }
         }
       }
@@ -187,7 +184,7 @@ boxplotServer <- function(id) {
       # Finalize the plot
       p + theme_minimal() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_y_continuous(limits = c(y_min, y_max * 1.05))
+        scale_y_continuous(limits = c(y_min, y_max * 1.1))  # More space for stars
     })
     
     # Render the plot.
@@ -198,7 +195,7 @@ boxplotServer <- function(id) {
     # Download handler for the filtered data.
     output$downloadData <- downloadHandler(
       filename = function() {
-        paste0(input$protein, "_", input$data_type, "_", 
+        paste0(input$protein, "_Protein_", 
                paste(input$sample_type, collapse = "_"), "_", 
                paste(input$cohort_filter, collapse = "_"), ".csv")
       },
@@ -211,7 +208,7 @@ boxplotServer <- function(id) {
     # Download handler for the plot (SVG format).
     output$downloadPlot <- downloadHandler(
       filename = function() {
-        paste0(input$protein, "_", input$data_type, "_", 
+        paste0(input$protein, "_Protein_", 
                paste(input$sample_type, collapse = "_"), "_", 
                paste(input$cohort_filter, collapse = "_"), ".svg")
       },

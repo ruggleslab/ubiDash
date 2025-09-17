@@ -199,14 +199,14 @@ heatmapHarmonizedServer <- function(id) {
       ## ----- Create the Heatmap -----
       ht <- ComplexHeatmap::Heatmap(
         mat_sub,
-        name = "Tissue Specificity Score",
+        name = "Relative Ranked Score",
         na_col = "#C0C0C2",
         col = circlize::colorRamp2(c(0, 0.5, 1), c("white", "#5B99C2", "#1F316F")),
         cluster_rows    = if (nrow(mat_sub) > 1) TRUE else FALSE,
         show_row_names  = if (nrow(mat_sub) < 30) TRUE else FALSE,
         show_column_names = FALSE,
         heatmap_legend_param = list(
-          title = "Tissue Specificity Index",
+          title = "Relative Ranked Score",
           title_position = "topleft",
           legend_direction = "vertical"
         ),
@@ -289,14 +289,14 @@ heatmapHarmonizedServer <- function(id) {
         
         ht <- ComplexHeatmap::Heatmap(
           mat_sub,
-          name = "Tissue Specificity Score",
+          name = "Relative Ranked Score",
           na_col = "#C0C0C2",
           col = circlize::colorRamp2(c(0, 0.5, 1), c("white", "#5B99C2", "#1F316F")),
           cluster_rows    = if (nrow(mat_sub) > 1) TRUE else FALSE,
           show_row_names  = if (nrow(mat_sub) < 30) TRUE else FALSE,
           show_column_names = FALSE,
           heatmap_legend_param = list(
-            title = "Tissue Specificity Index",
+            title = "Relative Ranked Score",
             title_position = "topcenter",
             legend_direction = "horizontal",
             legend_position = "bottom"

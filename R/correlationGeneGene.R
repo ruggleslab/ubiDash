@@ -128,21 +128,53 @@ correlationGeneGeneUI <- function(id, cohorts) {
 
 correlationGeneGeneTab <- function(id, cohorts, colorsTbl) {
   moduleServer(id, function(input, output, session) {
-    # Load required functions and data
-    source(file = "./scripts/corrAnalysis.R")
-    cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
+
+    # Lazy load gene lists only when needed
+    rna_genes <- reactiveVal(NULL)
+    protein_genes <- reactiveVal(NULL)
+
+    # Load gene lists on first access
+    observeEvent(input$GvGpanel, {
+      if (input$GvGpanel == "mRNA" && is.null(rna_genes())) {
+        # Load RNA genes only when mRNA tab is accessed
+        load("./data/searchlists.RData")
+        rna_genes(cptac_rna_genes)
+      } else if (input$GvGpanel == "Protein" && is.null(protein_genes())) {
+        # Load protein genes only when Protein tab is accessed
+        load("./data/searchlists.RData")
+        protein_genes(cptac_protein_genes)
+      } else if (input$GvGpanel == "mRNA/Protein" && (is.null(rna_genes()) || is.null(protein_genes()))) {
+        # Load both when mRNA/Protein tab is accessed
+        load("./data/searchlists.RData")
+        rna_genes(cptac_rna_genes)
+        protein_genes(cptac_protein_genes)
+      }
+    })
+
+    # Load required functions and data (lazy load)
+    cptac_samples <- reactiveVal(NULL)
+    load_cptac_samples <- function() {
+      if (is.null(cptac_samples())) {
+        source(file = "./scripts/corrAnalysis.R")
+        cptac_samples(mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds"))
+      }
+      cptac_samples()
+    }
     
     ### mRNA Correlation ###
-    updateSelectizeInput(
-      session, "inputGvgCorrRnaNameA",
-      choices = cptac_rna_genes, server = TRUE, selected = "BTRC",
-      options = list(placeholder = "Type gene name")
-    )
-    updateSelectizeInput(
-      session, "inputGvgCorrRnaNameB",
-      choices = cptac_rna_genes, server = TRUE, selected = "CTNNB1",
-      options = list(placeholder = "Type gene name")
-    )
+    observe({
+      req(rna_genes())
+      updateSelectizeInput(
+        session, "inputGvgCorrRnaNameA",
+        choices = rna_genes(), server = TRUE, selected = "BTRC",
+        options = list(placeholder = "Type gene name")
+      )
+      updateSelectizeInput(
+        session, "inputGvgCorrRnaNameB",
+        choices = rna_genes(), server = TRUE, selected = "CTNNB1",
+        options = list(placeholder = "Type gene name")
+      )
+    })
     
     resGvgCorrRna <- eventReactive(input$generateGvgCorrRna, {
       validate(
@@ -156,7 +188,7 @@ correlationGeneGeneTab <- function(id, cohorts, colorsTbl) {
         tissueType    = input$inputGvgCorrRnaStype,
         cptac_protein = NULL,
         cptac_rna     = cptac_rna,
-        cptac_samples = cptac_samples,
+        cptac_samples = load_cptac_samples(),
         colorsTbl     = colorsTbl
       )
     }, ignoreNULL = FALSE, ignoreInit = FALSE)
@@ -170,16 +202,19 @@ correlationGeneGeneTab <- function(id, cohorts, colorsTbl) {
     
     
     ### Protein Correlation ###
-    updateSelectizeInput(
-      session, "inputGvgCorrProteinNameA",
-      choices = cptac_protein_genes, server = TRUE, selected = "VHL",
-      options = list(placeholder = "Type gene name")
-    )
-    updateSelectizeInput(
-      session, "inputGvgCorrProteinNameB",
-      choices = cptac_protein_genes, server = TRUE, selected = "HIF1A",
-      options = list(placeholder = "Type gene name")
-    )
+    observe({
+      req(protein_genes())
+      updateSelectizeInput(
+        session, "inputGvgCorrProteinNameA",
+        choices = protein_genes(), server = TRUE, selected = "VHL",
+        options = list(placeholder = "Type gene name")
+      )
+      updateSelectizeInput(
+        session, "inputGvgCorrProteinNameB",
+        choices = protein_genes(), server = TRUE, selected = "HIF1A",
+        options = list(placeholder = "Type gene name")
+      )
+    })
     
     resGvgCorrProtein <- eventReactive(input$generateGvgCorrProtein, {
       cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
@@ -193,7 +228,7 @@ correlationGeneGeneTab <- function(id, cohorts, colorsTbl) {
         tissueType    = input$inputGvgCorrProteinStype,
         cptac_protein = cptac_protein,
         cptac_rna     = NULL,
-        cptac_samples = cptac_samples,
+        cptac_samples = load_cptac_samples(),
         colorsTbl     = colorsTbl
       )
     }, ignoreNULL = FALSE, ignoreInit = FALSE)
@@ -207,18 +242,20 @@ correlationGeneGeneTab <- function(id, cohorts, colorsTbl) {
     
     
     ### mRNA/Protein Correlation ###
-    updateSelectizeInput(
-      session, "inputGvgCorrBothNameA",
-      choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)),
-      server = TRUE, selected = "BTRC",
-      options = list(placeholder = "Type Protein name")
-    )
-    updateSelectizeInput(
-      session, "inputGvgCorrBothNameB",
-      choices = as.list(intersect(cptac_protein_genes, cptac_rna_genes)),
-      server = TRUE, selected = "CTNNB1",
-      options = list(placeholder = "Type gene name")
-    )
+    observe({
+      req(rna_genes(), protein_genes())
+      common_genes <- intersect(protein_genes(), rna_genes())
+      updateSelectizeInput(
+        session, "inputGvgCorrBothNameA",
+        choices = common_genes, server = TRUE, selected = "BTRC",
+        options = list(placeholder = "Type Protein name")
+      )
+      updateSelectizeInput(
+        session, "inputGvgCorrBothNameB",
+        choices = common_genes, server = TRUE, selected = "CTNNB1",
+        options = list(placeholder = "Type gene name")
+      )
+    })
     
     resGvgCorrBoth <- eventReactive(input$generateGvgCorrBoth, {
       cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
@@ -233,7 +270,7 @@ correlationGeneGeneTab <- function(id, cohorts, colorsTbl) {
         tissueType    = input$inputGvgCorrBothStype,
         cptac_protein = cptac_protein,
         cptac_rna     = cptac_rna,
-        cptac_samples = cptac_samples,
+        cptac_samples = load_cptac_samples(),
         colorsTbl     = colorsTbl
       )
     }, ignoreNULL = FALSE, ignoreInit = FALSE)

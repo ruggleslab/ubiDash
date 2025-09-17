@@ -17,27 +17,24 @@ ui <- shinyUI(
                tags$div(
                  # Overall container for flexible layout
                  div(class = "container-fluid p-3",
-                     # First row with iframe and abstract side by side
+                     # First row with main figure on top
                      div(class = "row mb-4",
-                         # First column - iframe
-                         div(class = "col-12 col-lg-6 mb-3 mb-lg-0",
-                             tags$iframe(src="https://docs.google.com/forms/d/e/1FAIpQLScjQcuKfMg_6HrA6aPIWoE2oH0S6pyt6a-spvUZr-SMmR0Kpg/viewform?embedded=true", 
-                                         width="100%", height="449", frameborder="0", 
-                                         marginheight="0", marginwidth="0")
-                         ),
-                         
-                         # Second column - abstract
-                         div(class = "col-12 col-lg-6",
-                             h1("Integrated multi-omic analysis of Cullin-RING E3 ligases in cancer"),
-                             p(abstract)
-                         )
-                     ),
-                     
-                     # Second row with image that spans full width
-                     div(class = "row",
                          div(class = "col-12 text-center",
                              img(src = "assets/OverviewSchematic.png", class = "img-fluid home-img")
                          )
+                     ),
+                     
+                     # Second row with abstract and feedback form side by side
+                     div(class = "row mb-4",
+                     # First column - abstract text
+                       HTML(paste0('<p>', abstract, '</p>')),
+                        
+                         
+                         # Second column - feedback form iframe
+                             tags$iframe(src="https://docs.google.com/forms/d/e/1FAIpQLScjQcuKfMg_6HrA6aPIWoE2oH0S6pyt6a-spvUZr-SMmR0Kpg/viewform?embedded=true", 
+                                         width="100%", height="449", frameborder="0", 
+                                         marginheight="0", marginwidth="0")
+                         
                      )
                  )
                ) %>%
@@ -100,7 +97,7 @@ ui <- shinyUI(
       ),
       navbarMenu(
         "Functional Analysis (Drug association)",
-        tabPanel("Drug Sensitivity",
+        tabPanel("CCLE Drug Sensitivity",
                  theme = bs_theme(version = 5, bootswatch = "pulse"),
                  drugResponseUI("drugResponseTab")
         ),
