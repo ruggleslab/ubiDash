@@ -6,8 +6,7 @@ oncoplotUI <- function(id, cohorts) {
       h3("Oncoplot"),
 
       # gene inputs
-      p("(description paragraph)"),
-      
+      p(tab_summaries$Oncoplot),
       sliderInput(ns("maxOncoGenes"), "Max Number of Genes to Display:",
         min = 1, max = 50,
         value = 10
@@ -36,14 +35,14 @@ oncoplotUI <- function(id, cohorts) {
       actionButton(ns("refresh"), "Generate Plot"),
 
       # download options
-     
+
       # downloadButton(outputId = ns("downloadOncoCohorts"), label = "Download Cohort Data"),
     ),
     mainPanel(
       textOutput(ns("error")) %>%
         tagAppendAttributes(class = "error"),
       shinycssloaders::withSpinner(plotOutput(ns("mutationOncoplot")), color = "#6A2798"),
-       p("Download this data"),
+      p("Download this data"),
       downloadButton(outputId = ns("downloadOncoMutations"), label = "Download Mutations Data"),
     )
   )
@@ -51,62 +50,63 @@ oncoplotUI <- function(id, cohorts) {
 
 
 oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
-  moduleServer(id,function(input,output,session){
+  moduleServer(id, function(input, output, session) {
+    maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+    all_genes <- unique(getGeneSummary(maf)$Hugo_Symbol)
+    updateSelectizeInput(session, "genes",
+      choices = all_genes,
+      server = TRUE
+    )
 
-    
-    updateSelectizeInput(session, 'genes', 
-                         choices = cptac_protein_genes, 
-                         server = TRUE)
+    inputCohorts <- reactiveVal()
 
-    inputCohorts = reactiveVal()
-    
-    filteredMaf = eventReactive(input$refresh, {
-      
-      validate(
-        need(length(isolate(input$genes)) == 0 || length(isolate(input$genes)) > 1, 'Two genes are needed to generate plot.'),
-      )
-      
-      maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+    filteredMaf <- eventReactive(input$refresh,
+      {
+        if (length(isolate(input$genes)) == 1) {
+          stop("Two genes are needed to generate plot.")
+        }
 
-      inputCohorts(cohorts)
-       
-      filteredMaf = maf
-      if (length(isolate(input$cohorts)) != 0 && length(isolate(input$cohorts)) != length(cohorts)) {
-        inputCohorts(maf@clinical.data[cohort_code %in% isolate(input$cohorts)])
-        filteredMaf = subsetMaf(maf, tsb = inputCohorts()$Tumor_Sample_Barcode)
-      }
-      
-      return(filteredMaf)
-      
-    },ignoreNULL = FALSE, ignoreInit=FALSE)
-    
+        maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+
+        inputCohorts(isolate(input$cohorts))
+
+        filteredMaf <- maf
+        if (length(inputCohorts()) != 0 && length(inputCohorts()) != length(cohorts)) {
+          filteredMaf <- subsetMaf(maf, tsb = maf@clinical.data[cohort_code %in% inputCohorts()]$Tumor_Sample_Barcode)
+        }
+
+        return(filteredMaf)
+      },
+      ignoreNULL = FALSE,
+      ignoreInit = FALSE
+    )
+
     output$mutationOncoplot <- renderPlot({
-      
       # cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
 
       inputGenes <- isolate(input$genes)
-      
+
       if (!isTruthy(inputGenes)) {
         inputGenes <- top_crls[1:isolate(input$maxOncoGenes)]
       }
 
-      colors = colorsTbl$color
-      names(colors) =  colorsTbl$id
-    
-      colors = colors[names(colors) %in% inputCohorts()]
-      
+      colors <- colorsTbl$color
+      names(colors) <- colorsTbl$id
+
+      colors <- colors[names(colors) %in% inputCohorts()]
+
       # vc_colors = c("#EF476F", "#F78C6B", "#FFD166", "#83D483", "#06D6A0", "#0CB0A9", "#118AB2","#073B4C", "#000000")
-      vc_colors = c("#0AA0BF","#F6114A", "#F36E98", "#78B177", "#9862A2", "#F05006", "#25998F","#FCA00C", "#000000")
-      names(vc_colors) = c(
-        'Missense_Mutation',
-        'Frame_Shift_Del',
-        'Frame_Shift_Ins',
-        'Nonsense_Mutation',
-        'Splice_Site',
-        'In_Frame_Ins',
-        'In_Frame_Del',
-        'Nonstop_Mutation',
-        'Multi_Hit'
+      vc_colors <- c("#0AA0BF", "#F6114A", "#F36E98", "#78B177", "#9862A2", "#F05006", "#25998F", "#FCA00C", "#000000")
+      names(vc_colors) <- c(
+        "Missense_Mutation",
+        "Frame_Shift_Del",
+        "Frame_Shift_Ins",
+        "Nonsense_Mutation",
+        "Splice_Site",
+        "In_Frame_Ins",
+        "In_Frame_Del",
+        "Nonstop_Mutation",
+        "Multi_Hit"
       )
 
       return(oncoplot(
@@ -117,7 +117,7 @@ oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
         sortByAnnotation = isolate(input$sortByCohort),
         gene_mar = 8,
         # barcode_mar = 20,
-        fontSize  = 1,
+        fontSize = 1,
         annotationFontSize = 1.5,
         legendFontSize = 1.5,
         colors = vc_colors,
@@ -128,9 +128,8 @@ oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
     })
 
     output$downloadOncoMutations <- downloadHandler(
-
       filename = function() {
-        if(length(isolate(input$cohorts)) == length(cohorts) && !isTruthy(isolate(input$genes))){
+        if (length(isolate(input$cohorts)) == length(cohorts) && !isTruthy(isolate(input$genes))) {
           paste("mutations-oncoplot-", Sys.Date(), ".csv", sep = "")
         } else {
           paste("mutations-oncoplot-custom", Sys.Date(), ".csv", sep = "")

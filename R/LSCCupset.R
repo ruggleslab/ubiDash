@@ -1,13 +1,13 @@
-
 LSCCUpsetUI <- function(id) {
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(
       h3("Upset Plot"),
-      p("Click on a row in the table to highlight its intersection."),
+      p(tab_summaries$`LSCC Upset`),
       checkboxInput(ns("filter_all_true"),
-                    "Show only intersections where all sets are TRUE in table",
-                    value = FALSE)
+        "Show only intersections where all sets are TRUE in table",
+        value = FALSE
+      )
     ),
     mainPanel(
       shinycssloaders::withSpinner(plotOutput(ns("distPlot")), color = "#6A2798"),
@@ -25,7 +25,7 @@ LSCCUpsetServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     sets <- c("neg_prot_prot", "pos_prot_ub", "yes_biogrid")
-    
+
     full_data <- reactive({
       req(file.exists("./data/EXP200_Percan_LSCC_upset_plot.xlsx"))
       df <- readxl::read_excel("./data/EXP200_Percan_LSCC_upset_plot.xlsx", skip = 1, col_names = TRUE)
@@ -38,7 +38,7 @@ LSCCUpsetServer <- function(id) {
       }
       df
     })
-    
+
     table_data <- reactive({
       df <- full_data()
       if (isTRUE(input$filter_all_true)) {
@@ -46,18 +46,18 @@ LSCCUpsetServer <- function(id) {
       }
       df
     })
-    
+
     output$upsetTable <- DT::renderDataTable({
       DT::datatable(table_data(), selection = "single", options = list(pageLength = 10))
     })
-    
+
     selected_sets <- reactive({
       req(input$upsetTable_rows_selected)
       df <- table_data()
       selected_row <- df[input$upsetTable_rows_selected, ]
       sets[as.logical(selected_row[, sets])]
     })
-    
+
     upset_plot <- reactive({
       df <- full_data()
       queries_arg <- NULL
@@ -85,18 +85,27 @@ LSCCUpsetServer <- function(id) {
         width_ratio = 0.15
       )
     })
-    
-    output$distPlot <- renderPlot({ upset_plot() })
-    
+
+    output$distPlot <- renderPlot({
+      upset_plot()
+    })
+
     output$downloadUpsetData <- downloadHandler(
-      filename = function() { paste("upset_data_", Sys.Date(), ".csv", sep = "") },
-      content = function(file) { write.csv(full_data(), file, row.names = FALSE) }
+      filename = function() {
+        paste("upset_data_", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(full_data(), file, row.names = FALSE)
+      }
     )
-    
+
     output$downloadSVG <- downloadHandler(
-      filename = function() { paste("upset_plot_", Sys.Date(), ".svg", sep = "") },
-      content = function(file) { ggsave(file, plot = upset_plot(), device = "svg", width = 7, height = 5) }
+      filename = function() {
+        paste("upset_plot_", Sys.Date(), ".svg", sep = "")
+      },
+      content = function(file) {
+        ggsave(file, plot = upset_plot(), device = "svg", width = 7, height = 5)
+      }
     )
-    
   })
 }

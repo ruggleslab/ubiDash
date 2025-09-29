@@ -1,11 +1,10 @@
-lollipopUI <- function(id){
+lollipopUI <- function(id) {
   ns <- NS(id)
 
   sidebarLayout(
     sidebarPanel(
       h3("Lollipop Plot"),
-      p("(description paragraph)"),
-      
+      p(tab_summaries$Lollipop),
       selectizeInput(
         inputId = ns("gene"),
         choices = NULL,
@@ -25,21 +24,18 @@ lollipopUI <- function(id){
 }
 
 lollipopServer <- function(id) {
-  moduleServer(id,function(input,output,session){
+  moduleServer(id, function(input, output, session) {
+    updateSelectizeInput(session, "gene",
+      choices = maf_genes,
+      server = TRUE, selected = "VHL"
+    )
 
+    output$lollipop <- renderPlot({
+      maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
 
-    
-    updateSelectizeInput(session, 'gene', 
-                         choices = maf_genes, 
-                         server = TRUE, selected = "VHL")
-      
-    output$lollipop = renderPlot({
-      
-      maf = mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-      
-      gene = input$gene
-      
-      return (lollipopPlot(
+      gene <- input$gene
+
+      return(lollipopPlot(
         maf = maf,
         gene = gene,
         AACol = "Protein_Change",

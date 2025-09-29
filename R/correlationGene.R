@@ -1,28 +1,28 @@
 correlationGeneUI <- function(id, cohorts) {
   ns <- NS(id)
-  
+
   sidebarLayout(
     sidebarPanel(
       h3("Gene Panel Correlation Analysis"),
-      p("(description paragraph)"),
+      p(tab_summaries$`Pancan Gene Panel`),
       selectizeInput(
         inputId = ns("inputGvpCorrProteinGeneName"),
         choices = NULL,
-        label = "Choose gene", 
-        options = list(`live-search` = TRUE), 
+        label = "Choose gene",
+        options = list(`live-search` = TRUE),
         multiple = TRUE
       ),
       selectizeInput(
         inputId = ns("inputGvpCorrProteinCohort"),
         choices = cohorts, selected = "BRCA",
-        label = "Select cohort", 
-        options = list(`live-search` = TRUE), 
+        label = "Select cohort",
+        options = list(`live-search` = TRUE),
         multiple = TRUE
       ),
       radioButtons(
         inputId = ns("inputGvpCorrProteinStype"),
-        label = "Choose sample type", 
-        choices = c("Normal", "Tumor"), 
+        label = "Choose sample type",
+        choices = c("Normal", "Tumor"),
         selected = "Tumor"
       ),
       actionButton(ns("generateGvpCorrProtein"), label = "Start Analysis")
@@ -38,7 +38,7 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
     # Load required functions and data
     source(file = "./scripts/corrAnalysis.R")
     cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
-    
+
     ### Gene Panel: Protein ###
     updateSelectizeInput(
       session, "inputGvpCorrProteinGeneName",
@@ -46,28 +46,34 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
       choices = cptac_protein_genes, server = TRUE,
       options = list(placeholder = "Type gene name")
     )
-    
-    resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein, {
-      cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
-      validate(
-        need(length(isolate(input$inputGvpCorrProteinCohort)) >= 1, 'Please select at least one cohort.'),
-        need(length(isolate(input$inputGvpCorrProteinGeneName)) >= 1, 'Please select at least one gene')
-      )
-      panelCorr(
-        geneNamesProtein = input$inputGvpCorrProteinGeneName,
-        geneNamesRNA     = NULL,
-        tissueType       = input$inputGvpCorrProteinStype,
-        cohort           = input$inputGvpCorrProteinCohort,
-        cptac_protein    = cptac_protein,
-        cptac_rna        = NULL,
-        cptac_samples    = cptac_samples
-      )
-    }, ignoreNULL = FALSE, ignoreInit = FALSE)
-    
+
+    resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein,
+      {
+        cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
+        if (length(isolate(input$inputGvpCorrProteinCohort)) < 1) {
+          stop("Please select at least one cohort.")
+        }
+        if (length(isolate(input$inputGvpCorrProteinGeneName)) < 1) {
+          stop("Please select at least one gene")
+        }
+        panelCorr(
+          geneNamesProtein = input$inputGvpCorrProteinGeneName,
+          geneNamesRNA     = NULL,
+          tissueType       = input$inputGvpCorrProteinStype,
+          cohort           = input$inputGvpCorrProteinCohort,
+          cptac_protein    = cptac_protein,
+          cptac_rna        = NULL,
+          cptac_samples    = cptac_samples
+        )
+      },
+      ignoreNULL = FALSE,
+      ignoreInit = TRUE
+    )
+
     output$outputPlotGvpCorrProtein <- renderPlotly({
       resGvpCorrProtein()$corrPlot
     })
-    
+
     output$downLoadGvpCorrProtein <- downloadHandler(
       filename = function() {
         paste0("GenePanelProtein-custom-", Sys.Date(), ".xlsx")
@@ -76,6 +82,5 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
         write.xlsx(resGvpCorrProtein()$corTab, file, row.names = TRUE)
       }
     )
-    
   })
 }

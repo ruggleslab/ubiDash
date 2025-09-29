@@ -6,78 +6,77 @@ drugResponseUI <- function(id) {
   sidebarLayout(
     sidebarPanel(
       h3("Response Analysis"),
-      p("Choose an analysis mode and its parameters. The plot will update automatically."),
-      
+      p(tab_summaries$`CCLE Drug Sensitivity`),
       radioButtons(
         inputId = ns("mode"),
-        label   = "Analysis mode:",
+        label = "Analysis mode:",
         choices = c(
           "Drug-centric"             = "drug",
           "UPS-centric"              = "ups",
           "Expression (box+density)" = "dist"
         )
       ),
-      
+
       ## drug-centric inputs
       conditionalPanel(
         condition = sprintf("input['%s'] == 'drug'", ns("mode")),
         selectizeInput(ns("drug"), "Drug", choices = NULL, options = list(`live-search` = TRUE))
       ),
-      
+
       ## ups-centric inputs
       conditionalPanel(
         condition = sprintf("input['%s'] == 'ups'", ns("mode")),
         selectizeInput(ns("e3"), "E3 (UPS) gene", choices = NULL, options = list(`live-search` = TRUE))
       ),
-      
+
       ## distribution inputs
       conditionalPanel(
         condition = sprintf("input['%s'] == 'dist'", ns("mode")),
         selectizeInput(
-          ns("e3_dist"),   
-          "E3 gene",            
-          choices  = NULL, 
+          ns("e3_dist"),
+          "E3 gene",
+          choices  = NULL,
           options  = list(`live-search` = TRUE),
           selected = NULL
         ),
         selectizeInput(
-          ns("tissue_dist"), 
-          "Tissue",              
-          choices  = NULL, 
+          ns("tissue_dist"),
+          "Tissue",
+          choices  = NULL,
           options  = list(`live-search` = TRUE),
           selected = NULL
         ),
         selectizeInput(
-          ns("cs"),       
-          "Co-factor (optional)", 
-          choices  = NULL, 
-          options  = list(
+          ns("cs"),
+          "Co-factor (optional)",
+          choices = NULL,
+          options = list(
             `live-search`     = TRUE,
-            placeholder       = 'None (leave blank)',
+            placeholder       = "None (leave blank)",
             allowEmptyOption  = TRUE
           ),
           selected = NULL
         ),
         selectizeInput(
-          ns("mut"),      
-          "Mutation (optional)",  
-          choices  = NULL, 
-          options  = list(
+          ns("mut"),
+          "Mutation (optional)",
+          choices = NULL,
+          options = list(
             `live-search`     = TRUE,
-            placeholder       = 'None (leave blank)',
+            placeholder       = "None (leave blank)",
             allowEmptyOption  = TRUE
           ),
           selected = NULL
         ),
         selectizeInput(
-          ns("drug_dist"), 
-          "Drug",               
-          choices  = NULL, 
+          ns("drug_dist"),
+          "Drug",
+          choices  = NULL,
           options  = list(`live-search` = TRUE),
           selected = NULL
         )
       )
-      
+
       # -- note: no actionButton any more --
     ),
     mainPanel(
@@ -93,12 +92,10 @@ drugResponseUI <- function(id) {
 ## ------------------------------------------------------------------------
 ## Server
 ## ------------------------------------------------------------------------
-## ------------------------------------------------------------------------
-## Server
-## ------------------------------------------------------------------------
 drugResponseServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     # 1) Load data once
+    print("Loading data...")
     cell_tx_LFC_collapsed <- readRDS("./data/Repurposing_Public_24Q2_LFC_COLLAPSED_tgr.rds") %>%
       select(depmap_id, IDs, LFC, Drug.Name, dose, tissue, Cancer_type) %>%
       distinct()
@@ -119,68 +116,70 @@ drugResponseServer <- function(id) {
     ) %>%
       filter(Branch == "Ubiquitin Proteasome System") %>%
       select(Gene.Symbol, Class) %>%
-      group_by(Gene.Symbol) %>% slice(1) %>% ungroup()
+      group_by(Gene.Symbol) %>%
+      slice(1) %>%
+      ungroup()
     mutations_df <- readRDS("./data/OmicsSomaticMutationsMatrixHotspot.rds") %>%
       as.data.frame() %>%
       rownames_to_column("depmap_id")
-    
+    print("Data loaded.")
     # 2) Populate selectors
     updateSelectizeInput(
       session, "drug",
-      choices  = sort(unique(cell_tx_LFC_collapsed$Drug.Name)),
+      choices = sort(unique(cell_tx_LFC_collapsed$Drug.Name)),
       selected = "ONCRASIN-1",
-      server   = TRUE
+      server = TRUE
     )
     updateSelectizeInput(
       session, "e3",
-      choices  = sort(protein_genes),
-      server   = TRUE
+      choices = sort(protein_genes),
+      server = TRUE
     )
     updateSelectizeInput(
       session, "e3_dist",
-      choices  = sort(protein_genes),
+      choices = sort(protein_genes),
       selected = "CLPX",
-      server   = TRUE
+      server = TRUE
     )
     updateSelectizeInput(
       session, "cs",
-      choices  = sort(protein_genes),
+      choices = sort(protein_genes),
       selected = character(0),
-      options  = list(
+      options = list(
         `live-search`     = TRUE,
-        placeholder       = 'None (leave blank)',
+        placeholder       = "None (leave blank)",
         allowEmptyOption  = TRUE
       ),
       server = TRUE
     )
     updateSelectizeInput(
       session, "mut",
-      choices  = setdiff(names(mutations_df), "depmap_id"),
+      choices = setdiff(names(mutations_df), "depmap_id"),
       selected = "PIK3CD (5293)",
-      options  = list(
+      options = list(
         `live-search`     = TRUE,
-        placeholder       = 'None (leave blank)',
+        placeholder       = "None (leave blank)",
         allowEmptyOption  = TRUE
       ),
       server = TRUE
     )
     updateSelectizeInput(
       session, "drug_dist",
-      choices  = sort(unique(cell_tx_LFC_collapsed$Drug.Name)),
+      choices = sort(unique(cell_tx_LFC_collapsed$Drug.Name)),
       selected = "ONCRASIN-1",
-      server   = TRUE
+      server = TRUE
     )
     updateSelectizeInput(
       session, "tissue_dist",
-      choices  = sort(unique(cell_tx_LFC_collapsed$tissue)),
+      choices = sort(unique(cell_tx_LFC_collapsed$tissue)),
       selected = "AUTONOMIC_GANGLIA",
-      server   = TRUE
+      server = TRUE
     )
-    
+
     # 3) Reactive plot object
     plot_obj <- reactive({
       req(input$mode)
-      
+
       if (input$mode == "drug") {
         req(input$drug)
         df <- protein %>%
@@ -191,31 +190,30 @@ drugResponseServer <- function(id) {
           group_by(IDs, hgnc_symbol, tissue) %>%
           summarise(
             cor = if (n() >= 3) cor(prot_expression, LFC, method = "spearman") else NA_real_,
-            p   = if (n() >= 3) cor.test(prot_expression, LFC, method = "spearman")$p.value else NA_real_,
+            p = if (n() >= 3) cor.test(prot_expression, LFC, method = "spearman")$p.value else NA_real_,
             .groups = "drop"
           ) %>%
           filter(!is.na(cor)) %>%
           mutate(fdr = p.adjust(p, "BH"))
-        
+
         top_pts <- filter(df, p < 0.05)
-        colors  <- read.csv("./data/colors.csv") %>%
+        colors <- read.csv("./data/colors.csv") %>%
           filter(description == "tissue") %>%
           pull(color) %>%
           setNames(unique(df$tissue))
-        
+
         ggplot(df, aes(cor, -log10(p), color = tissue)) +
           geom_point(alpha = abs(df$cor)) +
           geom_text_repel(data = top_pts, aes(label = hgnc_symbol), max.overlaps = 8) +
           geom_hline(yintercept = -log10(0.1), linetype = "dashed") +
           geom_vline(xintercept = 0) +
           scale_color_manual(values = colors) +
-          facet_wrap(~ IDs) +
+          facet_wrap(~IDs) +
           labs(
             title = paste("Drug-centric:", input$drug),
             x = "Spearman ρ", y = "-log10(P-value)"
           ) +
           theme_minimal()
-        
       } else if (input$mode == "ups") {
         req(input$e3)
         df <- protein %>%
@@ -226,17 +224,19 @@ drugResponseServer <- function(id) {
           summarise(
             ups = input$e3,
             cor = cor.test(!!sym(input$e3), LFC, method = "spearman", use = "complete.obs")$estimate,
-            p   = cor.test(!!sym(input$e3), LFC, method = "spearman", use = "complete.obs")$p.value,
-            n   = sum(is.finite(!!sym(input$e3)) & is.finite(LFC)),
+            p = cor.test(!!sym(input$e3), LFC, method = "spearman", use = "complete.obs")$p.value,
+            n = sum(is.finite(!!sym(input$e3)) & is.finite(LFC)),
             .groups = "drop"
           ) %>%
           filter(!is.na(cor)) %>%
           arrange(desc(abs(cor))) %>%
-          mutate(fdr = p.adjust(p, method = "BH"),
-                 fdr_sig = if_else(fdr < 0.1, "*", ""))
-        
+          mutate(
+            fdr = p.adjust(p, method = "BH"),
+            fdr_sig = if_else(fdr < 0.1, "*", "")
+          )
+
         top_points <- filter(df, p < 0.05)
-        
+
         ggplot(df, aes(x = cor, y = -log10(p))) +
           geom_point(alpha = abs(df$cor)) +
           geom_text_repel(data = top_points, aes(label = Drug.Name), max.overlaps = 10) +
@@ -249,24 +249,24 @@ drugResponseServer <- function(id) {
           ) +
           theme_minimal() +
           annotate("text", x = -0.15, y = 0, label = "bold(Sensitive)", parse = TRUE, size = 5) +
-          annotate("text", x =  0.15, y = 0, label = "bold(Resistant)", parse = TRUE, size = 5)
-        
+          annotate("text", x = 0.15, y = 0, label = "bold(Resistant)", parse = TRUE, size = 5)
       } else if (input$mode == "dist") {
         req(input$e3_dist, input$drug_dist, input$tissue_dist)
         drg <- input$drug_dist
         tis <- input$tissue_dist
-        cof <- if (nzchar(input$cs))  input$cs  else NULL
+        cof <- if (nzchar(input$cs)) input$cs else NULL
         mut <- if (nzchar(input$mut)) input$mut else NULL
-        
+
         # 1) pick columns & filter to single drug + single tissue
         trgt <- c(input$e3_dist, cof) %>% intersect(names(protein))
-        df0  <- cell_tx_LFC_collapsed %>%
+        df0 <- cell_tx_LFC_collapsed %>%
           filter(Drug.Name == drg, tissue == tis) %>%
           inner_join(select(protein, depmap_id, all_of(trgt)), by = "depmap_id") %>%
           mutate(across(all_of(trgt),
-                        ~ if_else(.x > median(.x, na.rm = TRUE), "High", "Low"),
-                        .names = "{.col}_status"))
-        
+            ~ if_else(.x > median(.x, na.rm = TRUE), "High", "Low"),
+            .names = "{.col}_status"
+          ))
+
         # 2) optionally merge mutation and rename to “Mutation”
         if (!is.null(mut) && mut %in% names(mutations_df)) {
           df0 <- df0 %>%
@@ -276,105 +276,112 @@ drugResponseServer <- function(id) {
         } else {
           group_mut <- NULL
         }
-        
+
         # 3) build contrast name & grouping vars
-        e3_col    <- paste0(input$e3_dist, "_status")
+        e3_col <- paste0(input$e3_dist, "_status")
         if (!is.null(cof)) {
-          cs_col       <- paste0(cof, "_status")
+          cs_col <- paste0(cof, "_status")
           combined_col <- paste0(input$e3_dist, "_", cof, "_status")
           df0 <- df0 %>% mutate(!!combined_col := paste0(.data[[e3_col]], "_", .data[[cs_col]]))
-          contrast   <- combined_col
+          contrast <- combined_col
           group_vars <- c(contrast, group_mut)
           df0 <- df0 %>%
             filter(
-              if_all(all_of(group_vars), ~ !is.na(.)),  # drop any NA in status or Mutation
+              if_all(all_of(group_vars), ~ !is.na(.)), # drop any NA in status or Mutation
               !is.na(LFC)
             )
         } else {
-          contrast   <- e3_col
+          contrast <- e3_col
           group_vars <- c(contrast, group_mut)
         }
-        
+
         # 4) shared settings
         lfc_lim <- range(df0$LFC, na.rm = TRUE)
-        colors  <- c(
-          "High"      = "blue",   "Low"       = "orange",
-          "High_High" = "#4E79A7","Low_Low"   = "#F28E2B",
-          "High_Low"  = "#76B7B2","Low_High"  = "#E15759"
+        colors <- c(
+          "High" = "blue", "Low" = "orange",
+          "High_High" = "#4E79A7", "Low_Low" = "#F28E2B",
+          "High_Low" = "#76B7B2", "Low_High" = "#E15759"
         )
-        
+
         # 5) compute medians for dashed lines
         df_meds <- df0 %>%
           group_by_at(group_vars) %>%
           summarise(mean_val = median(LFC, na.rm = TRUE), .groups = "drop")
-        
+
         # 6) Density plot
         p1 <- ggplot(df0, aes_string(x = "LFC", color = contrast)) +
           geom_density(alpha = 0.3) +
-          geom_vline(data = df_meds,
-                     aes_string(xintercept = "mean_val", color = contrast),
-                     linetype = "dashed", size = 1) +
+          geom_vline(
+            data = df_meds,
+            aes_string(xintercept = "mean_val", color = contrast),
+            linetype = "dashed", size = 1
+          ) +
           scale_color_manual(values = colors) +
           labs(
             title = if (!is.null(mut)) glue("{tis} | {mut}") else tis,
-            x     = NULL, y = "Density"
+            x = NULL, y = "Density"
           ) +
           xlim(lfc_lim) +
           facet_wrap(if (!is.null(mut)) vars(Drug.Name, Mutation) else vars(Drug.Name), scales = "fixed") +
           theme_minimal() +
           theme(legend.position = "right")
-        
+
         # 7) Boxplot + jitter + sample-size annotation
-        df_counts     <- df0 %>% count(across(all_of(group_vars)), name = "n")
+        df_counts <- df0 %>% count(across(all_of(group_vars)), name = "n")
         contrast_lvls <- unique(df0[[contrast]])
-        
+
         p2 <- ggplot(df0, aes_string(x = contrast, y = "LFC", color = contrast)) +
           geom_boxplot(outlier.shape = NA) +
           geom_jitter(width = 0.2) +
-          geom_text(data = df_counts,
-                    aes_string(
-                      x     = contrast,
-                      y     = lfc_lim[1] + diff(lfc_lim)*0.1,
-                      label = "paste0('n=', n)"
-                    ),
-                    inherit.aes = FALSE, size = 3.5) +
+          geom_text(
+            data = df_counts,
+            aes_string(
+              x     = contrast,
+              y     = lfc_lim[1] + diff(lfc_lim) * 0.1,
+              label = "paste0('n=', n)"
+            ),
+            inherit.aes = FALSE, size = 3.5
+          ) +
           scale_color_manual(values = colors) +
-          labs(x = NULL, y = expression(log[2]*"(cell viability)")) +
+          labs(x = NULL, y = expression(log[2] * "(cell viability)")) +
           ylim(lfc_lim) +
           facet_wrap(if (!is.null(mut)) vars(Drug.Name, Mutation) else vars(Drug.Name), scales = "fixed") +
           coord_flip() +
           theme_minimal() +
           theme(legend.position = "right")
-        
+
         # 8) add Wilcoxon pairwise comparisons
         if (length(contrast_lvls) > 1) {
           p2 <- p2 +
             stat_compare_means(
               comparisons = combn(contrast_lvls, 2, simplify = FALSE),
-              label       = "p.format",
-              method      = "wilcox.test",
-              label.y     = seq(
+              label = "p.format",
+              method = "wilcox.test",
+              label.y = seq(
                 from = max(df0$LFC, na.rm = TRUE) - 0.5,
                 to   = max(df0$LFC, na.rm = TRUE) - 2,
                 by   = -0.2
               )
             )
         }
-        
+
         # 9) combine density + boxplot
         ggpubr::ggarrange(
           p1, p2,
-          ncol          = 1,
+          ncol = 1,
           common.legend = TRUE,
-          legend        = "bottom",
-          align         = "hv"
+          legend = "bottom",
+          align = "hv"
         )
       }
     })
-    
+
     # 4) Render the reactive plot
-    output$result_plot <- renderPlot({
-      plot_obj()
-    }, height = 600)
+    output$result_plot <- renderPlot(
+      {
+        plot_obj()
+      },
+      height = 600
+    )
   })
 }

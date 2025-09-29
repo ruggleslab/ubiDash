@@ -6,35 +6,38 @@ scatterPlotUI <- function(id) {
         fluidRow(
           # Left column for inputs:
           # Display the full PNG image (adjust style as needed)
-          tags$img(src = "assets/E3~substrate_cartoon.png",
-                   style = "width:100%; height:auto; display:block; margin-top:15px;"),
-          column(8,
-                 helpText("Select a UPS class, a protein of interest, candidate substrate genes, and cohort(s) from the available list."),
-                 selectizeInput(
-                   ns("ups_class"), 
-                   "Class of UPS",
-                   choices = NULL
-                 ),
-                 # Static label for the second input.
-                 selectizeInput(
-                   ns("e3"), 
-                   "Protein of Interest", 
-                   choices = NULL  # Updated on the server based on UPS class.
-                 ),
-                 selectizeInput(
-                   ns("cs"), 
-                   "Candidate Substrate Genes", 
-                   choices = NULL,      # Updated on the server from the full UPS list.
-                   multiple = TRUE      # Allow multiple selections.
-                 ),
-                 # New cohort filter input; default: all cohorts selected.
-                 selectizeInput(
-                   ns("cohorts"),
-                   "Cohort(s)",
-                   choices = NULL,
-                   multiple = TRUE
-                 ),
-                 actionButton(ns("generatePlots"), "Generate Scatter Plots")
+          tags$img(
+            src = "assets/E3~substrate_cartoon.png",
+            style = "width:100%; height:auto; display:block; margin-top:15px;"
+          ),
+          column(
+            8,
+            p(tab_summaries$`Pancan Gene vs Gene`),
+            selectizeInput(
+              ns("ups_class"),
+              "Class of UPS",
+              choices = NULL
+            ),
+            # Static label for the second input.
+            selectizeInput(
+              ns("e3"),
+              "Protein of Interest",
+              choices = NULL # Updated on the server based on UPS class.
+            ),
+            selectizeInput(
+              ns("cs"),
+              "Candidate Substrate Genes",
+              choices = NULL, # Updated on the server from the full UPS list.
+              multiple = TRUE # Allow multiple selections.
+            ),
+            # New cohort filter input; default: all cohorts selected.
+            selectizeInput(
+              ns("cohorts"),
+              "Cohort(s)",
+              choices = NULL,
+              multiple = TRUE
+            ),
+            actionButton(ns("generatePlots"), "Generate Scatter Plots")
           )
         )
       ),
@@ -64,13 +67,14 @@ scatterPlotServer <- function(id) {
       }
       if (is.null(prot_data())) {
         prot_ <- read.csv("./data/Combine_PanCan_CPTAC_Proteome-gene_V1.1_UMich_GENCODE34_Sinai_imputed.tsv",
-                          sep = "\t", check.names = FALSE)
+          sep = "\t", check.names = FALSE
+        )
         prot_data(prot_)
       }
       if (is.null(ups_data_val())) {
         ups_data <- openxlsx::read.xlsx(
-          xlsxFile = './data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx',
-          sheet = 'dense'
+          xlsxFile = "./data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx",
+          sheet = "dense"
         )
         ups_data_val(ups_data)
       }
@@ -96,8 +100,10 @@ scatterPlotServer <- function(id) {
         load_scatter_data()
 
         samples <- sampl_data() %>%
-          dplyr::filter(datatype == "protein",
-                        harmonized_data_id %in% rownames(processed_prot())) %>%
+          dplyr::filter(
+            datatype == "protein",
+            harmonized_data_id %in% rownames(processed_prot())
+          ) %>%
           dplyr::select(harmonized_data_id, cohort) %>%
           unique()
 
@@ -107,7 +113,9 @@ scatterPlotServer <- function(id) {
       if (is.null(processed_colors())) {
         colors <- read.csv("./data/colors.csv") %>%
           dplyr::filter(id %in% unique(processed_samples()$cohort)) %>%
-          { setNames(.$color, .$id) }
+          {
+            setNames(.$color, .$id)
+          }
 
         processed_colors(colors)
       }
@@ -128,7 +136,7 @@ scatterPlotServer <- function(id) {
       ups_data <- ups_data_val()
 
       ups_class_selection <- ups_data %>%
-        dplyr::filter(Branch == 'Ubiquitin Proteasome System') %>%
+        dplyr::filter(Branch == "Ubiquitin Proteasome System") %>%
         dplyr::pull(Class) %>%
         unique()
 
@@ -139,7 +147,7 @@ scatterPlotServer <- function(id) {
         server = TRUE
       )
     })
-    
+
     # Update the "Protein of Interest" input based on the selected UPS class.
     observeEvent(input$ups_class, {
       req(input$ups_class)
@@ -147,7 +155,7 @@ scatterPlotServer <- function(id) {
       ups_data <- ups_data_val()
 
       current_genes <- ups_data %>%
-        dplyr::filter(Branch == 'Ubiquitin Proteasome System', Class == input$ups_class) %>%
+        dplyr::filter(Branch == "Ubiquitin Proteasome System", Class == input$ups_class) %>%
         dplyr::pull(Gene.Symbol) %>%
         unique()
 
@@ -166,7 +174,7 @@ scatterPlotServer <- function(id) {
         selected = if ("CDKN1B" %in% full_candidates) "CDKN1B" else character(0)
       )
     })
-    
+
     # Remove the protein of interest gene from the candidate list when selected.
     observeEvent(input$e3, {
       req(input$e3)
@@ -192,16 +200,16 @@ scatterPlotServer <- function(id) {
       updateSelectizeInput(
         session, "cohorts",
         choices = cohort_choices,
-        selected = cohort_choices,  # Default selection: all cohorts
+        selected = cohort_choices, # Default selection: all cohorts
         server = TRUE
       )
     })
-    
+
     ## ----------------------------
     ## REACTIVE PLOTS GENERATION
     ## ----------------------------
     plots_list <- reactiveVal(list())
-    
+
     observeEvent(input$generatePlots, {
       req(input$e3, input$cs)
 
@@ -227,47 +235,54 @@ scatterPlotServer <- function(id) {
       } else {
         input$cohorts
       }
-      
+
       plot_list <- list()
-      
+
       for (gene in cs_genes) {
         plots_cohort <- lapply(selected_cohorts, function(current_cohort) {
           df_cohort <- df %>% dplyr::filter(cohort == current_cohort)
-          
-          if (nrow(df_cohort) == 0 || 
-              sum(is.finite(df_cohort[[e3_gene]]) & is.finite(df_cohort[[gene]])) < 3) {
+
+          if (nrow(df_cohort) == 0 ||
+            sum(is.finite(df_cohort[[e3_gene]]) & is.finite(df_cohort[[gene]])) < 3) {
             ggplot2::ggplot() +
-              ggplot2::annotate("text", x = 0.5, y = 0.5, 
-                                label = paste("Cohort", current_cohort, ":\nNot enough data available"),
-                                size = 4, hjust = 0.5, vjust = 0.5) +
+              ggplot2::annotate("text",
+                x = 0.5, y = 0.5,
+                label = paste("Cohort", current_cohort, ":\nNot enough data available"),
+                size = 4, hjust = 0.5, vjust = 0.5
+              ) +
               ggplot2::theme_void() +
               ggplot2::ggtitle(current_cohort) +
               ggplot2::theme(aspect.ratio = 1)
           } else {
-            cor_value <- tryCatch({
-              cor.test(df_cohort[[e3_gene]], df_cohort[[gene]], method = "spearman")$estimate
-            }, error = function(e) NA)
-            
+            cor_value <- tryCatch(
+              {
+                cor.test(df_cohort[[e3_gene]], df_cohort[[gene]], method = "spearman")$estimate
+              },
+              error = function(e) NA
+            )
+
             ggplot2::ggplot(df_cohort, ggplot2::aes_string(x = e3_gene, y = gene)) +
               ggplot2::geom_point(color = colors[current_cohort], size = 3, alpha = 0.7) +
               ggplot2::geom_smooth(method = "lm", se = TRUE, color = "black") +
-              ggpubr::stat_cor(method = "spearman",
-                               cor.coef.name = "rho",
-                               label.y = max(df_cohort[[gene]], na.rm = TRUE) * 0.9) +
+              ggpubr::stat_cor(
+                method = "spearman",
+                cor.coef.name = "rho",
+                label.y = max(df_cohort[[gene]], na.rm = TRUE) * 0.9
+              ) +
               ggplot2::ggtitle(glue::glue("{current_cohort} (rho: {ifelse(is.na(cor_value), 'NA', round(cor_value,2))})")) +
               ggplot2::theme(aspect.ratio = 1)
           }
         })
-        
-        p_final <- patchwork::wrap_plots(plots_cohort, ncol = ceiling(length(plots_cohort)/2))
+
+        p_final <- patchwork::wrap_plots(plots_cohort, ncol = ceiling(length(plots_cohort) / 2))
         p_final <- p_final + patchwork::plot_annotation(
           title = glue::glue("{e3_gene} vs {gene}")
         )
         plot_list[[gene]] <- p_final
       }
-      
+
       plots_list(plot_list)
-      
+
       output$scatterPlotsUI <- renderUI({
         plot_output_list <- lapply(names(plots_list()), function(gene) {
           plotname <- paste0("plot_", gene)
@@ -281,7 +296,7 @@ scatterPlotServer <- function(id) {
         })
         do.call(tagList, plot_output_list)
       })
-      
+
       for (gene in names(plots_list())) {
         local({
           my_gene <- gene

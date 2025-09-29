@@ -3,12 +3,13 @@ correlationGeneAllUI <- function(id) {
   tagList(
     sidebarLayout(
       sidebarPanel(
+        p(tab_summaries$`Pancan Gene vs all`),
         selectizeInput(
           inputId = ns("selectedProtein"),
           label = "Choose Protein(s) of Interest",
           choices = NULL,
           selected = NULL,
-          multiple = TRUE  # allow multiple gene selection
+          multiple = TRUE # allow multiple gene selection
         ),
         sliderInput(
           inputId = ns("corThreshold"),
@@ -43,16 +44,16 @@ correlationGeneAllServer <- function(id) {
     # Read in your datasets (update the paths as needed)
     pancan_covariance <- readRDS("./data/Pancan_protein~protein_spearman_correlations_ups_variance.rds")
     biogrid <- readRDS("./data/BIOGRID-ALL-4.4.241.tab3.rds")
-    
+
     # Update the protein-selection choices based on unique proteins.
     protein_choices <- sort(unique(pancan_covariance$ups))
     updateSelectizeInput(
-      session, 
-      "selectedProtein", 
-      choices = protein_choices, 
+      session,
+      "selectedProtein",
+      choices = protein_choices,
       selected = protein_choices[1]
     )
-    
+
     # Reactive expression for the selected color palette.
     palette_used <- reactive({
       if (input$colorPalette == "default") {
@@ -63,7 +64,7 @@ correlationGeneAllServer <- function(id) {
         c("#ffe05f", "#b0b0b0", "white")
       }
     })
-    
+
     # Helper function to create the plot for a single gene.
     createPlotForGene <- function(selected_protein, threshold, palette_used) {
       # Filter the BioGRID dataset for interactions involving the current gene.
@@ -77,24 +78,24 @@ correlationGeneAllServer <- function(id) {
         mutate(Interactor = ifelse(Interactor_A == selected_protein, Interactor_B, Interactor_A)) %>%
         select(Interactor) %>%
         unique()
-      
+
       # Filter and prepare the covariance data.
       df <- pancan_covariance %>%
         filter(!is.na(cor) & !is.na(std_dev)) %>%
         filter(ups == selected_protein | cs == selected_protein) %>%
-        filter(abs(cor) >= threshold) %>%  # apply threshold
+        filter(abs(cor) >= threshold) %>% # apply threshold
         mutate(
           signed_fdr = -log10(fdr + 1e-10) * sign(cor),
           biogrid = ifelse(cs %in% biogrid_filtered$Interactor, "Yes", "No")
         ) %>%
         arrange(desc(signed_fdr))
-      
+
       # For plotting, focus on rows where the selected protein is the query.
       tmp <- df %>%
         filter(ups == selected_protein) %>%
         mutate(biogrid = factor(biogrid, levels = c("No", "Yes"))) %>%
         arrange(biogrid == "Yes")
-      
+
       # Identify top 5 and bottom 5 points (by correlation) to label.
       labeled_points <- tmp %>%
         slice_max(order_by = cor, n = 5, with_ties = FALSE) %>%
@@ -108,7 +109,7 @@ correlationGeneAllServer <- function(id) {
             domain = range(tmp$std_dev)
           )(std_dev)
         ))
-      
+
       # Create the ggplot for this gene.
       p <- ggplot(tmp, aes(x = signed_fdr, y = cor)) +
         geom_point(
@@ -149,10 +150,10 @@ correlationGeneAllServer <- function(id) {
         scale_color_identity() +
         theme_minimal() +
         ggtitle(selected_protein)
-      
+
       return(p)
     }
-    
+
     # Reactive expression for generating a list of plots (one per selected gene).
     plotList <- eventReactive(input$plotButton, {
       req(input$selectedProtein, input$corThreshold, input$colorPalette)
@@ -163,12 +164,12 @@ correlationGeneAllServer <- function(id) {
       })
       return(plots)
     })
-    
+
     # Reactive expression for the filtered data (for CSV download).
     filteredData <- eventReactive(input$plotButton, {
       req(input$selectedProtein, input$corThreshold)
       threshold <- input$corThreshold
-      
+
       data_list <- lapply(input$selectedProtein, function(selected_protein) {
         biogrid_filtered <- biogrid %>%
           select(`Official Symbol Interactor A`, `Official Symbol Interactor B`) %>%
@@ -180,11 +181,11 @@ correlationGeneAllServer <- function(id) {
           mutate(Interactor = ifelse(Interactor_A == selected_protein, Interactor_B, Interactor_A)) %>%
           select(Interactor) %>%
           unique()
-        
+
         df <- pancan_covariance %>%
           filter(!is.na(cor) & !is.na(std_dev)) %>%
           filter(ups == selected_protein | cs == selected_protein) %>%
-          filter(abs(cor) >= threshold) %>%  # apply threshold
+          filter(abs(cor) >= threshold) %>% # apply threshold
           mutate(
             signed_fdr = -log10(fdr + 1e-10) * sign(cor),
             biogrid = ifelse(cs %in% biogrid_filtered$Interactor, "Yes", "No")
@@ -194,65 +195,71 @@ correlationGeneAllServer <- function(id) {
         df$gene <- selected_protein
         return(df)
       })
-      
+
       combined_df <- do.call(rbind, data_list)
       return(combined_df)
     })
-    
+
     # Dynamically create UI output for each plot and its download buttons.
     # In the server module, replace the previous output$plots_ui with the following:
     output$plots_ui <- renderUI({
       req(plotList())
       ns <- session$ns
       n_genes <- length(plotList())
-      
+
       # Decide on the number of columns per row
-      cols_per_row <- if(n_genes <= 3) n_genes else 3
+      cols_per_row <- if (n_genes <= 3) n_genes else 3
       col_width <- floor(12 / cols_per_row)
-      
+
       # Split the indices into chunks (rows)
       idx <- seq_along(plotList())
-      row_chunks <- split(idx, ceiling(seq_along(idx)/cols_per_row))
-      
+      row_chunks <- split(idx, ceiling(seq_along(idx) / cols_per_row))
+
       # Build a fluidRow for each chunk
       fluidRows <- lapply(row_chunks, function(chunk) {
         fluidRow(
           lapply(chunk, function(i) {
             gene_name <- input$selectedProtein[i]
-            column(width = col_width,
-                   h3(gene_name),
-                   withSpinner(
-                     plotOutput(ns(paste0("corPlot", i)), width = "100%", height = "600px"),
-                     color = "#6A2798"
-                   ),
-                   br(),
-                   downloadButton(ns(paste0("downloadSVG", i)), 
-                                  label = paste("Download", gene_name, "Plot as SVG")),
-                   br(), br(),
-                   downloadButton(ns(paste0("downloadData", i)), 
-                                  label = paste("Download", gene_name, "Data as CSV")),
-                   hr()
+            column(
+              width = col_width,
+              h3(gene_name),
+              withSpinner(
+                plotOutput(ns(paste0("corPlot", i)), width = "100%", height = "600px"),
+                color = "#6A2798"
+              ),
+              br(),
+              downloadButton(ns(paste0("downloadSVG", i)),
+                label = paste("Download", gene_name, "Plot as SVG")
+              ),
+              br(), br(),
+              downloadButton(ns(paste0("downloadData", i)),
+                label = paste("Download", gene_name, "Data as CSV")
+              ),
+              hr()
             )
           })
         )
       })
-      
+
       # Return the list of fluidRows
       do.call(tagList, fluidRows)
     })
-    
+
     # For each plot in plotList, create corresponding outputs and download handlers.
     observeEvent(plotList(), {
       lapply(seq_along(plotList()), function(i) {
         local({
           my_i <- i
           gene_name <- input$selectedProtein[my_i]
-          
+
           # Render the plot.
-          output[[paste0("corPlot", my_i)]] <- renderPlot({
-            plotList()[[my_i]]
-          }, height = 600)
-          
+          output[[paste0("corPlot", my_i)]] <- renderPlot(
+            {
+              plotList()[[my_i]]
+            },
+            height = 600
+          )
+
           # Download handler for the SVG plot.
           output[[paste0("downloadSVG", my_i)]] <- downloadHandler(
             filename = function() {
@@ -262,7 +269,7 @@ correlationGeneAllServer <- function(id) {
               ggsave(file, plot = plotList()[[my_i]], device = "svg", width = 9, height = 6, units = "in")
             }
           )
-          
+
           # Download handler for the CSV data.
           output[[paste0("downloadData", my_i)]] <- downloadHandler(
             filename = function() {
@@ -278,6 +285,5 @@ correlationGeneAllServer <- function(id) {
         })
       })
     })
-    
   })
 }
