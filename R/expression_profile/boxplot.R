@@ -32,7 +32,7 @@ boxplotUI <- function(id) {
         plotOutput(ns("boxplot")),
         br(),
         downloadButton(ns("downloadData"), "Download Data (CSV)"),
-        downloadButton(ns("downloadPlot"), "Download Plot (SVG)")
+        downloadButton(ns("downloadPlot"), "Download Plot (PDF)")
       )
     )
   )
@@ -58,10 +58,17 @@ boxplotServer <- function(id) {
       filter(description == "tissue") %>%
       select(id, color) %>%
       deframe()
-    # Update cohort choices based on available cohorts.
+    # Update cohort choices based on available cohorts that have data in mat_prot.
     observe({
-      cohorts <- unique(cptac_sampl$cohort)
-      updateSelectInput(session, "cohort_filter", choices = cohorts, selected = cohorts)
+      # Find samples that exist in both cptac_sampl and mat_prot
+      available_samples <- intersect(cptac_sampl$harmonized_data_id, colnames(mat_prot))
+      # Get cohorts that have at least one available sample
+      available_cohorts <- cptac_sampl %>%
+        filter(harmonized_data_id %in% available_samples) %>%
+        pull(cohort) %>%
+        unique() %>%
+        sort()
+      updateSelectInput(session, "cohort_filter", choices = available_cohorts, selected = available_cohorts)
     })
 
     # Auto-populate protein choices based on available proteins in the protein matrix.
@@ -198,6 +205,92 @@ boxplotServer <- function(id) {
             )
           }
         }
+      } else if (input$split_by == "Tissue") {
+        # Group by tissue and type for sample sizes
+        sample_sizes <- data %>%
+          group_by(tissue, type) %>%
+          summarise(
+            n = sum(!is.na(value)), # Count only non-missing values
+            min_value = ifelse(sum(!is.na(value)) > 0,
+              min(value, na.rm = TRUE),
+              y_min
+            ), # Use y_min if all values are missing
+            .groups = "drop"
+          )
+
+        # Create the base boxplot
+        p <- ggplot(data, aes(x = tissue, y = value, fill = type)) +
+          geom_boxplot(position = position_dodge(width = 0.75), outlier.shape = NA) +
+          geom_jitter(aes(color = type),
+            position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.75),
+            alpha = 0.6, size = 1.2
+          ) +
+          geom_text(
+            data = sample_sizes,
+            aes(x = tissue, y = min_value, label = glue("n={n}"), group = type),
+            position = position_dodge(width = 0.75), size = 3, vjust = 0
+          ) +
+          labs(x = "Tissue", y = y_label, title = plot_title) +
+          scale_fill_manual(values = colors[unique(data$type)]) +
+          scale_color_manual(values = colors[unique(data$type)])
+
+        # Identify tissues with both Tumor and Normal samples for statistical tests
+        valid_tissues <- data %>%
+          group_by(tissue) %>%
+          filter(all(c("Tumor", "Normal") %in% type)) %>%
+          pull(tissue) %>%
+          unique()
+
+        # Add statistical annotations for valid tissues
+        if (length(valid_tissues) > 0 && length(unique(data$type)) > 1) {
+          # Calculate p-values manually for each tissue and add as text annotations
+          stat_results <- data %>%
+            filter(tissue %in% valid_tissues) %>%
+            group_by(tissue) %>%
+            do({
+              # Filter out missing values first
+              tumor_vals <- .$value[.$type == "Tumor" & !is.na(.$value)]
+              normal_vals <- .$value[.$type == "Normal" & !is.na(.$value)]
+
+              # Only perform test if both groups have at least 3 non-missing samples
+              if (length(tumor_vals) >= 3 & length(normal_vals) >= 3) {
+                tryCatch(
+                  {
+                    # Wilcoxon rank-sum test (Mann-Whitney U test)
+                    test_result <- wilcox.test(tumor_vals, normal_vals, exact = FALSE)
+                    p_val <- test_result$p.value
+
+                    # Convert p-value to significance stars
+                    sig_label <- case_when(
+                      is.na(p_val) ~ "",
+                      p_val > 0.05 ~ "ns",
+                      p_val <= 0.001 ~ "***",
+                      p_val <= 0.01 ~ "**",
+                      p_val <= 0.05 ~ "*",
+                      TRUE ~ ""
+                    )
+                    data.frame(p_value = p_val, label = sig_label, y_pos = y_max * 1.02)
+                  },
+                  error = function(e) {
+                    # If test fails for any reason, return empty result
+                    data.frame(p_value = NA, label = "", y_pos = y_max * 1.02)
+                  }
+                )
+              } else {
+                # Not enough samples for reliable test
+                data.frame(p_value = NA, label = "", y_pos = y_max * 1.02)
+              }
+            })
+
+          # Add text annotations for significance
+          if (nrow(stat_results) > 0 && any(stat_results$label != "")) {
+            p <- p + geom_text(
+              data = stat_results %>% filter(label != ""),
+              aes(x = tissue, y = y_pos, label = label),
+              size = 4, vjust = 0, inherit.aes = FALSE
+            )
+          }
+        }
       }
 
       # Finalize the plot
@@ -226,17 +319,17 @@ boxplotServer <- function(id) {
       }
     )
 
-    # Download handler for the plot (SVG format).
+    # Download handler for the plot (PDF format).
     output$downloadPlot <- downloadHandler(
       filename = function() {
         paste0(
           input$protein, "_Protein_",
           paste(input$sample_type, collapse = "_"), "_",
-          paste(input$cohort_filter, collapse = "_"), ".svg"
+          paste(input$cohort_filter, collapse = "_"), ".pdf"
         )
       },
       content = function(file) {
-        ggsave(file, plot = plot_obj(), device = "svg", width = 8, height = 6)
+        ggsave(file, plot = plot_obj(), device = "pdf", width = 8, height = 6)
       }
     )
   })

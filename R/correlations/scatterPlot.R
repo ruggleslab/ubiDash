@@ -5,14 +5,21 @@ scatterPlotUI <- function(id) {
       sidebarPanel(
         fluidRow(
           # Left column for inputs:
-          # Display the full PNG image (adjust style as needed)
+          # Display descriptive text first
+          column(
+            12,
+            p(tab_summaries$`Pancan Gene vs Gene`)
+          )
+        ),
+        fluidRow(
           tags$img(
             src = "assets/E3~substrate_cartoon.png",
-            style = "width:100%; height:auto; display:block; margin-top:15px;"
-          ),
+            style = "width:70%; height:auto; display:block; margin:1px 0px 0px 0px;"
+          )
+        ),
+        fluidRow(
           column(
-            8,
-            p(tab_summaries$`Pancan Gene vs Gene`),
+            12,
             selectizeInput(
               ns("ups_class"),
               "Class of UPS",
@@ -290,7 +297,7 @@ scatterPlotServer <- function(id) {
           tagList(
             plotOutput(ns(plotname)),
             downloadButton(ns(paste0("downloadData_", gene)), label = "Download Data"),
-            downloadButton(ns(paste0("downloadSVG_", gene)), label = "Download SVG Plot"),
+            downloadButton(ns(paste0("downloadPDF_", gene)), label = "Download PDF Plot"),
             tags$hr()
           )
         })
@@ -317,12 +324,12 @@ scatterPlotServer <- function(id) {
             }
           )
           # Download handler for SVG plot
-          output[[paste0("downloadSVG_", my_gene)]] <- downloadHandler(
+          output[[paste0("downloadPDF_", my_gene)]] <- downloadHandler(
             filename = function() {
-              paste0("plot_", my_gene, "_", Sys.Date(), ".svg")
+              paste0("plot_", my_gene, "_", Sys.Date(), ".pdf")
             },
             content = function(file) {
-              ggplot2::ggsave(file, plot = plots_list()[[my_gene]], device = "svg")
+              ggplot2::ggsave(file, plot = plots_list()[[my_gene]], device = "pdf")
             }
           )
         })

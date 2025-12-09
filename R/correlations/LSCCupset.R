@@ -16,7 +16,7 @@ LSCCUpsetUI <- function(id) {
       br(),
       p("Download Upset data and plot:"),
       downloadButton(outputId = ns("downloadUpsetData"), label = "Download Upset Data"),
-      downloadButton(outputId = ns("downloadSVG"), label = "Download Upset SVG")
+      downloadButton(outputId = ns("downloadPDF"), label = "Download Upset PDF")
     )
   )
 }
@@ -99,12 +99,12 @@ LSCCUpsetServer <- function(id) {
       }
     )
 
-    output$downloadSVG <- downloadHandler(
+    output$downloadPDF <- downloadHandler(
       filename = function() {
-        paste("upset_plot_", Sys.Date(), ".svg", sep = "")
+        paste("upset_plot_", Sys.Date(), ".pdf", sep = "")
       },
       content = function(file) {
-        ggsave(file, plot = upset_plot(), device = "svg", width = 7, height = 5)
+        ggsave(file, plot = upset_plot(), device = "pdf", width = 7, height = 5)
       }
     )
   })

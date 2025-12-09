@@ -25,11 +25,16 @@ correlationGeneUI <- function(id, cohorts) {
         choices = c("Normal", "Tumor"),
         selected = "Tumor"
       ),
-      actionButton(ns("generateGvpCorrProtein"), label = "Start Analysis")
+      tags$small(
+        "Note: Normal samples are limited in some cohorts. If analysis fails, try adding more cohorts or switching to Tumor.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
+      actionButton(ns("generateGvpCorrProtein"), label = "Generate Plot")
     ),
     mainPanel(
       withSpinner(plotlyOutput(outputId = ns("outputPlotGvpCorrProtein")), color = "#6A2798"),
-      downloadButton(ns("downLoadGvpCorrProtein"), label = "Download correlation data")
+      downloadButton(ns("downLoadGvpCorrProtein"), label = "Download correlation data"),
+      downloadButton(ns("downloadGvpCorrProteinPDF"), label = "Download PDF")
     )
   )
 }
@@ -56,6 +61,23 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
         if (length(isolate(input$inputGvpCorrProteinGeneName)) < 1) {
           stop("Please select at least one gene")
         }
+
+        # Check sample availability for Normal tissue type
+        if (input$inputGvpCorrProteinStype == "Normal") {
+          # Note: column is "cohort" not "cohor" - matching corrAnalysis.R which uses "cohor"
+          cptac_samples_filt <- cptac_samples[cptac_samples$cohort %in% input$inputGvpCorrProteinCohort, ]
+          normal_count <- sum(cptac_samples_filt$type == "Normal", na.rm = TRUE)
+          if (normal_count < 10) {
+            # Get cohorts that have Normal samples
+            cohorts_with_normal <- unique(cptac_samples$cohort[cptac_samples$type == "Normal"])
+            stop(paste0(
+              "Not enough Normal samples (", normal_count, " found, minimum 10 required). ",
+              "Cohorts with Normal samples: ", paste(cohorts_with_normal, collapse = ", "), ". ",
+              "Try selecting these cohorts or switch to 'Tumor' sample type."
+            ))
+          }
+        }
+
         panelCorr(
           geneNamesProtein = input$inputGvpCorrProteinGeneName,
           geneNamesRNA     = NULL,
@@ -80,6 +102,29 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
       },
       content = function(file) {
         write.xlsx(resGvpCorrProtein()$corTab, file, row.names = TRUE)
+      }
+    )
+
+    output$downloadGvpCorrProteinPDF <- downloadHandler(
+      filename = function() {
+        paste0("GenePanelProtein-", Sys.Date(), ".pdf")
+      },
+      content = function(file) {
+        # Recreate the static ggplot for PDF export
+        cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
+        res <- panelCorr(
+          geneNamesProtein = isolate(input$inputGvpCorrProteinGeneName),
+          geneNamesRNA     = NULL,
+          tissueType       = isolate(input$inputGvpCorrProteinStype),
+          cohort           = isolate(input$inputGvpCorrProteinCohort),
+          cptac_protein    = cptac_protein,
+          cptac_rna        = NULL,
+          cptac_samples    = cptac_samples
+        )
+        # Extract the ggplot object before ggplotly conversion
+        pdf(file, width = 10, height = 8)
+        print(res$corrPlot)
+        dev.off()
       }
     )
   })

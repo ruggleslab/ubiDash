@@ -14,7 +14,10 @@ LSCCUbiquitylUI <- function(id) {
     mainPanel(
       conditionalPanel(
         condition = sprintf("!output['%s']", ns("no_sites_trigger")),
-        shinycssloaders::withSpinner(plotOutput(ns("ubiScatterPlot")), color = "#6A2798")
+        shinycssloaders::withSpinner(plotOutput(ns("ubiScatterPlot")), color = "#6A2798"),
+        br(),
+        downloadButton(ns("downloadData"), "Download Data (CSV)"),
+        downloadButton(ns("downloadPlot"), "Download Plot (PDF)")
       ),
       conditionalPanel(
         condition = sprintf("output['%s']", ns("no_sites_trigger")),
@@ -168,5 +171,38 @@ LSCCUbiquitylServer <- function(id) {
     output$ubiScatterPlot <- renderPlot({
       scatter_plot()
     })
+
+    # Download handler for the plot (PDF format)
+    output$downloadPlot <- downloadHandler(
+      filename = function() {
+        e3_name <- gsub(" ", "_", input$e3)
+        substrate_name <- gsub(" ", "_", input$substrate)
+        paste0(e3_name, "_vs_", substrate_name, "_ubiquityl_", Sys.Date(), ".pdf")
+      },
+      content = function(file) {
+        pdf(file, width = 12, height = 8)
+        print(scatter_plot())
+        dev.off()
+      }
+    )
+
+    # Download handler for the data (CSV format)
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        e3_name <- gsub(" ", "_", input$e3)
+        substrate_name <- gsub(" ", "_", input$substrate)
+        paste0(e3_name, "_vs_", substrate_name, "_ubiquityl_data_", Sys.Date(), ".csv")
+      },
+      content = function(file) {
+        if (is.null(input$ub_site) || length(input$ub_site) == 0) {
+          write.csv(data.frame(message = "No ubiquityl sites selected"), file, row.names = FALSE)
+        } else {
+          # Export the joined data with selected E3, substrate, and ubiquityl sites
+          data <- joined_data() %>%
+            select(sample_id, input$e3, all_of(input$ub_site))
+          write.csv(data, file, row.names = FALSE)
+        }
+      }
+    )
   })
 }

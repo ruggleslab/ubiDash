@@ -21,3 +21,5 @@ ggpubr
 googledrive
 ggridges
 InteractiveComplexHeatmap
+survival
+survminer

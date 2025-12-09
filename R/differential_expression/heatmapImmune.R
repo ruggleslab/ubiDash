@@ -1,27 +1,31 @@
-heatmapCancerUI <- function(id) {
+heatmapImmuneUI <- function(id) {
   ns <- NS(id)
+
   sidebarLayout(
     sidebarPanel(
-      h3("Customize UPS Protein Heatmap"),
-      p(tab_summaries$`Heatmap Cancer Subtypes`),
-      selectInput(ns("classSelect"), "UPS Class",
-        choices = NULL, # will be updated dynamically
+      h3("UPS Proteins by Immune Subtype"),
+      p(tab_summaries$`Heatmap Immune Subtypes`),
+
+      # Existing filters
+      selectInput(ns("classSelectImmune"), "UPS Class",
+        choices = NULL, # dynamically updated later
         multiple = TRUE
       ),
-      selectInput(ns("cohortSelect"), "Cohort",
-        choices = NULL, # will be updated dynamically
+      selectInput(ns("cohortSelectImmune"), "Cohort",
+        choices = NULL, # dynamically updated later
         multiple = TRUE
       ),
-      selectInput(ns("cancerSubtypeSelect"), "Cancer Subtype",
-        choices = NULL, # will be updated dynamically
+      selectInput(ns("ImmuneSubtypeSelectImmune"), "Immune Subtype",
+        choices = NULL, # dynamically updated later
         multiple = TRUE
       ),
-      # NEW: Protein search input with server‐side search.
+
+      # New: Protein search input (with server-side search capability)
       selectizeInput(
         ns("filter_proteins"),
         label = "Protein(s) of interest:",
         choices = NULL,
-        selected = NULL,
+        selected = NULL, # full heatmap by default
         multiple = TRUE,
         options = list(
           placeholder = "Type or select one or more protein symbols",
@@ -35,22 +39,21 @@ heatmapCancerUI <- function(id) {
     ),
     mainPanel(
       shinycssloaders::withSpinner(
-        plotOutput(ns("heatmapPlot"), height = "800px"),
+        plotOutput(ns("heatmapPlotImmune"), height = "800px"),
         color = "#6A2798"
       ),
-      br(),
-      downloadButton(ns("download"), "Download PDF"),
-      downloadButton(ns("downloadData"), "Download Data")
+      downloadButton(ns("downloadImmune"), "Download PDF"),
+      downloadButton(ns("downloadDataImmune"), "Download Data")
     )
   )
 }
-heatmapCancerServer <- function(id) {
+heatmapImmuneServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Load raw data once
+    # Load raw data once as a reactive expression.
     data_raw <- reactive({
-      prot <- read.csv("./data/DEqMS.results_cancer_subtypes_with_tumotPurity.csv") # adjust file path
+      prot <- read.csv("./data/DEqMS.results_Immune_subtype_percan_with_tumotPurity.csv") # adjust file path if needed
       pn <- openxlsx::read.xlsx(
         "./data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx",
         sheet = "dense"
@@ -66,13 +69,13 @@ heatmapCancerServer <- function(id) {
       pn <- dat$pn
 
       # Filter pn by selected UPS class
-      if (!is.null(input$classSelect) && length(input$classSelect) > 0) {
-        pn <- pn %>% dplyr::filter(Class %in% input$classSelect)
+      if (!is.null(input$classSelectImmune) && length(input$classSelectImmune) > 0) {
+        pn <- pn %>% dplyr::filter(Class %in% input$classSelectImmune)
       }
 
       # Filter prot by selected cohorts
-      if (!is.null(input$cohortSelect) && length(input$cohortSelect) > 0) {
-        prot <- prot %>% dplyr::filter(cohort %in% input$cohortSelect)
+      if (!is.null(input$cohortSelectImmune) && length(input$cohortSelectImmune) > 0) {
+        prot <- prot %>% dplyr::filter(cohort %in% input$cohortSelectImmune)
       }
 
       # Merge network and differential expression data
@@ -103,24 +106,24 @@ heatmapCancerServer <- function(id) {
       list(merged_mat = merged_mat, proteins = proteins)
     })
 
-    # Update select input choices based on loaded data (only once at startup)
+    # Update input choices using the loaded data (only once at startup)
     observe({
       dat <- data_raw()
 
-      updateSelectInput(session, "classSelect",
+      updateSelectInput(session, "classSelectImmune",
         choices = unique(dat$pn$Class),
         selected = unique(dat$pn$Class)
       )
 
-      updateSelectInput(session, "cohortSelect",
+      updateSelectInput(session, "cohortSelectImmune",
         choices = unique(dat$prot$cohort),
         selected = unique(dat$prot$cohort)
       )
 
-      cancer_subtypes <- unique(sapply(strsplit(dat$prot$contrast, "_vs_"), function(x) x[1]))
-      updateSelectInput(session, "cancerSubtypeSelect",
-        choices = cancer_subtypes,
-        selected = cancer_subtypes
+      immune_subtypes <- unique(sapply(strsplit(dat$prot$contrast, "_vs_"), function(x) x[1]))
+      updateSelectInput(session, "ImmuneSubtypeSelectImmune",
+        choices = immune_subtypes,
+        selected = immune_subtypes
       )
 
       # Update the protein search input (using all available proteins from network data)
@@ -137,7 +140,7 @@ heatmapCancerServer <- function(id) {
     })
 
     # Update protein choices when class/cohort filters change (but not when proteins are selected)
-    observeEvent(c(input$classSelect, input$cohortSelect),
+    observeEvent(c(input$classSelectImmune, input$cohortSelectImmune),
       {
         current_proteins <- available_proteins()
         current_selection <- input$filter_proteins
@@ -156,7 +159,7 @@ heatmapCancerServer <- function(id) {
       ignoreNULL = FALSE
     )
 
-    # Build the heatmap object
+    # Build the heatmap object.
     heatmap_obj <- reactive({
       base <- base_merged_mat()
       merged_mat <- base$merged_mat
@@ -199,43 +202,38 @@ heatmapCancerServer <- function(id) {
         show_names <- (nrow(display_mat) < 30)
       }
 
-      # Create column annotations
+      # Create column annotations.
       annotations <- data.frame(
         Cohort = gsub("_.*", "", colnames(display_mat)),
-        Cancer_subtype = gsub("^[^_]*_|_vs_Others$", "", colnames(display_mat)),
+        Immune_subtype = gsub("^[^_]*_|_vs_Others$", "", colnames(display_mat)),
         row.names = colnames(display_mat)
       )
 
-      # Subset columns based on cancer subtype filter
-      if (!is.null(input$cancerSubtypeSelect) && length(input$cancerSubtypeSelect) > 0) {
+      # Apply the Immune Subtype filter if set.
+      if (!is.null(input$ImmuneSubtypeSelectImmune) && length(input$ImmuneSubtypeSelectImmune) > 0) {
         extracted_subtypes <- gsub("^[^_]*_|_vs_Others$", "", colnames(display_mat))
-        keep_cols <- extracted_subtypes %in% input$cancerSubtypeSelect
+        keep_cols <- extracted_subtypes %in% input$ImmuneSubtypeSelectImmune
         display_mat <- display_mat[, keep_cols, drop = FALSE]
         annotations <- annotations[keep_cols, , drop = FALSE]
       }
 
-      # Create row annotation by joining with the gene-to-class lookup
+      # Create row annotation (lookup of gene symbol to UPS class).
       x <- proteins %>%
         dplyr::select(Gene.Symbol, Class) %>%
         dplyr::distinct()
       Class <- data.frame(
-        gene = rownames(merged_mat),
-        stringsAsFactors = FALSE
+        gene = rownames(merged_mat), stringsAsFactors = FALSE
       ) %>%
         dplyr::inner_join(x, by = c("gene" = "Gene.Symbol")) %>%
         tibble::column_to_rownames("gene")
 
-      # Clean up cancer subtype labels
-      annotations$Cancer_subtype <- gsub("_", "-", annotations$Cancer_subtype)
-      annotations$Cancer_subtype[annotations$Cancer_subtype == "Serous-Adenocarcinoma"] <- "Serous Adenocarcinoma"
-      annotations$Cancer_subtype[annotations$Cancer_subtype == "Terminal-Respiratory-Unit"] <- "Terminal Respiratory Unit"
-      annotations$Cancer_subtype[annotations$Cancer_subtype == "IDH-mutant"] <- "IDH mutant"
+      annotations$Immune_subtype <- gsub("_", "-", annotations$Immune_subtype)
 
-      # Load color definitions from file.
+      # Load color definitions.
       colors <- read.csv("./data/colors.csv")
       present_classes <- unique(as.character(Class$Class))
       present_cohorts <- unique(as.character(annotations$Cohort))
-      present_subtypes <- unique(as.character(annotations$Cancer_subtype))
+      present_subtypes <- unique(as.character(annotations$Immune_subtype))
 
       colors.cohort <- setNames(
         object = colors$color[match(present_cohorts, colors$id)],
@@ -262,16 +260,16 @@ heatmapCancerServer <- function(id) {
         cluster_columns = TRUE,
         show_row_names = show_names,
         show_column_names = FALSE,
-        split = Class$Class, # group rows by UPS Class
+        split = Class$Class, # group rows by UPS class
         row_gap = grid::unit(0, "mm"),
         row_title = NULL,
-        column_title = "Differentially Expressed Proteins (DEPs) in cancer subtypes",
+        column_title = "Differentially Expressed Proteins (DEPs) in Immune Subtypes",
         column_title_gp = grid::gpar(fontsize = 16, fontface = "bold"),
         top_annotation = ComplexHeatmap::HeatmapAnnotation(
-          df = annotations[, c("Cohort", "Cancer_subtype")],
+          df = annotations[, c("Cohort", "Immune_subtype")],
           col = list(
             Cohort = colors.cohort,
-            Cancer_subtype = colors.subtypes
+            Immune_subtype = colors.subtypes
           ),
           which = "column"
         ),
@@ -289,7 +287,7 @@ heatmapCancerServer <- function(id) {
     })
 
     # Render the heatmap.
-    output$heatmapPlot <- renderPlot(
+    output$heatmapPlotImmune <- renderPlot(
       {
         req(heatmap_obj())
         result <- heatmap_obj()
@@ -300,9 +298,9 @@ heatmapCancerServer <- function(id) {
     )
 
     # Download handler for CSV export.
-    output$downloadData <- downloadHandler(
+    output$downloadDataImmune <- downloadHandler(
       filename = function() {
-        paste("cancer_heatmap_data_", Sys.Date(), ".csv", sep = "")
+        paste("immune_heatmap_data_", Sys.Date(), ".csv", sep = "")
       },
       content = function(file) {
         req(heatmap_obj()$mat)
@@ -311,9 +309,9 @@ heatmapCancerServer <- function(id) {
     )
 
     # Download handler for PDF export.
-    output$download <- downloadHandler(
+    output$downloadImmune <- downloadHandler(
       filename = function() {
-        paste0("heatmap_", Sys.Date(), ".pdf")
+        paste0("immune_heatmap_", Sys.Date(), ".pdf")
       },
       content = function(file) {
         pdf(file, width = 11, height = 8)

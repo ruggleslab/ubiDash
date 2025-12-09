@@ -19,11 +19,17 @@ volcanoUI <- function(id, cohorts) {
         ),
         selectizeInput(ns("poi"), "Protein(s) of Interest", choices = NULL, multiple = TRUE),
         selectInput(ns("cohort"), "Cohort", cohorts),
-        textInput(ns("PValCutoff"), "Adjusted P Value Cutoff:",
-          placeholder = "5e-8", value = "0.001"
-        ),
-        sliderInput(ns("logFCCutoff"), "Log2(Tumor/Normal) Cutoff:",
-          min = 0.25, max = 2, value = 1, step = 0.05
+        fluidRow(
+          column(6,
+            sliderInput(ns("PValCutoff"), "-Log10(Adj P-Value) Cutoff:",
+              min = 1, max = 10, value = 3, step = 0.5
+            )
+          ),
+          column(6,
+            sliderInput(ns("logFCCutoff"), "Log2(T/N) Cutoff:",
+              min = 0.25, max = 2, value = 1, step = 0.05
+            )
+          )
         )
       ),
 
@@ -40,6 +46,10 @@ volcanoUI <- function(id, cohorts) {
             placeholder = "Type or select one or more protein symbols",
             server = TRUE
           )
+        ),
+        radioButtons(ns("displayMode"), "Display Mode",
+          choices = c("Show as annotations" = "all", "Show only selected proteins" = "selected"),
+          selected = "all"
         )
       )
     ),
@@ -51,7 +61,7 @@ volcanoUI <- function(id, cohorts) {
         ),
         p("Download data and plot:"),
         downloadButton(outputId = ns("downloadVolcanoData"), label = "Download Data"),
-        downloadButton(outputId = ns("downloadSVG"), label = "Download SVG")
+        downloadButton(outputId = ns("downloadPDF"), label = "Download PDF")
       ),
       conditionalPanel(
         condition = paste0("input['", ns("plot_type"), "'] == 'heatmap'"),
@@ -116,18 +126,63 @@ volcanoServer <- function(id, DE_protein) {
     })
 
     # Update protein search input for the heatmap.
-    observe({
+    observeEvent(c(input$plot_type, input$class_heatmap), {
       if (input$plot_type == "heatmap") {
-        ups_genes <- ups_data %>%
-          dplyr::filter(Branch == "Ubiquitin Proteasome System") %>%
-          dplyr::pull(Gene.Symbol) %>%
-          unique() %>%
-          sort()
-        updateSelectizeInput(session, "filter_proteins_heatmap",
-          choices = ups_genes,
-          selected = NULL
-        )
+        current_proteins <- available_heatmap_proteins()
+        if (!is.null(current_proteins)) {
+          current_selection <- isolate(input$filter_proteins_heatmap)
+          # Preserve valid selections
+          valid_selection <- current_selection[current_selection %in% current_proteins]
+
+          updateSelectizeInput(session, "filter_proteins_heatmap",
+            choices = sort(current_proteins),
+            selected = valid_selection
+          )
+        }
       }
+    })
+
+    # Reactive for available proteins based on current heatmap filters
+    available_heatmap_proteins <- reactive({
+      if (input$plot_type != "heatmap") {
+        return(NULL)
+      }
+
+      # Read the matrix file.
+      out <- read.csv(file = "./data/EXP193_DEqMS_CPTAC_imputed_proteome_signed_p.adj_matrix.csv")
+
+      selected_classes <- input$class_heatmap
+      if (is.null(selected_classes)) {
+        return(NULL)
+      }
+
+      ups_genes <- ups_data %>%
+        dplyr::filter(
+          Branch == "Ubiquitin Proteasome System",
+          Class %in% selected_classes
+        ) %>%
+        dplyr::pull(Gene.Symbol) %>%
+        unique()
+
+      input_matrix <- out %>%
+        dplyr::filter(gene %in% ups_genes) %>%
+        column_to_rownames(var = "gene") %>%
+        .[which(rowMeans(!is.na(.)) > 0.5), ] %>%
+        as.matrix()
+
+      # Extract UPS annotation.
+      ups_annot <- ups_data %>%
+        dplyr::filter(Branch == "Ubiquitin Proteasome System") %>%
+        dplyr::select(Gene.Symbol, Class) %>%
+        dplyr::filter(Gene.Symbol %in% rownames(input_matrix)) %>%
+        dplyr::distinct(Gene.Symbol, .keep_all = TRUE) %>%
+        column_to_rownames(var = "Gene.Symbol") %>%
+        dplyr::select(Class) %>%
+        .[rownames(input_matrix), , drop = FALSE]
+
+      input_matrix <- input_matrix[rownames(input_matrix) %in% rownames(ups_annot), , drop = FALSE]
+
+      rownames(input_matrix)
     })
 
     # Volcano plot data processing.
@@ -202,18 +257,33 @@ volcanoServer <- function(id, DE_protein) {
 
       # Create the display matrix.
       display_matrix <- input_matrix
+      display_annot <- ups_annot
       if (!is.null(input$filter_proteins_heatmap) && length(input$filter_proteins_heatmap) > 0) {
-        rn <- rownames(display_matrix)
-        rn[!(rn %in% input$filter_proteins_heatmap)] <- ""
-        rownames(display_matrix) <- rn
-        show_names <- TRUE
+        if (input$displayMode == "selected") {
+          # Show only selected proteins that are present in the data
+          valid_selected <- input$filter_proteins_heatmap[input$filter_proteins_heatmap %in% rownames(display_matrix)]
+          if (length(valid_selected) > 0) {
+            display_matrix <- display_matrix[valid_selected, , drop = FALSE]
+            display_annot <- display_annot[valid_selected, , drop = FALSE]
+            show_names <- TRUE
+          } else {
+            # No valid selected proteins, show all
+            show_names <- (nrow(display_matrix) < 30)
+          }
+        } else {
+          # Show all in UPS class with annotations
+          rn <- rownames(display_matrix)
+          rn[!(rn %in% input$filter_proteins_heatmap)] <- ""
+          rownames(display_matrix) <- rn
+          show_names <- TRUE
+        }
       } else {
-        show_names <- FALSE
+        show_names <- (nrow(display_matrix) < 30)
       }
 
       list(
         matrix = display_matrix,
-        annotation = ups_annot,
+        annotation = display_annot,
         colors = colors,
         show_names = show_names
       )
@@ -226,9 +296,7 @@ volcanoServer <- function(id, DE_protein) {
       selected_class <- volcano_data()$selected_class
 
       logFCCutoff <- input$logFCCutoff
-      PValCutoff <- as.numeric(input$PValCutoff)
-      if (!isTruthy(PValCutoff)) PValCutoff <- 0.001
-      PValCutoff_log <- -log10(PValCutoff)
+      PValCutoff_log <- input$PValCutoff  # Already in -log10 scale from slider
 
       labeledPoints <- dplyr::filter(
         df,
@@ -329,9 +397,9 @@ volcanoServer <- function(id, DE_protein) {
       }
     )
 
-    output$downloadSVG <- downloadHandler(
+    output$downloadPDF <- downloadHandler(
       filename = function() {
-        paste0("volcano_plot_", Sys.Date(), ".svg")
+        paste0("volcano_plot_", Sys.Date(), ".pdf")
       },
       content = function(file) {
         req(volcano_data())
@@ -339,9 +407,7 @@ volcanoServer <- function(id, DE_protein) {
         selected_class <- volcano_data()$selected_class
 
         logFCCutoff <- input$logFCCutoff
-        PValCutoff <- as.numeric(input$PValCutoff)
-        if (!isTruthy(PValCutoff)) PValCutoff <- 0.001
-        PValCutoff_log <- -log10(PValCutoff)
+        PValCutoff_log <- input$PValCutoff  # Already in -log10 scale from slider
 
         labeledPoints <- dplyr::filter(
           df,
@@ -395,7 +461,7 @@ volcanoServer <- function(id, DE_protein) {
           )
         }
 
-        ggsave(file, plot = p, device = "svg", width = 8, height = 6)
+        ggsave(file, plot = p, device = "pdf", width = 8, height = 6)
       }
     )
 
@@ -429,7 +495,7 @@ volcanoServer <- function(id, DE_protein) {
           cluster_columns = TRUE,
           cluster_rows = TRUE,
           show_column_names = TRUE,
-          show_row_names = TRUE,
+          show_row_names = data$show_names,
           name = "-Log10(p.adj)",
           col = circlize::colorRamp2(
             c(-10, -2.5, 2.5, 10),

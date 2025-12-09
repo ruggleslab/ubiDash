@@ -35,13 +35,15 @@ shinyServer(function(input, output, session) {
     } else if (input$mainNav == "LSCC Upset") {
       LSCCUpsetServer("LSCCUpsetTab")
     } else if (input$mainNav == "Oncoplot") {
-      oncoplotServer("oncoTab", top_crls, cohorts, colorsTbl)
+      oncoplotServer("oncoTab", top_e3_genes, top_ups_genes, cohorts, colorsTbl)
     } else if (input$mainNav == "Lollipop") {
       lollipopServer("lollipopTab")
     } else if (input$mainNav == "QTL Analysis") {
       QTLServer("QTLTab", genelists, colorsTbl, cohorts1.1)
     } else if (input$mainNav == "CCLE Drug Sensitivity") {
       drugResponseServer("drugResponseTab")
+    } else if (input$mainNav == "CPTAC Survival") {
+      CPTACSurvivalServer("cptacSurvivalTab")
     } else if (input$mainNav == "Download Data") {
       dataDownloadServer("downloadTab")
     }

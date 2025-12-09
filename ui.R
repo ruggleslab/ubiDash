@@ -94,11 +94,12 @@ ui <- shinyUI(
         tabPanel(
           "LSCC Ubiquityl",
           LSCCUbiquitylUI("LSCCUbiquitylTab")
-        ),
-        tabPanel(
-          "LSCC Upset",
-          LSCCUpsetUI("LSCCUpsetTab")
         )
+        # ),
+        # tabPanel(
+        #   "LSCC Upset",
+        #   LSCCUpsetUI("LSCCUpsetTab")
+        # )
       ),
       navbarMenu(
         "Mutations (QTL)",
@@ -120,6 +121,10 @@ ui <- shinyUI(
         tabPanel("CCLE Drug Sensitivity",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
           drugResponseUI("drugResponseTab")
+        ),
+        tabPanel(
+          "CPTAC Survival",
+          CPTACSurvivalUI("cptacSurvivalTab")
         ),
       ),
       tabPanel("Download Data",

@@ -6,11 +6,26 @@ heatmapHarmonizedUI <- function(id) {
     sidebarPanel(
       h3("Summarized Profile"),
       p(tab_summaries$Heatmap),
+      # Illustration image
+      tags$div(
+        style = "text-align: center; margin-bottom: 15px;",
+        tags$img(
+          src = "assets/Gonzalez-Robles-Figures-1-0.png",
+          alt = "Heatmap Illustration",
+          style = "max-width: 100%; height: auto; border-radius: 5px;"
+        )
+      ),
 
-      # Filter inputs (method filter removed)
+      # Filter inputs
       selectizeInput(
         ns("filter_dataset"),
         label    = "Dataset:",
+        choices  = NULL,
+        multiple = TRUE
+      ),
+      selectizeInput(
+        ns("filter_method"),
+        label    = "Method:",
         choices  = NULL,
         multiple = TRUE
       ),
@@ -21,8 +36,8 @@ heatmapHarmonizedUI <- function(id) {
         multiple = TRUE
       ),
       selectizeInput(
-        ns("filter_tissue"),
-        label    = "Tissue:",
+        ns("filter_tissue_group"),
+        label    = "Tissue Group:",
         choices  = NULL,
         multiple = TRUE
       ),
@@ -44,7 +59,7 @@ heatmapHarmonizedUI <- function(id) {
       selectizeInput(
         ns("split_columns_by"),
         label = "Split columns by:",
-        choices = c("None", "Dataset", "Type", "Tissue"),
+        choices = c("None", "Dataset", "Method", "Type", "Tissue Group"),
         selected = "Dataset"
       ),
 
@@ -54,9 +69,9 @@ heatmapHarmonizedUI <- function(id) {
     mainPanel(
       h3("UPS Protein Expression Profile"),
       plotOutput(ns("static_heatmap")),
-      p("Download this data or plot:"),
+      br(),
       downloadButton(outputId = ns("download_data"), label = "Download Data"),
-      downloadButton(outputId = ns("download_plot"), label = "Download Plot")
+      downloadButton(outputId = ns("download_plot"), label = "Download PDF")
     )
   )
 }
@@ -68,15 +83,59 @@ heatmapHarmonizedServer <- function(id) {
     ## ============
     ## Data Loading
     ## ============
-    mat_ups_file <- "./data/mat_ups.rds"
-    sampl_df_file <- "./data/sampl_df.rds"
+    harmonized_proteome_file <- "./data/UbiDash_harmonized_proteome_data.rds"
+    sample_mapping_file <- "./data/UbiDash_sample_mapping.rds"
     ups_df_file <- "./data/ups_df.rds"
-    colors_file <- "./data/colors.rds"
+    colors_file <- "./data/colors.csv"
 
-    mat.ups <- readRDS(mat_ups_file)
-    sampl.df <- readRDS(sampl_df_file)
+    # Load raw data
+    mat <- readRDS(harmonized_proteome_file)
+    metadata <- readRDS(sample_mapping_file)
     ups.df <- readRDS(ups_df_file)
-    colors <- readRDS(colors_file)
+    colors_tab <- read.csv(colors_file)
+    colors <- setNames(colors_tab$color, colors_tab$id)
+
+    # Add sample column from rownames if not present
+    if (!"sample" %in% colnames(metadata)) {
+      metadata <- metadata %>%
+        tibble::rownames_to_column(var = "sample")
+    }
+
+    # Get UPS gene list
+    ups.gns <- rownames(mat)[rownames(mat) %in% rownames(ups.df)]
+
+    # Process data: rank genes and calculate relative rank scores
+    mat.ups <- mat %>%
+      singscore::rankGenes() %>%
+      apply(., 2, function(x) x / max(x, na.rm = TRUE)) %>%
+      .[ups.gns, , drop = FALSE] %>%
+      as.data.frame() %>%
+      tibble::rownames_to_column("gene") %>%
+      tidyr::pivot_longer(-gene, names_to = "sample", values_to = "score") %>%
+      dplyr::left_join(metadata %>% dplyr::select(sample, dataset, method, type, tissue_group),
+        by = "sample"
+      ) %>%
+      dplyr::select(-sample) %>%
+      dplyr::group_by(gene, dataset, method, type, tissue_group) %>%
+      dplyr::summarise(dplyr::across(everything(), ~ mean(.x, na.rm = TRUE)), .groups = "drop") %>%
+      tidyr::unite("group", dataset, method, type, tissue_group, sep = "_") %>%
+      tidyr::pivot_wider(names_from = group, values_from = score) %>%
+      tibble::column_to_rownames("gene") %>%
+      dplyr::mutate(dplyr::across(everything(), ~ ifelse(is.nan(.), NA, .)))
+
+    # Ensure mat.ups is a proper numeric matrix
+    mat.ups <- as.data.frame(mat.ups)
+    mat.ups <- as.matrix(mat.ups)
+    if (!is.numeric(mat.ups)) {
+      mat.ups <- apply(mat.ups, 2, as.numeric)
+    }
+
+    # Create sample dataframe for annotations
+    sampl.df <- metadata %>%
+      dplyr::mutate(sample = paste(dataset, method, type, tissue_group, sep = "_")) %>%
+      dplyr::select(-tissue) %>%
+      dplyr::distinct() %>%
+      tibble::column_to_rownames(var = "sample")
 
     ## =============================
     ## Initialize Filter Input Choices
@@ -85,13 +144,17 @@ heatmapHarmonizedServer <- function(id) {
       choices  = sort(unique(sampl.df$dataset)),
       selected = sort(unique(sampl.df$dataset))
     )
+    updateSelectizeInput(session, "filter_method",
+      choices  = sort(unique(sampl.df$method)),
+      selected = sort(unique(sampl.df$method))
+    )
     updateSelectizeInput(session, "filter_type",
       choices  = sort(unique(sampl.df$type)),
       selected = sort(unique(sampl.df$type))
     )
-    updateSelectizeInput(session, "filter_tissue",
-      choices  = sort(unique(sampl.df$tissue)),
-      selected = sort(unique(sampl.df$tissue))
+    updateSelectizeInput(session, "filter_tissue_group",
+      choices  = sort(unique(sampl.df$tissue_group)),
+      selected = sort(unique(sampl.df$tissue_group))
     )
     updateSelectizeInput(session, "filter_genes",
       choices  = sort(rownames(mat.ups)),
@@ -104,8 +167,9 @@ heatmapHarmonizedServer <- function(id) {
     filter_state <- reactive({
       list(
         dataset = input$filter_dataset,
+        method = input$filter_method,
         type = input$filter_type,
-        tissue = input$filter_tissue,
+        tissue_group = input$filter_tissue_group,
         genes = input$filter_genes,
         cluster_columns = input$cluster_columns,
         split_columns_by = input$split_columns_by
@@ -114,13 +178,21 @@ heatmapHarmonizedServer <- function(id) {
 
     debounced_state <- shiny::debounce(filter_state, millis = 300)
 
-    ## Update type when dataset changes (method filter removed)
+    ## Update dependent filters when dataset changes
     observeEvent(input$filter_dataset, {
       req(input$filter_dataset)
       filtered_sampl <- sampl.df[sampl.df$dataset %in% input$filter_dataset, ]
+      updateSelectizeInput(session, "filter_method",
+        choices  = sort(unique(filtered_sampl$method)),
+        selected = sort(unique(filtered_sampl$method))
+      )
       updateSelectizeInput(session, "filter_type",
         choices  = sort(unique(filtered_sampl$type)),
         selected = sort(unique(filtered_sampl$type))
+      )
+      updateSelectizeInput(session, "filter_tissue_group",
+        choices  = sort(unique(filtered_sampl$tissue_group)),
+        selected = sort(unique(filtered_sampl$tissue_group))
       )
     })
 
@@ -135,15 +207,18 @@ heatmapHarmonizedServer <- function(id) {
 
       selected_dataset <- state$dataset
       if (is.null(selected_dataset)) selected_dataset <- character(0)
+      selected_method <- state$method
+      if (is.null(selected_method)) selected_method <- character(0)
       selected_type <- state$type
       if (is.null(selected_type)) selected_type <- character(0)
-      selected_tissue <- state$tissue
-      if (is.null(selected_tissue)) selected_tissue <- character(0)
+      selected_tissue_group <- state$tissue_group
+      if (is.null(selected_tissue_group)) selected_tissue_group <- character(0)
 
-      # Filter columns (samples) based on selected dataset, type, and tissue.
+      # Filter columns (samples) based on selected dataset, method, type, and tissue_group
       keep_cols <- sampl.df$dataset %in% selected_dataset &
+        sampl.df$method %in% selected_method &
         sampl.df$type %in% selected_type &
-        sampl.df$tissue %in% selected_tissue
+        sampl.df$tissue_group %in% selected_tissue_group
 
       if (!any(keep_cols)) {
         return(list(
@@ -164,11 +239,16 @@ heatmapHarmonizedServer <- function(id) {
         keep_rows <- rep(TRUE, nrow(mat_sub))
       }
       mat_sub <- mat_sub[keep_rows, , drop = FALSE]
-      ups_sub <- ups.df[keep_rows, , drop = FALSE]
+      # Ensure ups_sub matches the filtered matrix rows
+      ups_sub <- ups.df[rownames(mat_sub), , drop = FALSE]
 
       ## --- Data Cleaning ---
-      # Instead of removing rows with Inf, NA, or constant values,
-      # replace any Inf or NA values with 0 so that all genes are retained.
+      # Ensure mat_sub is a proper numeric matrix
+      mat_sub <- as.matrix(mat_sub)
+      if (!is.numeric(mat_sub)) {
+        mat_sub <- apply(mat_sub, 2, as.numeric)
+      }
+      # Replace any Inf or NA values with 0 so that all genes are retained
       mat_sub[is.infinite(mat_sub)] <- 0
       mat_sub[is.na(mat_sub)] <- 0
 
@@ -212,8 +292,8 @@ heatmapHarmonizedServer <- function(id) {
         }
 
         ## ----- Annotations for Heatmap -----
-        # Subset sampl_sub to remove the "method" column from the annotations/legend
-        annot_df <- sampl_sub[, c("dataset", "type", "tissue"), drop = FALSE]
+        # Include dataset, method, type, and tissue_group in annotations
+        annot_df <- sampl_sub[, c("dataset", "method", "type", "tissue_group"), drop = FALSE]
 
         # Column annotation (using subset of sample data)
         annot <- ComplexHeatmap::columnAnnotation(
@@ -221,8 +301,9 @@ heatmapHarmonizedServer <- function(id) {
           na_col = "grey",
           col = list(
             dataset = colors[levels(as.factor(annot_df$dataset))],
-            type    = colors[levels(as.factor(annot_df$type))],
-            tissue  = colors[levels(as.factor(annot_df$tissue))]
+            method = colors[levels(as.factor(annot_df$method))],
+            type = colors[levels(as.factor(annot_df$type))],
+            tissue_group = colors[levels(as.factor(annot_df$tissue_group))]
           ),
           show_annotation_name = FALSE,
           annotation_legend_param = list(direction = "horizontal", ncol = 1)
@@ -244,8 +325,15 @@ heatmapHarmonizedServer <- function(id) {
         if (is.null(split_by)) {
           split_by <- "None"
         }
-        split_col_name <- tolower(split_by)
-        column_split_var <- if (!identical(split_by, "None") && split_col_name %in% colnames(sampl_sub)) {
+        # Map display names to column names
+        split_col_map <- c(
+          "Dataset" = "dataset",
+          "Method" = "method",
+          "Type" = "type",
+          "Tissue Group" = "tissue_group"
+        )
+        split_col_name <- split_col_map[split_by]
+        column_split_var <- if (!identical(split_by, "None") && !is.na(split_col_name) && split_col_name %in% colnames(sampl_sub)) {
           sampl_sub[[split_col_name]]
         } else {
           NULL
@@ -270,7 +358,7 @@ heatmapHarmonizedServer <- function(id) {
           row_split = ups_sub$UPS_Class,
           row_title = NULL
         )
-        if (!is.null(column_split_var) && identical(split_by, "Tissue")) {
+        if (!is.null(column_split_var) && split_by == "Tissue Group") {
           heatmap_args$column_title <- rep("", length(unique(column_split_var)))
         }
         ht <- do.call(ComplexHeatmap::Heatmap, heatmap_args)
@@ -293,11 +381,14 @@ heatmapHarmonizedServer <- function(id) {
       updateSelectizeInput(session, "filter_dataset",
         selected = sort(unique(sampl.df$dataset))
       )
+      updateSelectizeInput(session, "filter_method",
+        selected = sort(unique(sampl.df$method))
+      )
       updateSelectizeInput(session, "filter_type",
         selected = sort(unique(sampl.df$type))
       )
-      updateSelectizeInput(session, "filter_tissue",
-        selected = sort(unique(sampl.df$tissue))
+      updateSelectizeInput(session, "filter_tissue_group",
+        selected = sort(unique(sampl.df$tissue_group))
       )
       updateSelectizeInput(session, "filter_genes",
         selected = NULL
@@ -318,13 +409,13 @@ heatmapHarmonizedServer <- function(id) {
         write.csv(as.data.frame(filtered), file)
       }
     )
-    # Make sure svglite is installed: install.packages("svglite")
+    # Download handler for heatmap plot (PDF format)
     output$download_plot <- downloadHandler(
       filename = function() {
-        paste("heatmap-", Sys.Date(), ".svg", sep = "")
+        paste("heatmap-", Sys.Date(), ".pdf", sep = "")
       },
       content = function(file) {
-        svglite::svglite(file, width = 12, height = 8)
+        pdf(file, width = 12, height = 8)
 
         data_list <- filteredData()
         mat_sub <- data_list$mat
@@ -334,15 +425,16 @@ heatmapHarmonizedServer <- function(id) {
         state <- debounced_state()
         shiny::req(state)
 
-        annot_df <- sampl_sub[, c("dataset", "type", "tissue"), drop = FALSE]
+        annot_df <- sampl_sub[, c("dataset", "method", "type", "tissue_group"), drop = FALSE]
 
         annot <- ComplexHeatmap::columnAnnotation(
           df = annot_df,
           na_col = "grey",
           col = list(
             dataset = colors[levels(as.factor(annot_df$dataset))],
-            type    = colors[levels(as.factor(annot_df$type))],
-            tissue  = colors[levels(as.factor(annot_df$tissue))]
+            method = colors[levels(as.factor(annot_df$method))],
+            type = colors[levels(as.factor(annot_df$type))],
+            tissue_group = colors[levels(as.factor(annot_df$tissue_group))]
           ),
           show_annotation_name = FALSE
         )
@@ -360,8 +452,15 @@ heatmapHarmonizedServer <- function(id) {
         if (is.null(split_by)) {
           split_by <- "None"
         }
-        split_col_name <- tolower(split_by)
-        column_split_var <- if (!identical(split_by, "None") && split_col_name %in% colnames(sampl_sub)) {
+        # Map display names to column names
+        split_col_map <- c(
+          "Dataset" = "dataset",
+          "Method" = "method",
+          "Type" = "type",
+          "Tissue Group" = "tissue_group"
+        )
+        split_col_name <- split_col_map[split_by]
+        column_split_var <- if (!identical(split_by, "None") && !is.na(split_col_name) && split_col_name %in% colnames(sampl_sub)) {
           sampl_sub[[split_col_name]]
         } else {
           NULL
@@ -387,7 +486,7 @@ heatmapHarmonizedServer <- function(id) {
           row_split = ups_sub$UPS_Class,
           row_title = NULL
         )
-        if (!is.null(column_split_var) && identical(split_by, "Tissue")) {
+        if (!is.null(column_split_var) && split_by == "Tissue Group") {
           heatmap_args$column_title <- rep("", length(unique(column_split_var)))
         }
         ht <- do.call(ComplexHeatmap::Heatmap, heatmap_args)

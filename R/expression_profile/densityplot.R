@@ -19,10 +19,9 @@ densityUI <- function(id) {
     mainPanel(
       textOutput(ns("err")) %>% tagAppendAttributes(class = "error"),
       shinycssloaders::withSpinner(plotOutput(ns("plot")), color = "#6A2798"),
-      p("Download the sample data:"),
+      br(),
       downloadButton(outputId = ns("download_data"), label = "Download CSV"),
-      p("Download the plot as SVG:"),
-      downloadButton(outputId = ns("download_plot"), label = "Download SVG")
+      downloadButton(outputId = ns("download_plot"), label = "Download PDF")
     )
   )
 }
@@ -183,10 +182,10 @@ densityServer <- function(id) {
     )
 
 
-    # Download handler for saving the plot as an SVG file
+    # Download handler for saving the plot as a PDF file
     output$download_plot <- downloadHandler(
       filename = function() {
-        paste0(isolate(input$gene), "_distribution.svg")
+        paste0(isolate(input$gene), "_distribution.pdf")
       },
       content = function(file) {
         req(sample())
@@ -232,7 +231,7 @@ densityServer <- function(id) {
               scale_fill_manual(values = c("Normal" = "orange", "Tumor" = "purple")) +
               scale_color_manual(values = c("Normal" = "orange", "Tumor" = "purple"), guide = FALSE)
 
-            ggsave(filename = file, plot = p, width = 10, height = 7, device = "svg")
+            ggsave(filename = file, plot = p, width = 10, height = 7, device = "pdf")
           },
           error = function(e) {
             # If plotting fails, create a simple error plot
@@ -243,7 +242,7 @@ densityServer <- function(id) {
                 size = 6, hjust = 0.5, vjust = 0.5
               ) +
               theme_void()
-            ggsave(filename = file, plot = error_plot, width = 10, height = 7, device = "svg")
+            ggsave(filename = file, plot = error_plot, width = 10, height = 7, device = "pdf")
           }
         )
       }

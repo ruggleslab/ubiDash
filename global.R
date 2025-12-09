@@ -13,15 +13,20 @@ library(jsonlite)
 
 tab_summaries <- fromJSON("./www/tab_summaries.json")
 
-#
-# if(!require(devtools)) install.packages("devtools")
-# devtools::install_github("krassowski/complex-upset")
+
 options(rsconnect.max.bundle.size = 3145728000)
 
 # loading R packages
 source("./scripts/load.packages.R")
 pks_lst <- readLines("./www/packages.txt")
 load.packages(pks_lst)
+
+# Source all R files from R/ subfolders (Shiny only auto-sources root R/ files)
+r_files <- list.files("./R", pattern = "\\.R$", recursive = TRUE, full.names = TRUE)
+for (f in r_files) {
+  source(f)
+}
+
 skip_load_data <- exists("skip_load_data") && get("skip_load_data")
 
 if (!skip_load_data) {
@@ -68,9 +73,7 @@ if (!skip_load_data) {
   # mem_rdata_from_drive <- memoise(rdata_from_drive)
 
 
-
   mem_readRDS <- memoise(readRDS)
-
 
 
   load("./data/searchlists.RData")
@@ -81,9 +84,6 @@ if (!skip_load_data) {
     # ,"MB","HCC"
   )
   cohorts <- c("BRCA", "COAD", "HGSC", "LUAD", "CCRCC", "UCEC", "PDA", "LSCC", "GBM", "HNSCC", "OV")
-
-
-
 
 
   currentTime <- as.numeric(Sys.time())
@@ -101,12 +101,28 @@ if (!skip_load_data) {
   genelists <- readRDS("./data/combined_genelists.rds")
 
 
-  top_crls <- readRDS("./data/topcrls.rds")
+  e3_ligase_list <- readRDS("./data/UbiDash_NYU+WEHI_E3_ligase_list.rds")
+
+  # Top 15 UPS genes by mutation frequency (pre-computed to avoid MAF subsetting issues)
+  # See EXP084_UPS_mutations analysis for methodology
+  top_ups_genes <- c(
+    "KMT2D", "KMT2C", "VHL", "HERC2", "BIRC6", "UBR4", "HUWE1", "HECW1",
+    "RNF213", "MAGEL2", "CREBBP", "HERC1", "CMYA5", "HECTD4", "FBXW7"
+  )
+
+  # Top 15 E3 ligase genes by mutation frequency (pre-computed to avoid MAF subsetting issues)
+  # See EXP084_UPS_mutations analysis for methodology
+  top_e3_genes <- c(
+    "VHL", "HERC2", "BIRC6", "UBR4", "HUWE1", "HECW1", "RNF213", "HERC1",
+    "HECTD4", "FBXW7", "MYCBP2", "RNF43", "BRWD3", "MAP3K1", "KLHL1"
+  )
+
+  # Use top E3 genes as default for backwards compatibility
+  top_crls <- top_e3_genes
 
   currentTime <- as.numeric(Sys.time())
   print(glue("Prepared oncoplot data in {(currentTime- time) * 1000} ms"))
   time <- currentTime
-
 
 
   currentTime <- as.numeric(Sys.time())
@@ -148,7 +164,6 @@ if (!skip_load_data) {
   }
 
 
-
   currentTime <- as.numeric(Sys.time())
   print(glue("Prepared heatmap data in {(currentTime- time) * 1000} ms"))
   time <- currentTime
@@ -170,8 +185,6 @@ if (!skip_load_data) {
   # Simplified Heatmap ----
 
 
-
-
   # get_prt.global.AI <- function(){
   #   data = get_from_drive("cptac_tmt-log2-AI_protein_expression.rds")
   #   data = data_norm(data, col_center = T)
@@ -179,7 +192,6 @@ if (!skip_load_data) {
   # }
 
   # mem_prt.global.AI <- memoise(get_prt.global.AI)
-
 
 
   currentTime <- as.numeric(Sys.time())

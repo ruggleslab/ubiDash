@@ -22,8 +22,8 @@ correlationGeneAllUI <- function(id) {
         selectInput(
           inputId = ns("colorPalette"),
           label = "Choose Color Palette",
-          choices = c("Default" = "default", "Purple to Yellow" = "purple_yellow"),
-          selected = "default"
+          choices = c("Default" = "purple_yellow", "Yellow to White" = "default"),
+          selected = "Default"
         ),
         actionButton(
           inputId = ns("plotButton"),
@@ -228,8 +228,8 @@ correlationGeneAllServer <- function(id) {
                 color = "#6A2798"
               ),
               br(),
-              downloadButton(ns(paste0("downloadSVG", i)),
-                label = paste("Download", gene_name, "Plot as SVG")
+              downloadButton(ns(paste0("downloadPDF", i)),
+                label = paste("Download", gene_name, "Plot as PDF")
               ),
               br(), br(),
               downloadButton(ns(paste0("downloadData", i)),
@@ -260,13 +260,13 @@ correlationGeneAllServer <- function(id) {
             height = 600
           )
 
-          # Download handler for the SVG plot.
-          output[[paste0("downloadSVG", my_i)]] <- downloadHandler(
+          # Download handler for the PDF plot.
+          output[[paste0("downloadPDF", my_i)]] <- downloadHandler(
             filename = function() {
-              paste0("corPlot_", gene_name, "_", Sys.Date(), ".svg")
+              paste0("corPlot_", gene_name, "_", Sys.Date(), ".pdf")
             },
             content = function(file) {
-              ggsave(file, plot = plotList()[[my_i]], device = "svg", width = 9, height = 6, units = "in")
+              ggsave(file, plot = plotList()[[my_i]], device = "pdf", width = 9, height = 6, units = "in")
             }
           )
 

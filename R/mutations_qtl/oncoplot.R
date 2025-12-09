@@ -7,14 +7,20 @@ oncoplotUI <- function(id, cohorts) {
 
       # gene inputs
       p(tab_summaries$Oncoplot),
+      selectInput(
+        inputId = ns("geneSet"),
+        label = "Default Gene Set",
+        choices = c("Top E3 Ligases" = "e3", "Top UPS Genes" = "ups"),
+        selected = "e3"
+      ),
       sliderInput(ns("maxOncoGenes"), "Max Number of Genes to Display:",
-        min = 1, max = 50,
-        value = 10
+        min = 1, max = 15,
+        value = 15
       ),
       selectizeInput(
         inputId = ns("genes"),
         choices = NULL,
-        label = "Custon Gene Set",
+        label = "Custom Gene Set (overrides default)",
         options = list(`live-search` = TRUE),
         multiple = TRUE
       ),
@@ -42,14 +48,15 @@ oncoplotUI <- function(id, cohorts) {
       textOutput(ns("error")) %>%
         tagAppendAttributes(class = "error"),
       shinycssloaders::withSpinner(plotOutput(ns("mutationOncoplot")), color = "#6A2798"),
-      p("Download this data"),
-      downloadButton(outputId = ns("downloadOncoMutations"), label = "Download Mutations Data"),
+      br(),
+      downloadButton(outputId = ns("downloadOncoMutations"), label = "Download Data"),
+      downloadButton(outputId = ns("downloadOncoPDF"), label = "Download PDF"),
     )
   )
 }
 
 
-oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
+oncoplotServer <- function(id, top_e3_genes, top_ups_genes, cohorts, colorsTbl) {
   moduleServer(id, function(input, output, session) {
     maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
     all_genes <- unique(getGeneSummary(maf)$Hugo_Symbol)
@@ -87,7 +94,9 @@ oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
       inputGenes <- isolate(input$genes)
 
       if (!isTruthy(inputGenes)) {
-        inputGenes <- top_crls[1:isolate(input$maxOncoGenes)]
+        # Use selected gene set (E3 or UPS)
+        selectedGeneSet <- if (isolate(input$geneSet) == "ups") top_ups_genes else top_e3_genes
+        inputGenes <- selectedGeneSet[1:isolate(input$maxOncoGenes)]
       }
 
       colors <- colorsTbl$color
@@ -121,12 +130,12 @@ oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
         annotationFontSize = 1.5,
         legendFontSize = 1.5,
         colors = vc_colors,
+        removeNonMutated = T, # this is new
         # drawColBar = F,
         # cBioPortal = T,
         clinicalFeatures = "cohort_code"
       ))
     })
-
     output$downloadOncoMutations <- downloadHandler(
       filename = function() {
         if (length(isolate(input$cohorts)) == length(cohorts) && !isTruthy(isolate(input$genes))) {
@@ -137,6 +146,46 @@ oncoplotServer <- function(id, top_crls, cohorts, colorsTbl) {
       },
       content = function(file) {
         write.csv(filteredMaf()@data, file)
+      }
+    )
+
+    output$downloadOncoPDF <- downloadHandler(
+      filename = function() {
+        paste("oncoplot-", Sys.Date(), ".pdf", sep = "")
+      },
+      content = function(file) {
+        inputGenes <- isolate(input$genes)
+
+        if (!isTruthy(inputGenes)) {
+          selectedGeneSet <- if (isolate(input$geneSet) == "ups") top_ups_genes else top_e3_genes
+          inputGenes <- selectedGeneSet[1:isolate(input$maxOncoGenes)]
+        }
+
+        colors <- colorsTbl$color
+        names(colors) <- colorsTbl$id
+        colors <- colors[names(colors) %in% inputCohorts()]
+
+        vc_colors <- c("#0AA0BF", "#F6114A", "#F36E98", "#78B177", "#9862A2", "#F05006", "#25998F", "#FCA00C", "#000000")
+        names(vc_colors) <- c(
+          "Missense_Mutation", "Frame_Shift_Del", "Frame_Shift_Ins", "Nonsense_Mutation",
+          "Splice_Site", "In_Frame_Ins", "In_Frame_Del", "Nonstop_Mutation", "Multi_Hit"
+        )
+
+        pdf(file, width = 12, height = 10)
+        oncoplot(
+          maf = filteredMaf(),
+          genes = inputGenes,
+          annotationColor = list(cohort_code = colors),
+          sortByAnnotation = isolate(input$sortByCohort),
+          gene_mar = 8,
+          fontSize = 1,
+          annotationFontSize = 1.5,
+          legendFontSize = 1.5,
+          colors = vc_colors,
+          removeNonMutated = TRUE,
+          clinicalFeatures = "cohort_code"
+        )
+        dev.off()
       }
     )
   })
