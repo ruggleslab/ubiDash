@@ -224,10 +224,30 @@ if (!skip_load_data) {
   time <- currentTime
 
   # correlations ----
-
+  # Load data needed for correlation gene panel module
+  cptac_tmt_protein <- readRDS("./data/cptac_tmt-log2-AI-v1.1_protein_expression.rds")
+  cptac_samples <- readRDS("./data/cptac_samples_info_across_datatypes_v1.1.rds")
 
   currentTime <- as.numeric(Sys.time())
-  print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
+  print(glue("Prepared correlation data in {(currentTime- time) * 1000} ms"))
+  time <- currentTime
+
+  # mutations/oncoplot ----
+  # Load MAF data needed for oncoplot and lollipop modules
+  pancan_maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+
+  currentTime <- as.numeric(Sys.time())
+  print(glue("Prepared mutation data in {(currentTime- time) * 1000} ms"))
+  time <- currentTime
+
+  # heatmap harmonized ----
+  # Load data needed for heatmap harmonized module
+  harmonized_proteome <- readRDS("./data/UbiDash_harmonized_proteome_data.rds")
+  ubidash_sample_mapping <- readRDS("./data/UbiDash_sample_mapping.rds")
+  ups_df <- readRDS("./data/ups_df.rds")
+
+  currentTime <- as.numeric(Sys.time())
+  print(glue("Prepared heatmap harmonized data in {(currentTime- time) * 1000} ms"))
   time <- currentTime
 
   print(glue("Total startup time was {(time-startTime) * 1000} ms"))

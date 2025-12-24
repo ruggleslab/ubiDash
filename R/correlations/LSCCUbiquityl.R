@@ -9,7 +9,7 @@ LSCCUbiquitylUI <- function(id) {
       selectInput(ns("substrate"), "Select Candidate Substrate:", choices = NULL),
       # Allow multiple selection for ubiquityl sites
       selectizeInput(ns("ub_site"), "Select Candidate Ubiquityl Site(s):", choices = NULL, multiple = TRUE),
-      actionButton(ns("generate_plot"), "Generate Scatter Plot")
+      actionButton(ns("generate_plot"), "Generate Scatter Plot", class = "btn-primary")
     ),
     mainPanel(
       conditionalPanel(
@@ -32,11 +32,26 @@ LSCCUbiquitylServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Load data frames.
-    # prot is loaded from final_data_2.csv (contains E3 proteins and candidate substrate values),
-    # and ub.prot is loaded from final_data.csv (contains candidate ubiquityl site measurements in "CandidateSubstrate_site" format).
-    prot <- read.csv("./data/LSCC_prot_former_Combine_PanCan_CPTAC_Proteome-gene_V1.1_UMich_GENCODE34_Sinai_imputed.csv", stringsAsFactors = FALSE)
-    ub.prot <- read.csv("./data/LSCC_ub_prot_former_1-s2.0-S0092867421008576-mmc3.csv", stringsAsFactors = FALSE)
+    # Lazy load data once per session
+    prot_cache <- reactiveVal(NULL)
+    ub_prot_cache <- reactiveVal(NULL)
+
+    get_prot_data <- function() {
+      if (is.null(prot_cache())) {
+        prot_cache(read.csv("./data/LSCC_prot_former_Combine_PanCan_CPTAC_Proteome-gene_V1.1_UMich_GENCODE34_Sinai_imputed.csv", stringsAsFactors = FALSE))
+      }
+      prot_cache()
+    }
+
+    get_ub_prot_data <- function() {
+      if (is.null(ub_prot_cache())) {
+        ub_prot_cache(read.csv("./data/LSCC_ub_prot_former_1-s2.0-S0092867421008576-mmc3.csv", stringsAsFactors = FALSE))
+      }
+      ub_prot_cache()
+    }
+
+    prot <- get_prot_data()
+    ub.prot <- get_ub_prot_data()
 
     ### Update E3 Input
     # Candidate E3 proteins: from prot, use columns (excluding sample_id) that do not have an underscore.

@@ -5,7 +5,11 @@ correlationGeneGeneUI <- function(id, cohorts) {
   sidebarLayout(
     sidebarPanel(
       h3("Gene vs. Gene Correlation Analysis"),
-      p("(description paragraph)"),
+      p(tab_summaries$`Pancan Gene vs Gene`),
+      tags$small(
+        "Select RNA, protein, or cross-omic pairs; Spearman correlations are computed across your chosen cohorts and sample type, and both plots and tables are downloadable.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       tabsetPanel(
         id = ns("GvGpanel"), selected = "mRNA",
         tabPanel(

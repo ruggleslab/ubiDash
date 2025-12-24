@@ -38,7 +38,7 @@ oncoplotUI <- function(id, cohorts) {
         multiple = TRUE
       ),
       checkboxInput(ns("sortByCohort"), "Sort by Cohort", value = FALSE),
-      actionButton(ns("refresh"), "Generate Plot"),
+      actionButton(ns("refresh"), "Generate Plot", class = "btn-primary"),
 
       # download options
 
@@ -58,8 +58,8 @@ oncoplotUI <- function(id, cohorts) {
 
 oncoplotServer <- function(id, top_e3_genes, top_ups_genes, cohorts, colorsTbl) {
   moduleServer(id, function(input, output, session) {
-    maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-    all_genes <- unique(getGeneSummary(maf)$Hugo_Symbol)
+    # Use pre-loaded MAF data from global.R
+    all_genes <- unique(getGeneSummary(pancan_maf)$Hugo_Symbol)
     updateSelectizeInput(session, "genes",
       choices = all_genes,
       server = TRUE
@@ -73,11 +73,10 @@ oncoplotServer <- function(id, top_e3_genes, top_ups_genes, cohorts, colorsTbl) 
           stop("Two genes are needed to generate plot.")
         }
 
-        maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-
+        # Use pre-loaded MAF data from global.R
         inputCohorts(isolate(input$cohorts))
 
-        filteredMaf <- maf
+        filteredMaf <- pancan_maf
         if (length(inputCohorts()) != 0 && length(inputCohorts()) != length(cohorts)) {
           filteredMaf <- subsetMaf(maf, tsb = maf@clinical.data[cohort_code %in% inputCohorts()]$Tumor_Sample_Barcode)
         }

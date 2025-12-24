@@ -134,10 +134,7 @@ drugResponseServer <- function(id) {
       left_join(sample_lfq, by = "CCLE_ID") %>%
       select(depmap_id, everything())
     protein_genes <- setdiff(names(protein), "depmap_id")
-    ups <- openxlsx::read.xlsx(
-      "./data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx",
-      sheet = "dense"
-    ) %>%
+    ups <- readRDS("./data/Human_Proteostasis_Network.rds") %>%
       filter(Branch == "Ubiquitin Proteasome System") %>%
       select(Gene.Symbol, Class) %>%
       group_by(Gene.Symbol) %>%

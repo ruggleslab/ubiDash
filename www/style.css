@@ -87,6 +87,17 @@ h2{
   height: 30px;
 }
 
+.btn-primary {
+  background-color: #6A2798 !important;
+  border-color: #6A2798 !important;
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: #552080 !important;
+  border-color: #552080 !important;
+}
+
 /* Set error message color */
 .error {
   color: red;

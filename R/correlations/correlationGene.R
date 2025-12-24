@@ -5,6 +5,10 @@ correlationGeneUI <- function(id, cohorts) {
     sidebarPanel(
       h3("Gene Panel Correlation Analysis"),
       p(tab_summaries$`Pancan Gene Panel`),
+      tags$small(
+        "Pick multiple proteins, choose cohorts and sample type, then generate a pairwise Spearman correlation heatmap with downloadable data and PDF export.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       selectizeInput(
         inputId = ns("inputGvpCorrProteinGeneName"),
         choices = NULL,
@@ -28,8 +32,7 @@ correlationGeneUI <- function(id, cohorts) {
       tags$small(
         "Note: Normal samples are limited in some cohorts. If analysis fails, try adding more cohorts or switching to Tumor.",
         style = "color: #6c757d; display: block; margin-bottom: 10px;"
-      ),
-      actionButton(ns("generateGvpCorrProtein"), label = "Generate Plot")
+      )
     ),
     mainPanel(
       withSpinner(plotlyOutput(outputId = ns("outputPlotGvpCorrProtein")), color = "#6A2798"),
@@ -42,7 +45,8 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
   moduleServer(id, function(input, output, session) {
     # Load required functions and data
     source(file = "./scripts/corrAnalysis.R")
-    cptac_samples <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
+    # Use pre-loaded data from global.R
+    # cptac_samples is already loaded globally
 
     ### Gene Panel: Protein ###
     updateSelectizeInput(
@@ -52,45 +56,42 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
       options = list(placeholder = "Type gene name")
     )
 
-    resGvpCorrProtein <- eventReactive(input$generateGvpCorrProtein,
-      {
-        cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
-        if (length(isolate(input$inputGvpCorrProteinCohort)) < 1) {
-          stop("Please select at least one cohort.")
-        }
-        if (length(isolate(input$inputGvpCorrProteinGeneName)) < 1) {
-          stop("Please select at least one gene")
-        }
+    resGvpCorrProtein <- reactive({
+      req(input$inputGvpCorrProteinCohort, input$inputGvpCorrProteinGeneName)
+      # Use pre-loaded data from global.R
+      if (length(input$inputGvpCorrProteinCohort) < 1) {
+        stop("Please select at least one cohort.")
+      }
+      if (length(input$inputGvpCorrProteinGeneName) < 1) {
+        stop("Please select at least one gene")
+      }
 
-        # Check sample availability for Normal tissue type
-        if (input$inputGvpCorrProteinStype == "Normal") {
-          # Note: column is "cohort" not "cohor" - matching corrAnalysis.R which uses "cohor"
-          cptac_samples_filt <- cptac_samples[cptac_samples$cohort %in% input$inputGvpCorrProteinCohort, ]
-          normal_count <- sum(cptac_samples_filt$type == "Normal", na.rm = TRUE)
-          if (normal_count < 10) {
-            # Get cohorts that have Normal samples
-            cohorts_with_normal <- unique(cptac_samples$cohort[cptac_samples$type == "Normal"])
-            stop(paste0(
-              "Not enough Normal samples (", normal_count, " found, minimum 10 required). ",
-              "Cohorts with Normal samples: ", paste(cohorts_with_normal, collapse = ", "), ". ",
-              "Try selecting these cohorts or switch to 'Tumor' sample type."
-            ))
-          }
+      # Check sample availability for Normal tissue type
+      if (input$inputGvpCorrProteinStype == "Normal") {
+        # Note: column is "cohort" not "cohor" - matching corrAnalysis.R which uses "cohor"
+        cptac_samples_filt <- cptac_samples[cptac_samples$cohort %in% input$inputGvpCorrProteinCohort, ]
+        normal_count <- sum(cptac_samples_filt$type == "Normal", na.rm = TRUE)
+        if (normal_count < 10) {
+          # Get cohorts that have Normal samples
+          cohorts_with_normal <- unique(cptac_samples$cohort[cptac_samples$type == "Normal"])
+          stop(paste0(
+            "Not enough Normal samples (", normal_count, " found, minimum 10 required). ",
+            "Cohorts with Normal samples: ", paste(cohorts_with_normal, collapse = ", "), ". ",
+            "Try selecting these cohorts or switch to 'Tumor' sample type."
+          ))
         }
+      }
 
-        panelCorr(
-          geneNamesProtein = input$inputGvpCorrProteinGeneName,
-          geneNamesRNA     = NULL,
-          tissueType       = input$inputGvpCorrProteinStype,
-          cohort           = input$inputGvpCorrProteinCohort,
-          cptac_protein    = cptac_protein,
-          cptac_rna        = NULL,
-          cptac_samples    = cptac_samples
-        )
-      },
-      ignoreNULL = FALSE,
-      ignoreInit = TRUE
-    )
+      panelCorr(
+        geneNamesProtein = input$inputGvpCorrProteinGeneName,
+        geneNamesRNA     = NULL,
+        tissueType       = input$inputGvpCorrProteinStype,
+        cohort           = input$inputGvpCorrProteinCohort,
+        cptac_protein    = cptac_tmt_protein,
+        cptac_rna        = NULL,
+        cptac_samples    = cptac_samples
+      )
+    })
 
     output$outputPlotGvpCorrProtein <- renderPlotly({
       resGvpCorrProtein()$corrPlot
@@ -110,14 +111,13 @@ correlationGeneServer <- function(id, cohorts, colorsTbl) {
         paste0("GenePanelProtein-", Sys.Date(), ".pdf")
       },
       content = function(file) {
-        # Recreate the static ggplot for PDF export
-        cptac_protein <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
+        # Use pre-loaded data from global.R
         res <- panelCorr(
           geneNamesProtein = isolate(input$inputGvpCorrProteinGeneName),
           geneNamesRNA     = NULL,
           tissueType       = isolate(input$inputGvpCorrProteinStype),
           cohort           = isolate(input$inputGvpCorrProteinCohort),
-          cptac_protein    = cptac_protein,
+          cptac_protein    = cptac_tmt_protein,
           cptac_rna        = NULL,
           cptac_samples    = cptac_samples
         )

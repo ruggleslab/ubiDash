@@ -20,12 +20,14 @@ volcanoUI <- function(id, cohorts) {
         selectizeInput(ns("poi"), "Protein(s) of Interest", choices = NULL, multiple = TRUE),
         selectInput(ns("cohort"), "Cohort", cohorts),
         fluidRow(
-          column(6,
+          column(
+            6,
             sliderInput(ns("PValCutoff"), "-Log10(Adj P-Value) Cutoff:",
               min = 1, max = 10, value = 3, step = 0.5
             )
           ),
-          column(6,
+          column(
+            6,
             sliderInput(ns("logFCCutoff"), "Log2(T/N) Cutoff:",
               min = 0.25, max = 2, value = 1, step = 0.05
             )
@@ -81,10 +83,7 @@ volcanoServer <- function(id, DE_protein) {
     ns <- session$ns
 
     # Load UPS data and colors.
-    ups_data <- openxlsx::read.xlsx(
-      xlsxFile = "./data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx",
-      sheet = "dense"
-    )
+    ups_data <- readRDS("./data/Human_Proteostasis_Network.rds")
     colors_tab <- read.csv("./data/colors.csv")
     colors <- setNames(colors_tab$color, colors_tab$id)
 
@@ -296,7 +295,7 @@ volcanoServer <- function(id, DE_protein) {
       selected_class <- volcano_data()$selected_class
 
       logFCCutoff <- input$logFCCutoff
-      PValCutoff_log <- input$PValCutoff  # Already in -log10 scale from slider
+      PValCutoff_log <- input$PValCutoff # Already in -log10 scale from slider
 
       labeledPoints <- dplyr::filter(
         df,
@@ -407,7 +406,7 @@ volcanoServer <- function(id, DE_protein) {
         selected_class <- volcano_data()$selected_class
 
         logFCCutoff <- input$logFCCutoff
-        PValCutoff_log <- input$PValCutoff  # Already in -log10 scale from slider
+        PValCutoff_log <- input$PValCutoff # Already in -log10 scale from slider
 
         labeledPoints <- dplyr::filter(
           df,

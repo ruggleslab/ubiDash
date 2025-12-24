@@ -34,12 +34,11 @@ lollipopServer <- function(id) {
     )
 
     output$lollipop <- renderPlot({
-      maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-
+      # Use pre-loaded MAF data from global.R
       gene <- input$gene
 
       return(lollipopPlot(
-        maf = maf,
+        maf = pancan_maf,
         gene = gene,
         AACol = "Protein_Change",
         showMutationRate = TRUE,
@@ -54,12 +53,12 @@ lollipopServer <- function(id) {
         paste0(input$gene, "_lollipop_", Sys.Date(), ".pdf")
       },
       content = function(file) {
-        maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+        # Use pre-loaded MAF data from global.R
         gene <- input$gene
 
         pdf(file, width = 10, height = 6)
         lollipopPlot(
-          maf = maf,
+          maf = pancan_maf,
           gene = gene,
           AACol = "Protein_Change",
           showMutationRate = TRUE,
@@ -75,11 +74,11 @@ lollipopServer <- function(id) {
         paste0(input$gene, "_lollipop_data_", Sys.Date(), ".csv")
       },
       content = function(file) {
-        maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+        # Use pre-loaded MAF data from global.R
         gene <- input$gene
 
         # Extract mutations for the selected gene
-        gene_data <- maf@data[Hugo_Symbol == gene]
+        gene_data <- pancan_maf@data[Hugo_Symbol == gene]
         write.csv(gene_data, file, row.names = FALSE)
       }
     )

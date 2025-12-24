@@ -4,6 +4,10 @@ correlationGeneAllUI <- function(id) {
     sidebarLayout(
       sidebarPanel(
         p(tab_summaries$`Pancan Gene vs all`),
+        tags$small(
+          "Choose one or more proteins, set the absolute Spearman cutoff, and highlight known BioGRID interactors; each plot and its filtered data can be downloaded.",
+          style = "color: #6c757d; display: block; margin-bottom: 10px;"
+        ),
         selectizeInput(
           inputId = ns("selectedProtein"),
           label = "Choose Protein(s) of Interest",
@@ -24,15 +28,27 @@ correlationGeneAllUI <- function(id) {
           label = "Choose Color Palette",
           choices = c("Default" = "purple_yellow", "Yellow to White" = "default"),
           selected = "Default"
-        ),
-        actionButton(
-          inputId = ns("plotButton"),
-          label = "Generate Plot"
         )
       ),
       mainPanel(
-        # This UI output will be populated with plots and download buttons
-        uiOutput(ns("plots_ui"))
+        conditionalPanel(
+          condition = sprintf("output['%s']", ns("data_loaded")),
+          # This UI output will be populated with plots and download buttons
+          uiOutput(ns("plots_ui"))
+        ),
+        conditionalPanel(
+          condition = sprintf("!output['%s']", ns("data_loaded")),
+          div(
+            style = "text-align: center; padding: 50px;",
+            shinycssloaders::withSpinner(
+              div(style = "height: 200px;"),
+              color = "#6A2798",
+              type = 4,
+              size = 2
+            ),
+            h4("Loading correlation data...", style = "color: #6A2798;")
+          )
+        )
       )
     )
   )
@@ -41,9 +57,36 @@ correlationGeneAllUI <- function(id) {
 correlationGeneAllServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    # Read in your datasets (update the paths as needed)
-    pancan_covariance <- readRDS("./data/Pancan_protein~protein_spearman_correlations_ups_variance.rds")
-    biogrid <- readRDS("./data/BIOGRID-ALL-4.4.241.tab3.rds")
+
+    # Lazy load data once per session
+    pancan_cov_cache <- reactiveVal(NULL)
+    biogrid_cache <- reactiveVal(NULL)
+
+    get_pancan_covariance <- function() {
+      if (is.null(pancan_cov_cache())) {
+        pancan_cov_cache(readRDS("./data/Pancan_protein~protein_spearman_correlations_ups_variance.rds"))
+      }
+      pancan_cov_cache()
+    }
+
+    get_biogrid <- function() {
+      if (is.null(biogrid_cache())) {
+        biogrid_cache(readRDS("./data/BIOGRID-ALL-4.4.241.tab3.rds"))
+      }
+      biogrid_cache()
+    }
+
+    # Track loading state
+    data_loaded <- reactiveVal(FALSE)
+
+    output$data_loaded <- reactive({
+      data_loaded()
+    })
+    outputOptions(output, "data_loaded", suspendWhenHidden = FALSE)
+
+    # Read in your datasets (lazily loaded)
+    pancan_covariance <- get_pancan_covariance()
+    biogrid <- get_biogrid()
 
     # Update the protein-selection choices based on unique proteins.
     protein_choices <- sort(unique(pancan_covariance$ups))
@@ -51,8 +94,12 @@ correlationGeneAllServer <- function(id) {
       session,
       "selectedProtein",
       choices = protein_choices,
-      selected = protein_choices[1]
+      selected = if ("VHL" %in% protein_choices) "VHL" else protein_choices[1],
+      server = TRUE
     )
+
+    # Mark data as loaded after inputs are updated
+    data_loaded(TRUE)
 
     # Reactive expression for the selected color palette.
     palette_used <- reactive({
@@ -155,8 +202,12 @@ correlationGeneAllServer <- function(id) {
     }
 
     # Reactive expression for generating a list of plots (one per selected gene).
-    plotList <- eventReactive(input$plotButton, {
-      req(input$selectedProtein, input$corThreshold, input$colorPalette)
+    plotList <- reactive({
+      req(input$selectedProtein)
+      req(length(input$selectedProtein) > 0)
+      req(input$corThreshold)
+      req(input$colorPalette)
+
       threshold <- input$corThreshold
       # Create a list of plots.
       plots <- lapply(input$selectedProtein, function(selected_protein) {
@@ -166,7 +217,7 @@ correlationGeneAllServer <- function(id) {
     })
 
     # Reactive expression for the filtered data (for CSV download).
-    filteredData <- eventReactive(input$plotButton, {
+    filteredData <- reactive({
       req(input$selectedProtein, input$corThreshold)
       threshold <- input$corThreshold
 
@@ -223,7 +274,7 @@ correlationGeneAllServer <- function(id) {
             column(
               width = col_width,
               h3(gene_name),
-              withSpinner(
+              shinycssloaders::withSpinner(
                 plotOutput(ns(paste0("corPlot", i)), width = "100%", height = "600px"),
                 color = "#6A2798"
               ),

@@ -37,7 +37,7 @@ QTLUI <- function(id, cohorts) {
           min = 0, max = 1000, value = 1, step = 1
         ))
       ),
-      actionButton(ns("refresh"), "Generate Plots"),
+      actionButton(ns("refresh"), "Generate Plots", class = "btn-primary"),
       hr(),
       tags$div(
         style = "font-size: 11px; color: #666; margin-top: 10px;",
@@ -89,19 +89,55 @@ QTLUI <- function(id, cohorts) {
 }
 QTLServer <- function(id, genelists, colorsTbl, cohorts) {
   moduleServer(id, function(input, output, session) {
-    # Load all required data once
-    mut <- mem_get_from_drive("cptac_v1.1_mut.rds")
+    # Lazy load data once per session
+    qtl_cache <- reactiveVal(NULL)
+    sample_mapping_cache <- reactiveVal(NULL)
+    protein_cache <- reactiveVal(NULL)
+    mut_cache <- reactiveVal(NULL)
 
+    get_qtl_data <- function() {
+      if (is.null(qtl_cache())) {
+        qtl_cache(readRDS("./data/CPTAC_Pancan_pQTLs_with_class.rds"))
+      }
+      qtl_cache()
+    }
 
-    qtl_data <- readRDS("./data/CPTAC_Pancan_pQTLs_with_class.rds")
-    sample_mapping <- readRDS("./data/UbiDash_CPTAC_PanCan_sample_ID_mapping_across_datatypes_v1.1.rds") %>%
-      filter(datatype == "protein", include == TRUE) %>%
-      distinct(harmonized_data_id, .keep_all = TRUE)
-    protein_data <- readRDS("./data/UbiDash_CPTAC_PanCan_Proteome-gene_V1.1_UMich_GENCODE34_Sinai_imputed_clean.rds") %>%
-      as.data.frame() %>%
-      t() %>%
-      as.data.frame() %>%
-      rownames_to_column("harmonized_data_id")
+    get_sample_mapping <- function() {
+      if (is.null(sample_mapping_cache())) {
+        sample_mapping_cache(
+          readRDS("./data/UbiDash_CPTAC_PanCan_sample_ID_mapping_across_datatypes_v1.1.rds") %>%
+            filter(datatype == "protein", include == TRUE) %>%
+            distinct(harmonized_data_id, .keep_all = TRUE)
+        )
+      }
+      sample_mapping_cache()
+    }
+
+    get_protein_data <- function() {
+      if (is.null(protein_cache())) {
+        protein_cache(
+          readRDS("./data/UbiDash_CPTAC_PanCan_Proteome-gene_V1.1_UMich_GENCODE34_Sinai_imputed_clean.rds") %>%
+            as.data.frame() %>%
+            t() %>%
+            as.data.frame() %>%
+            rownames_to_column("harmonized_data_id")
+        )
+      }
+      protein_cache()
+    }
+
+    get_mut_data <- function() {
+      if (is.null(mut_cache())) {
+        mut_cache(mem_get_from_drive("cptac_v1.1_mut.rds"))
+      }
+      mut_cache()
+    }
+
+    # Get data references
+    qtl_data <- get_qtl_data()
+    sample_mapping <- get_sample_mapping()
+    protein_data <- get_protein_data()
+    mut <- get_mut_data()
 
     # Precompute static choices
     ups_choices <- sort(unique(qtl_data$ups_protein))
@@ -168,7 +204,7 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
         geom_boxplot(outlier.shape = NA) +
         geom_jitter(position = position_jitter(0.2), alpha = 0.6, size = 1.2) +
         scale_color_manual(values = colors) +
-        facet_wrap(~cohort, scales = "free_y") +
+        facet_wrap(~cohort, scales = "free_y", labeller = label_wrap_gen(width = 10), nrow = 2) +
         theme_minimal() +
         labs(
           x = m, y = gn,
@@ -177,7 +213,7 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
         ) +
         theme(
           legend.position = "bottom",
-          strip.text = element_text(face = "bold")
+          strip.text = element_text(face = "bold", size = 9)
         )
       cohort_levels <- unique(df$cohort)
       for (coh in cohort_levels) {
@@ -197,7 +233,7 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
           )
         }
       }
-      return(ggplotly(p, height = 1200))
+      return(ggplotly(p, height = 800))
     })
 
     # Reactive data frames for volcano plots
@@ -361,7 +397,7 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
           geom_boxplot(outlier.shape = NA) +
           geom_jitter(position = position_jitter(0.2), alpha = 0.6, size = 1.2) +
           scale_color_manual(values = colors) +
-          facet_wrap(~cohort, scales = "free_y") +
+          facet_wrap(~cohort, scales = "free_y", labeller = label_wrap_gen(width = 10), nrow = 2) +
           theme_minimal() +
           labs(
             x = m, y = gn,

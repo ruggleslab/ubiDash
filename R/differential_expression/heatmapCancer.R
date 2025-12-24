@@ -51,10 +51,7 @@ heatmapCancerServer <- function(id) {
     # Load raw data once
     data_raw <- reactive({
       prot <- read.csv("./data/DEqMS.results_cancer_subtypes_with_tumotPurity.csv") # adjust file path
-      pn <- openxlsx::read.xlsx(
-        "./data/Human-Proteostasis-Network-2.0-2024-0415-1-e1e497a1e8cd5a06-tgr.xlsx",
-        sheet = "dense"
-      )[, -1] %>%
+      pn <- readRDS("./data/Human_Proteostasis_Network.rds") %>%
         dplyr::filter(Branch == "Ubiquitin Proteasome System")
       list(prot = prot, pn = pn)
     })

@@ -28,12 +28,27 @@ densityUI <- function(id) {
 # densityServer.R
 densityServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-    # Load protein genes if not already available
-    if (!exists("cptac_protein_genes")) {
-      load("./data/searchlists.RData")
+    # Lazy load data once per session
+    dataset_cache <- reactiveVal(NULL)
+    sample_cache <- reactiveVal(NULL)
+
+    # Load data only when first accessed
+    get_dataset <- function() {
+      if (is.null(dataset_cache())) {
+        dataset_cache(readRDS("./data/cptac_tmt-log2-AI-v1.1_protein_expression.rds"))
+      }
+      dataset_cache()
     }
-    dataset <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
-    protein_genes <- rownames(dataset)
+
+    get_sample_metadata <- function() {
+      if (is.null(sample_cache())) {
+        sample_cache(readRDS("./data/cptac_samples_info_across_datatypes_v1.1.rds"))
+      }
+      sample_cache()
+    }
+
+    # Get protein genes from cached dataset
+    protein_genes <- rownames(get_dataset())
 
     # Update the gene selectize input with protein genes
     updateSelectizeInput(
@@ -53,10 +68,10 @@ densityServer <- function(id) {
         # Get the gene and datatype selections
         ups_gn <- isolate(input$gene)
         xlab <- "log2 Normalized Protein Expression"
-        # Load the appropriate dataset using mem_get_from_drive()
-        dataset <- mem_get_from_drive("cptac_tmt-log2-AI-v1.1_protein_expression.rds")
-        # Load sample metadata from the drive
-        sample <- mem_get_from_drive("cptac_samples_info_across_datatypes_v1.1.rds")
+        # Load the appropriate dataset from local cache
+        dataset <- get_dataset()
+        # Load sample metadata from local cache
+        sample <- get_sample_metadata()
 
         # Subset to the desired datatype and only include samples that passed QC
         sample <- subset(

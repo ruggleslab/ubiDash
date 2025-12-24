@@ -81,19 +81,13 @@ heatmapHarmonizedServer <- function(id) {
     ns <- session$ns
 
     ## ============
-    ## Data Loading
+    ## Data Loading - Use pre-loaded data from global.R
     ## ============
-    harmonized_proteome_file <- "./data/UbiDash_harmonized_proteome_data.rds"
-    sample_mapping_file <- "./data/UbiDash_sample_mapping.rds"
-    ups_df_file <- "./data/ups_df.rds"
-    colors_file <- "./data/colors.csv"
-
-    # Load raw data
-    mat <- readRDS(harmonized_proteome_file)
-    metadata <- readRDS(sample_mapping_file)
-    ups.df <- readRDS(ups_df_file)
-    colors_tab <- read.csv(colors_file)
-    colors <- setNames(colors_tab$color, colors_tab$id)
+    # Use pre-loaded datasets from global.R
+    mat <- harmonized_proteome
+    metadata <- ubidash_sample_mapping
+    ups.df <- ups_df
+    colors <- setNames(colorsTbl$color, colorsTbl$id)
 
     # Add sample column from rownames if not present
     if (!"sample" %in% colnames(metadata)) {
