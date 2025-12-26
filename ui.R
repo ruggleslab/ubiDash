@@ -47,7 +47,7 @@ ui <- shinyUI(
           tagAppendAttributes(class = "title-page")
       ),
       navbarMenu(
-        "Expression Profile",
+        "UPS Protein Profiles",
         tabPanel(
           "Heatmap",
           heatmapHarmonizedUI("heatmapHarmonizedTab")
@@ -62,7 +62,7 @@ ui <- shinyUI(
         )
       ),
       navbarMenu(
-        "Differential Expression Profile",
+        "Differential Expression",
         # volcano plot tab ----
         tabPanel(
           "Volcano Plots",
@@ -78,7 +78,7 @@ ui <- shinyUI(
         )
       ),
       navbarMenu(
-        "Correlations",
+        "Protein Associations",
         tabPanel(
           "Pancan Gene vs Gene",
           scatterPlotUI("scatterPlotTab")
@@ -102,7 +102,7 @@ ui <- shinyUI(
         # )
       ),
       navbarMenu(
-        "Mutations (QTL)",
+        "Mutational Effects",
         tabPanel(
           "Oncoplot",
           oncoplotUI("oncoTab", cohorts)
@@ -117,7 +117,7 @@ ui <- shinyUI(
         )
       ),
       navbarMenu(
-        "Functional Analysis (Drug association)",
+        "Clinical Potential",
         tabPanel("CCLE Drug Sensitivity",
           theme = bs_theme(version = 5, bootswatch = "pulse"),
           drugResponseUI("drugResponseTab")

@@ -6,6 +6,11 @@ heatmapHarmonizedUI <- function(id) {
     sidebarPanel(
       h3("Summarized Profile"),
       p(tab_summaries$Heatmap),
+      tags$small(
+        tags$strong("Data integration:"),
+        " Harmonized across CPTAC, CCLE, PRIDE, and TPCPA using median z-score normalization.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       # Illustration image
       tags$div(
         style = "text-align: center; margin-bottom: 15px;",

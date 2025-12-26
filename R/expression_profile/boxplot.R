@@ -4,6 +4,10 @@ boxplotUI <- function(id) {
     sidebarLayout(
       sidebarPanel(
         p(tab_summaries$Boxplot),
+        tags$small(
+          "Wilcoxon tests compare groups within each split. Multiple cohorts/tissues can be compared simultaneously.",
+          style = "color: #6c757d; display: block; margin-bottom: 10px;"
+        ),
         # Add static significance legend
         p(HTML(
           "<b>Significance Levels:</b><br>",

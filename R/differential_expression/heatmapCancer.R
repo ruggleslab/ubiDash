@@ -4,6 +4,10 @@ heatmapCancerUI <- function(id) {
     sidebarPanel(
       h3("UPS Proteins by Cancer Subtype"),
       p(tab_summaries$`Heatmap Cancer Subtypes`),
+      tags$small(
+        "Filters are combinatorial - select multiple classes, cohorts, or subtypes to refine the heatmap.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       selectInput(ns("classSelect"), "UPS Class",
         choices = NULL, # will be updated dynamically
         multiple = TRUE

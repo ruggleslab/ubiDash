@@ -8,6 +8,10 @@ densityUI <- function(id) {
       width = 3,
       h3("Density Plot"),
       p(tab_summaries$`Density Plots`),
+      tags$small(
+        "All CPTAC cohorts are overlaid on a single plot for direct comparison of expression distributions.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       selectizeInput(
         inputId = ns("gene"),
         label = "Gene",

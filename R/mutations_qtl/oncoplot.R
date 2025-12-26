@@ -7,6 +7,10 @@ oncoplotUI <- function(id, cohorts) {
 
       # gene inputs
       p(tab_summaries$Oncoplot),
+      tags$small(
+        "Genes are ranked by mutation frequency. Use custom gene set to focus on specific UPS components.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       selectInput(
         inputId = ns("geneSet"),
         label = "Default Gene Set",

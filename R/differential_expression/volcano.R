@@ -5,6 +5,11 @@ volcanoUI <- function(id, cohorts) {
     sidebarPanel(
       h3("Visualization"),
       p(tab_summaries$`Volcano Plots`),
+      tags$small(
+        tags$strong("Tip:"),
+        " Adjust cutoffs to focus on highly dysregulated proteins. Points outside thresholds are highlighted.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       radioButtons(ns("plot_type"), "Plot Type:",
         choices = c("Volcano Plot" = "volcano", "Heatmap" = "heatmap"),
         selected = "volcano", inline = TRUE

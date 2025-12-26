@@ -8,7 +8,12 @@ scatterPlotUI <- function(id) {
           # Display descriptive text first
           column(
             12,
-            p(tab_summaries$`Pancan Gene vs Gene`)
+            p(tab_summaries$`Pancan Gene vs Gene`),
+            tags$small(
+              tags$strong("Note:"),
+              " Each substrate generates a separate plot showing Spearman correlation with statistical significance.",
+              style = "color: #6c757d; display: block; margin-bottom: 10px;"
+            )
           )
         ),
         fluidRow(

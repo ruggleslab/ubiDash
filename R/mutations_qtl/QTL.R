@@ -94,6 +94,8 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
     sample_mapping_cache <- reactiveVal(NULL)
     protein_cache <- reactiveVal(NULL)
     mut_cache <- reactiveVal(NULL)
+    qtl_by_mutation_cache <- reactiveVal(NULL)
+    qtl_by_ups_cache <- reactiveVal(NULL)
 
     get_qtl_data <- function() {
       if (is.null(qtl_cache())) {
@@ -113,6 +115,7 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
       sample_mapping_cache()
     }
 
+    # Lazy load protein data only when needed
     get_protein_data <- function() {
       if (is.null(protein_cache())) {
         protein_cache(
@@ -133,10 +136,30 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
       mut_cache()
     }
 
-    # Get data references
+    # Pre-filter QTL data for faster lookups
+    get_qtl_by_mutation <- function() {
+      if (is.null(qtl_by_mutation_cache())) {
+        qtl_data <- get_qtl_data()
+        qtl_by_mutation_cache(
+          qtl_data %>%
+            filter(is.numeric(estimate), !is.nan(estimate), !is.infinite(estimate)) %>%
+            split(.$mutation)
+        )
+      }
+      qtl_by_mutation_cache()
+    }
+
+    get_qtl_by_ups <- function() {
+      if (is.null(qtl_by_ups_cache())) {
+        qtl_data <- get_qtl_data()
+        qtl_by_ups_cache(split(qtl_data, qtl_data$ups_protein))
+      }
+      qtl_by_ups_cache()
+    }
+
+    # Get data references (but defer protein_data loading)
     qtl_data <- get_qtl_data()
     sample_mapping <- get_sample_mapping()
-    protein_data <- get_protein_data()
     mut <- get_mut_data()
 
     # Precompute static choices
@@ -144,30 +167,32 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
     mut_choices <- colnames(mut)
     genelist_choices <- names(genelists)
 
-    # Update input choices
+    # Update input choices (server=FALSE for static choices)
     updateSelectizeInput(session, "gene",
       choices = ups_choices,
-      server = TRUE, selected = "TRIM29"
+      selected = "TRIM29"
     )
     updateSelectizeInput(session, "genelist",
       choices = genelist_choices,
-      server = TRUE, selected = "hCD"
+      selected = "hCD"
     )
     updateSelectizeInput(session, "mutgene",
       choices = mut_choices,
-      server = TRUE, selected = "TP53.mut"
+      selected = "TP53.mut"
     )
 
-    # Boxplot output
-    output$boxplot <- renderPlotly({
-      req(input$refresh)
+    # Shared reactive for boxplot data (used by both plot and PDF download)
+    boxplot_data <- eventReactive(input$refresh, {
+      req(input$gene, input$mutgene)
       gn <- isolate(input$gene)
       m <- isolate(input$mutgene)
       if (!isTruthy(gn)) gn <- "ABL1"
       if (!isTruthy(m)) m <- "VHL"
-      colors <- colorsTbl
-      colors <- setNames(object = colors$color, nm = colors$id)
+
+      # Load protein data only when needed
+      protein_data <- get_protein_data()
       selected_cohorts <- cohorts
+
       df <- protein_data %>%
         left_join(sample_mapping, by = "harmonized_data_id") %>%
         filter(cohort %in% selected_cohorts, !is.na(harmonized_data_id)) %>%
@@ -181,7 +206,23 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
           by = "harmonized_data_id"
         ) %>%
         filter(!is.na(protein_expr), !is.na(mut_status))
+
       df$mut_status <- factor(df$mut_status, levels = c("WT", "Mutant"))
+      df
+    })
+
+    # Boxplot output
+    output$boxplot <- renderPlotly({
+      df <- boxplot_data()
+      req(df)
+
+      gn <- isolate(input$gene)
+      m <- isolate(input$mutgene)
+      if (!isTruthy(gn)) gn <- "ABL1"
+      if (!isTruthy(m)) m <- "VHL"
+
+      colors <- colorsTbl
+      colors <- setNames(object = colors$color, nm = colors$id)
       n_req <- isolate(input$n_genes)
       n_mutant <- sum(df$mut_status == "Mutant", na.rm = TRUE)
       n_wt <- sum(df$mut_status == "WT", na.rm = TRUE)
@@ -236,18 +277,22 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
       return(ggplotly(p, height = 800))
     })
 
-    # Reactive data frames for volcano plots
+    # Reactive data frames for volcano plots (using pre-filtered data)
     df_mutation <- eventReactive(input$refresh,
       {
+        req(input$mutgene, input$n_genes)
         n <- isolate(input$n_genes)
         gn <- gsub(".mut", "", isolate(input$mutgene))
         if (!isTruthy(gn)) gn <- "VHL"
-        df <- qtl_data %>%
-          filter(n_mut > n &
-            is.numeric(estimate) &
-            !is.nan(estimate) &
-            !is.infinite(estimate) &
-            mutation == gn) %>%
+
+        # Use pre-filtered lookup
+        qtl_by_mutation <- get_qtl_by_mutation()
+        if (!gn %in% names(qtl_by_mutation)) {
+          return(data.frame())
+        }
+
+        df <- qtl_by_mutation[[gn]] %>%
+          filter(n_mut > n) %>%
           mutate(Label = paste(ups_protein, mutation, sep = "-")) %>%
           mutate(Class = as.factor(Class))
         return(df)
@@ -257,11 +302,19 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
     )
     df_ups <- eventReactive(input$refresh,
       {
+        req(input$gene, input$n_genes)
         n <- isolate(input$n_genes)
         gn <- isolate(input$gene)
         if (!isTruthy(gn)) gn <- "ABL1"
-        df <- qtl_data %>%
-          filter(ups_protein == gn & n_mut > n) %>%
+
+        # Use pre-filtered lookup
+        qtl_by_ups <- get_qtl_by_ups()
+        if (!gn %in% names(qtl_by_ups)) {
+          return(data.frame())
+        }
+
+        df <- qtl_by_ups[[gn]] %>%
+          filter(n_mut > n) %>%
           mutate(Label = paste(ups_protein, mutation, sep = "-")) %>%
           mutate(Class = as.factor(mutation))
         return(df)
@@ -365,33 +418,22 @@ QTLServer <- function(id, genelists, colorsTbl, cohorts) {
       }
     )
 
-    # PDF download handler
+    # PDF download handler (reuses boxplot_data reactive)
     output$downloadPDF <- downloadHandler(
       filename = function() {
         paste("QTL-boxplot-", Sys.Date(), ".pdf", sep = "")
       },
       content = function(file) {
+        df <- boxplot_data()
+        req(df)
+
         gn <- isolate(input$gene)
         m <- isolate(input$mutgene)
         if (!isTruthy(gn)) gn <- "ABL1"
         if (!isTruthy(m)) m <- "VHL"
+
         colors <- colorsTbl
         colors <- setNames(object = colors$color, nm = colors$id)
-        selected_cohorts <- cohorts
-        df <- protein_data %>%
-          left_join(sample_mapping, by = "harmonized_data_id") %>%
-          filter(cohort %in% selected_cohorts, !is.na(harmonized_data_id)) %>%
-          select(harmonized_data_id, cohort, all_of(gn)) %>%
-          rename(protein_expr = all_of(gn)) %>%
-          left_join(
-            data.frame(
-              harmonized_data_id = rownames(mut),
-              mut_status = mut[, m, drop = TRUE]
-            ),
-            by = "harmonized_data_id"
-          ) %>%
-          filter(!is.na(protein_expr), !is.na(mut_status))
-        df$mut_status <- factor(df$mut_status, levels = c("WT", "Mutant"))
 
         p <- ggplot(df, aes(x = mut_status, y = protein_expr, color = cohort)) +
           geom_boxplot(outlier.shape = NA) +

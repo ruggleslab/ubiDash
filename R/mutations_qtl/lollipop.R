@@ -5,6 +5,10 @@ lollipopUI <- function(id) {
     sidebarPanel(
       h3("Lollipop Plot"),
       p(tab_summaries$Lollipop),
+      tags$small(
+        "Mutations are mapped to protein coordinates. Recurrent hotspots indicate functionally critical residues.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       selectizeInput(
         inputId = ns("gene"),
         choices = NULL,

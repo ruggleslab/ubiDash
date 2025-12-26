@@ -5,6 +5,10 @@ heatmapImmuneUI <- function(id) {
     sidebarPanel(
       h3("UPS Proteins by Immune Subtype"),
       p(tab_summaries$`Heatmap Immune Subtypes`),
+      tags$small(
+        "Immune subtypes based on Thorsson et al. classification - explore immune-context dependencies.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
 
       # Existing filters
       selectInput(ns("classSelectImmune"), "UPS Class",

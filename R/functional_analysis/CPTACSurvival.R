@@ -25,15 +25,25 @@ CPTACSurvivalUI <- function(id) {
                     maxOptions = 20
                 )
             ),
-            selectizeInput(
-                ns("cohort_selection"),
-                label = "Cohort or cohorts:",
-                choices = NULL,
-                selected = NULL,
-                multiple = TRUE,
-                options = list(
-                    placeholder = "Pan-Cancer or individual CPTAC cohorts",
-                    maxItems = 5
+            radioButtons(
+                ns("analysis_type"),
+                label = "Analysis type:",
+                choices = c("Pan-Cancer" = "pancan", "Per-Cancer" = "percan"),
+                selected = "pancan",
+                inline = TRUE
+            ),
+            conditionalPanel(
+                condition = sprintf("input['%s'] == 'percan'", ns("analysis_type")),
+                selectizeInput(
+                    ns("cohort_selection"),
+                    label = "Select cohort(s):",
+                    choices = NULL,
+                    selected = NULL,
+                    multiple = TRUE,
+                    options = list(
+                        placeholder = "Select one or more CPTAC cohorts",
+                        maxItems = 5
+                    )
                 )
             ),
             sliderInput(
@@ -52,8 +62,13 @@ CPTACSurvivalUI <- function(id) {
                 tags$br()
             ),
             tags$small(
-                "Low and High groups are defined by the cohort-specific quantile cutoffs.",
+                "Low and High groups are defined by the cohort-specific quantile cutoffs. Middle samples are excluded to emphasize expression extremes.",
                 style = "color: #6c757d;"
+            ),
+            tags$small(
+                tags$strong("Per-Cancer mode:"),
+                " Analyze survival within specific cohorts to identify lineage-specific prognostic markers.",
+                style = "color: #6c757d; display: block; margin-top: 10px;"
             )
         ),
         mainPanel(
@@ -113,7 +128,7 @@ CPTACSurvivalServer <- function(id) {
         cohort_values <- sample_meta$cohort
         cohort_values <- cohort_values[!is.na(cohort_values) & cohort_values != ""]
         cohort_choices <- unique(cohort_values)
-        cohort_choices <- c("Pan-Cancer", sort(cohort_choices))
+        cohort_choices <- sort(cohort_choices)
 
         updateSelectizeInput(
             session,
@@ -122,38 +137,23 @@ CPTACSurvivalServer <- function(id) {
             selected = if (length(gene_choices) > 0) gene_choices[1] else NULL
         )
 
-        observe({
-            # Remove 'Pan-Cancer' if any other cohort is selected
-            selected <- input$cohort_selection
-            if (!is.null(selected) && length(selected) > 0 && any(selected != "Pan-Cancer")) {
-                updateSelectizeInput(
-                    session,
-                    "cohort_selection",
-                    choices = sort(cohort_choices[cohort_choices != "Pan-Cancer"]),
-                    selected = selected[selected != "Pan-Cancer"]
-                )
-            } else {
-                updateSelectizeInput(
-                    session,
-                    "cohort_selection",
-                    choices = cohort_choices,
-                    selected = if (is.null(selected) || length(selected) == 0) "Pan-Cancer" else selected
-                )
-            }
-        })
+        updateSelectizeInput(
+            session,
+            "cohort_selection",
+            choices = cohort_choices,
+            selected = NULL
+        )
 
         selected_cohorts <- reactive({
-            choices <- input$cohort_selection
-            if (is.null(choices) || length(choices) == 0) {
-                return(NULL)
+            if (input$analysis_type == "pancan") {
+                return(NULL) # NULL means all cohorts (Pan-Cancer)
+            } else {
+                choices <- input$cohort_selection
+                if (is.null(choices) || length(choices) == 0) {
+                    return(NULL)
+                }
+                return(choices)
             }
-            if ("Pan-Cancer" %in% choices) {
-                choices <- setdiff(choices, "Pan-Cancer")
-            }
-            if (length(choices) == 0) {
-                return(NULL)
-            }
-            choices
         })
 
         survival_df <- reactive({

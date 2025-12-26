@@ -7,6 +7,11 @@ drugResponseUI <- function(id) {
     sidebarPanel(
       h3("Response Analysis"),
       p(tab_summaries$`CCLE Drug Sensitivity`),
+      tags$small(
+        tags$strong("Analysis modes:"),
+        " Drug-centric shows protein correlations with drug sensitivity; UPS-centric finds drugs associated with E3 expression.",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       # Display the schematic explanation figure
       tags$img(
         src = "assets/Gonzalez-Robles-Figures-5-02.png",

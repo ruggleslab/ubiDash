@@ -5,11 +5,15 @@ LSCCUbiquitylUI <- function(id) {
     sidebarPanel(
       h3("Ubiquityl Scatter Plot"),
       p(tab_summaries$`LSCC Ubiquityl`),
+      tags$small(
+        tags$strong("Data source:"),
+        " Site-specific ubiquitylation data from Gillette et al., Cell 2020 (LSCC cohort only).",
+        style = "color: #6c757d; display: block; margin-bottom: 10px;"
+      ),
       selectInput(ns("e3"), "Select E3 protein:", choices = NULL),
       selectInput(ns("substrate"), "Select Candidate Substrate:", choices = NULL),
       # Allow multiple selection for ubiquityl sites
-      selectizeInput(ns("ub_site"), "Select Candidate Ubiquityl Site(s):", choices = NULL, multiple = TRUE),
-      actionButton(ns("generate_plot"), "Generate Scatter Plot", class = "btn-primary")
+      selectizeInput(ns("ub_site"), "Select Candidate Ubiquityl Site(s):", choices = NULL, multiple = TRUE)
     ),
     mainPanel(
       conditionalPanel(
@@ -98,6 +102,21 @@ LSCCUbiquitylServer <- function(id) {
     })
     # If no site available
     no_sites_trigger <- reactiveVal(FALSE)
+
+    # Reset trigger when sites become available
+    observe({
+      req(ub.prot, input$substrate)
+      candidate_ub <- setdiff(colnames(ub.prot), "sample_id")
+      candidate_ub <- candidate_ub[grepl("_", candidate_ub)]
+      candidate_ub <- candidate_ub[grep(paste0("^", input$substrate, "_"), candidate_ub)]
+
+      if (length(candidate_ub) > 0 && !is.null(input$ub_site) && length(input$ub_site) > 0) {
+        no_sites_trigger(FALSE)
+      } else if (length(candidate_ub) == 0) {
+        no_sites_trigger(TRUE)
+      }
+    })
+
     output$no_sites_trigger <- reactive({
       no_sites_trigger()
     })
@@ -130,7 +149,7 @@ LSCCUbiquitylServer <- function(id) {
     # For each selected ubiquityl site (target column), generate a scatter plot:
     # - X-axis: the selected E3 protein measurement (from prot)
     # - Y-axis: the candidate ubiquityl site measurement (target column from ub.prot)
-    scatter_plot <- eventReactive(input$generate_plot, {
+    scatter_plot <- reactive({
       if (is.null(input$ub_site) || length(input$ub_site) == 0) {
         no_sites_trigger(TRUE)
         return(NULL)
