@@ -1,7 +1,7 @@
 generateCorrPlot <- function(threshold, plot_tab, xaxis, yaxis, inputGenes, warning) {
   warning("")
 
-  inputGenes <- splitInputGenes(inputGenes)
+  # inputGenes <- splitInputGenes(inputGenes)
 
   plot_tab <- filter(plot_tab, abs(plot_tab[, xaxis]) > threshold &
     abs(plot_tab[, yaxis]) > threshold)

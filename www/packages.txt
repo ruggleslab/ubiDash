@@ -19,3 +19,7 @@ circlize
 ggrepel
 ggpubr
 googledrive
+ggridges
+InteractiveComplexHeatmap
+survival
+survminer

@@ -14,10 +14,12 @@ body > .container-fluid {
   justify-content: space-between;
 }
 
-#heatmapTab-heatmap.shiny-plot-output, #simplifiedHeatmapTab-heatmap.shiny-plot-output{
+.shiny-plot-output, .plotly-container, .plotly{
   height:auto!important;
   min-height:400px;
 }
+
+
 
 body > .container-fluid > .container-fluid {
       padding-left: 10px!important;
@@ -85,6 +87,17 @@ h2{
   height: 30px;
 }
 
+.btn-primary {
+  background-color: #6A2798 !important;
+  border-color: #6A2798 !important;
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: #552080 !important;
+  border-color: #552080 !important;
+}
+
 /* Set error message color */
 .error {
   color: red;
@@ -138,6 +151,21 @@ footer img {
 .spacer{
   flex:1
 }
+ .well{
+    border-radius: 5px!important;
+  }
+  
+    
+.irs--shiny .irs-bar {
+    border-top: 1px solid #6A2798!important;
+    border-bottom: 1px solid #6A2798!important;
+    background: #6A2798!important;
+}
+
+.irs--shiny .irs-single {
+    background-color: #6A2798!important;
+}
+  
 
 /* Media query for smaller screens */
 @media (max-width: 680px) {
@@ -198,4 +226,6 @@ footer img {
   .navbar:after {
     display: none;
   }
+  
+ 
 }

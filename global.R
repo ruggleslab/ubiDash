@@ -1,20 +1,37 @@
-##########################
-#        ubiDash Global settings         #
-##########################
+library("glue")
+library("readxl")
+library("tidyverse")
+library("googledrive")
+library("memoise")
+library("plotly")
+library("ComplexUpset")
+library(scales) # for scales::alpha
+library(ggpubr) # for stat_cor
+library(ggprism) # for theme_prism
+library(patchwork) # for combining plots
+library(jsonlite)
+
+tab_summaries <- fromJSON("./www/tab_summaries.json")
+
+
+options(rsconnect.max.bundle.size = 3145728000)
 
 # loading R packages
 source("./scripts/load.packages.R")
 pks_lst <- readLines("./www/packages.txt")
 load.packages(pks_lst)
 
+# Source all R files from R/ subfolders (Shiny only auto-sources root R/ files)
+r_files <- list.files("./R", pattern = "\\.R$", recursive = TRUE, full.names = TRUE)
+for (f in r_files) {
+  source(f)
+}
 
-# loading datasets
-time <- as.numeric(Sys.time())
-startTime <- time
+skip_load_data <- exists("skip_load_data") && get("skip_load_data")
 
-skip_load_data = T
-
-if(!skip_load_data){
+if (!skip_load_data) {
+  time <- as.numeric(Sys.time())
+  startTime <- time
 
   # drive config ----
 
@@ -24,23 +41,27 @@ if(!skip_load_data){
   )
 
   ## Getting the auth token (only needs to be done once, so if you have the file you don't need to do this)
-  #drive_auth()
+  # drive_auth()
 
   ## List all of the files that you have available to download
   # drive_find()
+  # options(shiny.autoreload = TRUE)
 
 
-  get_from_drive <- function(filename){
+  get_from_drive <- function(filename) {
+    # print(filename)
     ## download the file in current wd and save the object so you know the location of the download
     ## This function can fail so wrap it in an error object to rerun it if it fails
-    file_data <- drive_download(filename, overwrite = TRUE)
+    suppressMessages(
+      file_data <- drive_download(filename, overwrite = TRUE)
+    )
 
     ## Loading the Rds object based on the local path that it's stored in
     data <- readRDS(file_data$local_path)
 
     ## Deleting the file once it's loaded in to save on storage space
     if (file.exists(file_data$local_path)) {
-      #Delete file if it exists
+      # Delete file if it exists
       file.remove(file_data$local_path)
     }
 
@@ -48,172 +69,99 @@ if(!skip_load_data){
   }
 
 
-  # Datasets ----
+  mem_get_from_drive <- memoise(get_from_drive)
+  # mem_rdata_from_drive <- memoise(rdata_from_drive)
+
+
+  mem_readRDS <- memoise(readRDS)
+
+
+  load("./data/searchlists.RData")
+
+
+  cohorts1.1 <- c(
+    "BRCA", "COAD", "HGSC", "LUAD", "ccRCC", "UCEC", "PDAC", "LSCC", "GBM", "HNSCC"
+    # ,"MB","HCC"
+  )
+  cohorts <- c("BRCA", "COAD", "HGSC", "LUAD", "CCRCC", "UCEC", "PDA", "LSCC", "GBM", "HNSCC", "OV")
+
 
   currentTime <- as.numeric(Sys.time())
-
-  ccle_rna <- get_from_drive("ubidash/ccle_tpm_rna_expression.rds")
-  ccle_protein <- get_from_drive("ubidash/ccle_tmt_protein_expression.rds")
-  ccle_samples <- get_from_drive("ubidash/ccle_sample_info.rds")
-
-  # cptac dataset
-  cptac_rna <- get_from_drive("ubidash/duplicates_averaged_cptac_rna.rds")
-  cptac_protein <- get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-  cptac_samples <- get_from_drive("ubidash/cptac_sample_info_with_subtypes.rds")
-
-
-  #pride dataset
-  pride_protein <- get_from_drive("ubidash/pride_lfq_protein_expression.rds")
-
-  # for correlations tab
-  plot_tab <- get_from_drive("ubidash/cptac_multi_omic_correlations.rds")
-
-
-  currentTime =  as.numeric(Sys.time())
-
   print(glue("read datasets in {(currentTime- time) * 1000} ms"))
   time <- currentTime
 
-  # maf for lollipop and oncoplot tabs
-  maf <- readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
-
-  currentTime <- as.numeric(Sys.time())
-  print(glue("read maf in {(currentTime- time) * 1000} ms"))
-  time <- currentTime
-
-
-  # Information used by various modules ----
-
-  # cohort  and sample type of all normal and tumor samples
-  tnlabels <- subset(cptac_samples, sample_type %in% c("T", "N"), select = c("sample_type", "cohort_code", "Cancer_subtype"))
-  # get list of cohorts
-  cohorts <- unique(tnlabels$cohort_code)
 
   genes <- read_excel(path = "./data/AllCRLs.v5.xlsx", sheet = 1)
   crl_genes <- unique(genes$hgnc_symbol)
-
-  getInputGenes <- function(CSV, TXT, delim = "tab") {
-    delims <- c(
-      tab = "\t",
-      comma = ","
-    )
-    inFile <- CSV
-    if (!is.null(inFile)) {
-      return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = delims[delim])))
-    }
-    return(TXT)
-  }
-
-
-  getInputGenes <- function(CSV, TXT, delim = "tab") {
-    delims <- c(
-      tab = "\t",
-      comma = ","
-    )
-    inFile <- CSV
-    if (!is.null(inFile)) {
-      return(unlist(read.table(file = inFile$datapath, header = FALSE, sep = delims[delim])))
-    }
-    return(TXT)
-  }
-
-
 
   currentTime <- as.numeric(Sys.time())
   print(glue("Initialized global functions in {(currentTime- time) * 1000} ms"))
   time <- currentTime
 
+  genelists <- readRDS("./data/combined_genelists.rds")
 
-  # Tab-specific variables ----
 
-  # Oncoplot ----
+  e3_ligase_list <- readRDS("./data/UbiDash_NYU+WEHI_E3_ligase_list.rds")
 
-  cohort_colors <- list(cohort_code = c(
-    BRCA = "royalblue4",
-    CCRCC = "maroon4",
-    COAD = "goldenrod1",
-    GBM = "aquamarine",
-    HCC = "pink3",
-    HNSCC = "coral4",
-    LSCC = "slategray3",
-    LUAD = "mediumpurple",
-    OV = "seagreen",
-    PDA = "lightgoldenrod2",
-    UCEC = "orangered3"
-  ))
+  # Top 15 UPS genes by mutation frequency (pre-computed to avoid MAF subsetting issues)
+  # See EXP084_UPS_mutations analysis for methodology
+  top_ups_genes <- c(
+    "KMT2D", "KMT2C", "VHL", "HERC2", "BIRC6", "UBR4", "HUWE1", "HECW1",
+    "RNF213", "MAGEL2", "CREBBP", "HERC1", "CMYA5", "HECTD4", "FBXW7"
+  )
 
-  top_crls <- readRDS("./data/topcrls.rds")
+  # Top 15 E3 ligase genes by mutation frequency (pre-computed to avoid MAF subsetting issues)
+  # See EXP084_UPS_mutations analysis for methodology
+  top_e3_genes <- c(
+    "VHL", "HERC2", "BIRC6", "UBR4", "HUWE1", "HECW1", "RNF213", "HERC1",
+    "HECTD4", "FBXW7", "MYCBP2", "RNF43", "BRWD3", "MAP3K1", "KLHL1"
+  )
+
+  # Use top E3 genes as default for backwards compatibility
+  top_crls <- top_e3_genes
 
   currentTime <- as.numeric(Sys.time())
   print(glue("Prepared oncoplot data in {(currentTime- time) * 1000} ms"))
   time <- currentTime
 
 
-  # Correlations ----
-  source("./scripts/GenerateCorrPlot.R")
-
-  lines <- list(
-    geom_hline(yintercept = .5, color = "red"),
-    geom_hline(yintercept = -.5, color = "red"),
-    geom_vline(xintercept = -.5, color = "red"),
-    geom_vline(xintercept = --.5, color = "red"),
-    geom_hline(yintercept = 0, size = 1, color = "black"),
-    geom_vline(xintercept = -0, size = 1, color = "black")
-  )
-
-
   currentTime <- as.numeric(Sys.time())
   print(glue("Prepared correlations data in {(currentTime- time) * 1000} ms"))
   time <- currentTime
 
-  # Heatmap ----
-  load("./data/defaults.RData")
+  z_score <- function(data_matrix, which = c(1, 2)) { # 1 rows, 2 columns
+    # Remove rows with all NA values
+    data_matrix <- data_matrix[!apply(is.na(data_matrix), which, all), , drop = FALSE]
+    # data_matrix <- data_matrix[!apply(is.nan(data_matrix), which, all), , drop = FALSE]
 
-  filteredProteinMat <- cptac_protein[genesSubset$genes, rownames(tnlabels)]
-  # remove rows with over 50% NA
-  filteredProteinMat <- filteredProteinMat[which(rowMeans(!is.na(filteredProteinMat)) > 0.5), ]
+    # Calculate the row means and standard deviations
+    row_means <- rowMeans(data_matrix, na.rm = TRUE)
+    row_sds <- apply(data_matrix, which, sd, na.rm = TRUE)
 
-  filteredTnlabels <- tnlabels[rownames(tnlabels) %in% colnames(cptac_rna), ]
-  filteredMRNAMat <- cptac_rna[genesSubset$genes, rownames(filteredTnlabels)]
-  # remove rows with over 50% NA
-  filteredMRNAMat <- filteredMRNAMat[which(rowMeans(!is.na(filteredMRNAMat)) > 0.5), ]
+    # Calculate Z-scores for each row
+    z_scores <- (data_matrix - row_means) / row_sds
 
-
-  colorsTbl <- read.csv("./data/colors.csv")
-  colors <- colorsTbl$color[1:11]
-  colorList <- list(
-    Type = setNames(colorsTbl$color[12:13], nm = c("T", "N")),
-    Cohort = setNames(colors, nm = cohorts)
-  )
-
-  # getCohortPatients <- function(labels, cohortSelect) {
-  #   patients <- filter(labels, cohort_code %in% cohortSelect)
-  #   return(patients)
-  # }
-
-
-  drawHeatmap <- function(inputGenesMat,
-                          annotation,
-                          colsplit,
-                          clusterCol,
-                          clusterRow,
-                          legendName) {
-    hm <- Heatmap(inputGenesMat,
-                  name = legendName,
-                  show_column_names = FALSE,
-                  show_row_names = TRUE,
-                  top_annotation = annotation,
-                  heatmap_legend_param = list(direction = "horizontal"),
-                  column_split = colsplit,
-                  cluster_columns = clusterCol,
-                  cluster_rows = clusterRow
-    )
-    return(draw(hm,
-                heatmap_legend_side = "bottom",
-                annotation_legend_side = "right")
-           )
+    return(z_scores)
   }
 
+  colorsTbl <- read.csv("./data/colors.csv")
+
+  drawHeatmap <- function(inputGenesMat, annotation, colsplit, clusterCol, clusterRow, legendName, column_names) {
+    hm <- Heatmap(inputGenesMat,
+      name = legendName,
+      show_column_names = column_names, show_row_names = TRUE,
+      top_annotation = annotation, heatmap_legend_param = list(direction = "horizontal"),
+      column_split = colsplit, cluster_columns = clusterCol, cluster_rows = clusterRow,
+      column_names_rot = 45,
+      column_names_gp = grid::gpar(fontsize = 13.2),
+      column_names_side = "top"
+    )
+
+    return(draw(hm,
+      heatmap_legend_side = "bottom",
+      annotation_legend_side = "right"
+    ))
+  }
 
 
   currentTime <- as.numeric(Sys.time())
@@ -225,7 +173,6 @@ if(!skip_load_data){
   # drug pathway and targets annotation
   drugpath <- read.csv("./data/drugsensitivity/drugpath.csv", row.names = 1)
 
-  # exp <- read.delim("./data/drugsensitivity/Cell_line_RMA_proc_basalExp.txt", header = T)
   exp <- readRDS("./data/drugsensitivity/Cell_line_RMA_proc_basalExp.rds")
   cell <- read.csv("./data/drugsensitivity/MatchedCellAnno.csv", row.names = 1)
 
@@ -237,23 +184,20 @@ if(!skip_load_data){
 
   # Simplified Heatmap ----
 
-  source("./data/simplifiedheatmap/tgr_misc.R")
-  # prt.n = readRDS("./data/simplifiedheatmap/prt_n.rds")
 
-  # prt.global.RI <-
-  #   readRDS(file = "./data/cptac_tmt-log2-RI_protein_expression.rds")
-  # prt.global.RI <- data_norm(prt.global.RI)
+  # get_prt.global.AI <- function(){
+  #   data = get_from_drive("cptac_tmt-log2-AI_protein_expression.rds")
+  #   data = data_norm(data, col_center = T)
+  #   return(data)
+  # }
 
-  prt.global.AI <- get_from_drive("ubidash/cptac_tmt-log2-RI_protein_expression.rds")
-  prt.global.AI <- data_norm(prt.global.AI, col_center = T)
+  # mem_prt.global.AI <- memoise(get_prt.global.AI)
 
-  labels <- read.csv("./data/simplifiedheatmap/sub_types.csv")
 
-  source("./scripts/tertiles.R")
+  currentTime <- as.numeric(Sys.time())
+  print(glue("Prepared simplified heatmap data in {(currentTime- time) * 1000} ms"))
+  time <- currentTime
 
-  # Apply function to each column of the matrix
-  # mTert <- apply(prt.n, 2, tertiles)
-  # row.names(mTert) <- row.names(prt.n)
 
   my.colors <-
     setNames(c("#070A52", "#6C9BCF", "#AFD3E2"),
@@ -261,10 +205,53 @@ if(!skip_load_data){
       nm = c("High", "Medium", "Low")
     ) # for each category
 
-  currentTime <- as.numeric(Sys.time())
-  print(glue("Prepared simplified heatmap data in {(currentTime- time) * 1000} ms"))
-  time <- currentTime
-}
+  # volcano ----
+  # Retrieve all sheet names from the Excel file
+  DE_protein_cohorts <- excel_sheets("./data/Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx")
+  # Exclude the sheet named "long table"
+  DE_protein_cohorts <- DE_protein_cohorts[DE_protein_cohorts != "long-table"]
+  # Read only the sheets you want into a list of data frames
+  DE_protein <- lapply(DE_protein_cohorts, function(cohort) {
+    read_excel("./data/Table S2A. DEqMS_Percancer_CPTAC_imputed_proteome_matchedTN.xlsx", sheet = cohort)
+  })
+  # Convert each element to a data.frame (if needed)
+  DE_protein <- lapply(DE_protein, as.data.frame)
+  # Name the list elements after the corresponding cohorts
+  names(DE_protein) <- DE_protein_cohorts
 
-print(glue("Total startup time was {(time-startTime) * 1000} ms"))
-rm(time, currentTime, startTime)
+  currentTime <- as.numeric(Sys.time())
+  print(glue("Prepared volcano plot data in {(currentTime- time) * 1000} ms"))
+  time <- currentTime
+
+  # correlations ----
+  # Load data needed for correlation gene panel module
+  cptac_tmt_protein <- readRDS("./data/cptac_tmt-log2-AI-v1.1_protein_expression.rds")
+  cptac_samples <- readRDS("./data/cptac_samples_info_across_datatypes_v1.1.rds")
+
+  currentTime <- as.numeric(Sys.time())
+  print(glue("Prepared correlation data in {(currentTime- time) * 1000} ms"))
+  time <- currentTime
+
+  # mutations/oncoplot ----
+  # Load MAF data needed for oncoplot and lollipop modules
+  pancan_maf <- mem_readRDS("./data/PanCan_Union_Maf_Broad_WashU_v1.1_TGR.rds")
+
+  currentTime <- as.numeric(Sys.time())
+  print(glue("Prepared mutation data in {(currentTime- time) * 1000} ms"))
+  time <- currentTime
+
+  # heatmap harmonized ----
+  # Load data needed for heatmap harmonized module
+  harmonized_proteome <- readRDS("./data/UbiDash_harmonized_proteome_data.rds")
+  ubidash_sample_mapping <- readRDS("./data/UbiDash_sample_mapping.rds")
+  ups_df <- readRDS("./data/ups_df.rds")
+
+  currentTime <- as.numeric(Sys.time())
+  print(glue("Prepared heatmap harmonized data in {(currentTime- time) * 1000} ms"))
+  time <- currentTime
+
+  print(glue("Total startup time was {(time-startTime) * 1000} ms"))
+  rm(time, currentTime, startTime)
+
+  skip_load_data <- T
+}

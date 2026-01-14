@@ -1,0 +1,30 @@
+Package: ubiDash
+Type: Application
+Title: ubiDash
+Version: 1
+Depends: R (>= 4.4.0)
+Imports:
+    glue,
+    readxl,
+    tidyverse,
+    ggprism,
+    styler,
+    shiny,
+    shinycssloaders,
+    plotly,
+    bslib,
+    DT,
+    corrplot,
+    openxlsx,
+    ComplexHeatmap,
+    stringr,
+    reshape2,
+    RColorBrewer,
+    maftools,
+    circlize,
+    ggrepel,
+    ggpubr,
+    googledrive,
+    ggridges,
+    survival,
+    survminer
