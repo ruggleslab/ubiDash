@@ -148,7 +148,8 @@ ui <- shinyUI(
           p(
             strong("Citation:"),
             tags$a(
-              href = "citation-link-here", "González-Robles et al. (coming soon)",
+              href = "https://doi.org/10.1038/s41418-026-01791-w",
+              "González-Robles et al. 2026 PMID: 42686851, 42472879",
               style = "color: white"
             )
           ),
